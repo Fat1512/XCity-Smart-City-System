@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: XCity
+  data:
+    mongodb:
+      uri: ${MONGO_URL}
+
+app:
+  token:
+    secret: ${AUTH_SECRET_KEY}
+    expirationTime: 200000
+  ai-server: ${AI_SERVER_URL}
+
+server:
+  port: 8080
+  servlet:
+    context-path: /xcity-service
