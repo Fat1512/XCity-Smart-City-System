@@ -1,0 +1,17 @@
+package com.tpd.XCity.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Location {
+    private List<Double> bbox;
+    private Object coordinates;
+    private GeoJsonType type;
+}
