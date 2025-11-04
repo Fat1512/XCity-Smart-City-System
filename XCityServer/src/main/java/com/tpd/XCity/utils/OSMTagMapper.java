@@ -1,44 +1,44 @@
 package com.tpd.XCity.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.tpd.XCity.entity.Building;
-import com.tpd.XCity.entity.Address;
-import com.tpd.XCity.entity.BuildingCategory;
-import com.tpd.XCity.entity.Property;
+import com.tpd.XCity.entity.building.Building;
+import com.tpd.XCity.entity.building.Address;
+import com.tpd.XCity.entity.building.BuildingCategory;
+import com.tpd.XCity.entity.building.Property;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 
 public class OSMTagMapper {
     private static final Map<String, BiConsumer<Building, String>> TAG_MAPPING = Map.ofEntries(
-            Map.entry("name", (b, v) -> b.setName(new Property<>(v))),
-            Map.entry("description", (b, v) -> b.setDescription(new Property<>(v))),
-            Map.entry("opening_hours", (b, v) -> b.setOpeningHours(new Property<>(List.of(v)))),
+            Map.entry("name", (b, v) -> b.setName(v)),
+            Map.entry("description", (b, v) -> b.setDescription(v)),
+            Map.entry("opening_hours", (b, v) -> b.setOpeningHours(List.of(v))),
 
             Map.entry("building", (b, v) -> {
                 try {
-                    b.setCategory(new Property<>(List.of(BuildingCategory.valueOf(v.toUpperCase()))));
+                    b.setCategory(List.of(BuildingCategory.valueOf(v.toUpperCase())));
                 } catch (IllegalArgumentException ignored) {
                 }
             }),
             Map.entry("building:levels", (b, v) -> {
                 try {
-                    b.setFloorsAboveGround(new Property<>((double) Integer.parseInt(v)));
+                    b.setFloorsAboveGround(Double.valueOf(v));
                 } catch (NumberFormatException ignored) {
                 }
             }),
             Map.entry("building:levels:underground", (b, v) -> {
                 try {
-                    b.setFloorsBelowGround(new Property<>((double) Integer.parseInt(v)));
+                    b.setFloorsBelowGround(Double.valueOf(v));
                 } catch (NumberFormatException ignored) {
                 }
             }),
 
-            Map.entry("addr:street", (b, v) -> ensureAddress(b).getValue().setStreetAddress(v)),
-            Map.entry("addr:city", (b, v) -> ensureAddress(b).getValue().setAddressLocality(v)),
-            Map.entry("addr:district", (b, v) -> ensureAddress(b).getValue().setAddressRegion(v)),
-            Map.entry("addr:postcode", (b, v) -> ensureAddress(b).getValue().setPostalCode(v)),
-            Map.entry("addr:housenumber", (b, v) -> ensureAddress(b).getValue().setStreetNr(v))
+            Map.entry("addr:street", (b, v) -> ensureAddress(b).setStreetAddress(v)),
+            Map.entry("addr:city", (b, v) -> ensureAddress(b).setAddressLocality(v)),
+            Map.entry("addr:district", (b, v) -> ensureAddress(b).setAddressRegion(v)),
+            Map.entry("addr:postcode", (b, v) -> ensureAddress(b).setPostalCode(v)),
+            Map.entry("addr:housenumber", (b, v) -> ensureAddress(b).setStreetNr(v))
     );
 
     public static void applyTags(Building building, JsonNode tagsNode) {
@@ -56,10 +56,8 @@ public class OSMTagMapper {
 
     }
 
-    private static Property<Address> ensureAddress(Building b) {
-        if (b.getAddress() == null) b.setAddress(Property.<Address>builder()
-                .value(new Address())
-                .build());
+    private static Address ensureAddress(Building b) {
+        if (b.getAddress() == null) b.setAddress(new Address());
         return b.getAddress();
     }
 }

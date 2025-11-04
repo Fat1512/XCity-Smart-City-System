@@ -1,4 +1,4 @@
-package com.tpd.XCity.entity;
+package com.tpd.XCity.entity.building;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

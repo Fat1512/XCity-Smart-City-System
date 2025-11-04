@@ -1,4 +1,4 @@
-package com.tpd.XCity.entity;
+package com.tpd.XCity.entity.building;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Location {
+public class ContainedInPlace {
     private List<Double> bbox;
     private Object coordinates;
     private GeoJsonType type;

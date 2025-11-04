@@ -1,4 +1,4 @@
-package com.tpd.XCity.entity;
+package com.tpd.XCity.entity.building;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

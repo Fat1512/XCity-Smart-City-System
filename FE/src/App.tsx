@@ -5,6 +5,9 @@ import AppLayout from "./ui/AppLayout";
 import Home from "./page/Home";
 
 import BuildingList from "./feature/building/BuildingList";
+
+import AdminLayout from "./ui/AdminLayout";
+import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -23,6 +26,12 @@ const App = () => {
             <Route path="/map" element={<BuildingList />} />
           </Route>
           <Route path="/home" element={<Home />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route
+              path="building/:buildingId"
+              element={<AdminBuildingWrapper />}
+            />
+          </Route>
         </Routes>
       </BrowserRouter>
 

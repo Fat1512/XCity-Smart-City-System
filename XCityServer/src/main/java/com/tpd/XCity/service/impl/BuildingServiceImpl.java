@@ -2,8 +2,13 @@ package com.tpd.XCity.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tpd.XCity.dto.response.JsonLdWrapperResponse;
-import com.tpd.XCity.entity.*;
+import com.tpd.XCity.entity.building.Building;
+import com.tpd.XCity.entity.building.GeoJsonType;
+import com.tpd.XCity.entity.building.GeoProperty;
+import com.tpd.XCity.entity.building.Location;
+import com.tpd.XCity.mapper.BuildingMapper;
 import com.tpd.XCity.service.BuildingService;
 import com.tpd.XCity.utils.AppConstant;
 import com.tpd.XCity.utils.OSMTagMapper;
@@ -24,6 +29,7 @@ import java.util.*;
 public class BuildingServiceImpl implements BuildingService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+    private final BuildingMapper buildingMapper;
 
     @Value("${app.orion-url}")
     private String ORION_URL;
@@ -60,6 +66,25 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
+    public JsonLdWrapperResponse<Building> getEntitiesById(String id) {
+        try {
+            String url = String.format("%s/%s", ORION_URL, id);
+            HttpEntity<String> req = new HttpEntity<>(createJsonLdHeaders());
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, req, String.class);
+
+            JsonLdWrapperResponse jsonLdWrapperResponse = JsonLdWrapperResponse.builder()
+                    .context(List.of(AppConstant.DEFAULT_CONTEXT))
+                    .data(objectMapper.readTree(response.getBody()))
+                    .build();
+
+            return jsonLdWrapperResponse;
+        } catch (Exception ex) {
+            log.warn("Failed to get entities {}: {}", ex.getMessage());
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
     public void createBuilding(Building building) {
         try {
             HttpEntity<String> req = new HttpEntity<>(objectMapper.writeValueAsString(building), createJsonLdHeaders());
@@ -71,7 +96,7 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
-    public void createBuildings(List<Building> buildings) {
+    public void createBuildings(List<ObjectNode> buildings) {
         if (buildings == null || buildings.isEmpty()) {
             log.info("No buildings to send to Orion-LD.");
             return;
@@ -95,14 +120,7 @@ public class BuildingServiceImpl implements BuildingService {
             log.info("Batch upload {} buildings — response: {}", response.getBody(), response.getStatusCode());
         } catch (Exception batchEx) {
             log.warn("Batch upload failed: {} → fallback to single create", batchEx.getMessage());
-            for (Building b : buildings) {
-                try {
-                    createBuilding(b);
-                } catch (Exception ex) {
-                    log.warn("Failed single insert {}: {}", b.getId(), ex.getMessage());
-                }
-            }
-            log.info("Completed fallback upload: {} buildings.", buildings.size());
+
         }
     }
 
@@ -139,7 +157,7 @@ public class BuildingServiceImpl implements BuildingService {
             JsonNode elements = root.get("elements");
             if (elements == null) return;
 
-            List<Building> buildings = new ArrayList<>();
+            List<ObjectNode> buildings = new ArrayList<>();
 
             for (JsonNode el : elements) {
                 String type = el.get("type").asText();
@@ -171,10 +189,8 @@ public class BuildingServiceImpl implements BuildingService {
                         loc.setCoordinates(List.of(polygon));
                     }
                 }
-                b.setLocation(GeoProperty.<Location>builder()
-                        .value(loc)
-                        .build());
-                buildings.add(b);
+                b.setLocation(loc);
+                buildings.add(buildingMapper.toOrion(b));
             }
 
             this.createBuildings(buildings);

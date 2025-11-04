@@ -10,3 +10,14 @@ export async function getBuildings() {
     );
   }
 }
+
+export async function getBuilding(id: string) {
+  try {
+    const res = await API.get(`/building/${id}`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}

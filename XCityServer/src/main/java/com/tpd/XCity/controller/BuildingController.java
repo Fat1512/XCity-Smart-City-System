@@ -19,6 +19,13 @@ public class BuildingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/building/{id}")
+    public ResponseEntity<JsonLdWrapperResponse> getBuilding(@PathVariable("id") String id) {
+        JsonLdWrapperResponse response = buildingService.getEntitiesById(id);
+        return ResponseEntity.ok(response);
+    }
+
+
     @PostMapping("/building/init")
     public ResponseEntity<String> initBuilding() {
         buildingService.initBuildingFromOverpass();

@@ -1,4 +1,4 @@
-package com.tpd.XCity.entity;
+package com.tpd.XCity.entity.building;
 
 public enum BuildingType {
     BUILDING
