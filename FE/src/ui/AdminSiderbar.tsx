@@ -7,57 +7,84 @@ import {
   IoLeaf,
   IoBusiness,
   IoFlash,
-  IoAdd,
 } from "react-icons/io5";
+import { useNavigate, useLocation } from "react-router-dom";
+
+interface SubItem {
+  label: string;
+  path: string;
+}
+
 interface MenuItem {
   label: string;
   icon: React.ReactNode;
-  subItems?: string[];
+  subItems?: SubItem[];
 }
 
 const menuData: MenuItem[] = [
   {
     label: "Tòa nhà",
     icon: <IoBusiness className="text-blue-600" />,
-    subItems: ["Tòa nhà", "Trung tâm thương mại"],
+    subItems: [
+      { label: "Tòa nhà", path: "/admin/buildings" },
+      { label: "Trung tâm thương mại", path: "/admin/mall" },
+    ],
   },
   {
     label: "Giao thông",
     icon: <IoCarSport className="text-yellow-600" />,
-    subItems: ["Vị trí bến xe", "Tình trạng kẹt xe", "Tai nạn"],
+    subItems: [
+      { label: "Vị trí bến xe", path: "/admin/stations" },
+      { label: "Tình trạng kẹt xe", path: "/admin/traffic" },
+      { label: "Tai nạn", path: "/admin/accidents" },
+    ],
   },
   {
     label: "Môi trường",
     icon: <IoLeaf className="text-green-600" />,
-    subItems: ["Nhiệt độ", "Chất lượng không khí (AQI)", "Tiếng ồn"],
+    subItems: [
+      { label: "Nhiệt độ", path: "/admin/temperature" },
+      { label: "Chất lượng không khí (AQI)", path: "/admin/aqi" },
+      { label: "Tiếng ồn", path: "/admin/noise" },
+    ],
   },
   {
     label: "Hạ tầng kỹ thuật đô thị",
     icon: <IoFlash className="text-red-500" />,
-    subItems: ["Cấp thoát nước", "Viễn thông", "Năng lượng"],
+    subItems: [
+      { label: "Cấp thoát nước", path: "/admin/water" },
+      { label: "Viễn thông", path: "/admin/telecom" },
+      { label: "Năng lượng", path: "/admin/energy" },
+    ],
   },
   {
     label: "Dịch vụ công cộng",
     icon: <IoConstruct className="text-purple-600" />,
-    subItems: ["Công viên", "Bãi đỗ xe", "Đèn đường thông minh"],
+    subItems: [
+      { label: "Công viên", path: "/admin/parks" },
+      { label: "Bãi đỗ xe", path: "/admin/parking" },
+      { label: "Đèn đường thông minh", path: "/admin/smart-lights" },
+    ],
   },
 ];
 
 const AdminSidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [openSection, setOpenSection] = useState<string | null>(null);
-  const [activeItem, setActiveItem] = useState<string | null>(null);
 
   const toggleSection = (label: string) => {
     setOpenSection(openSection === label ? null : label);
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col shadow-md">
+    <aside className="w-64 fixed top-0 bottom-0 bg-white border-r border-gray-200 p-4 flex flex-col shadow-md">
       <div className="flex items-center gap-2 mb-6">
         <div className="h-8 w-8 bg-green-600 rounded flex items-center justify-center text-white font-bold shadow">
-          OR
+          SC
         </div>
-        <h1 className="text-lg font-semibold text-gray-800">OpenRemote</h1>
+        <h1 className="text-lg font-semibold text-gray-800">Smart City</h1>
       </div>
 
       <nav className="flex-1 overflow-auto">
@@ -95,24 +122,29 @@ const AdminSidebar = () => {
                   openSection === menu.label ? "max-h-64 mt-2" : "max-h-0"
                 }`}
               >
-                {menu.subItems?.map((sub) => (
-                  <li
-                    key={sub}
-                    onClick={() => setActiveItem(sub)}
-                    className={`px-3 py-1.5 text-sm rounded-md cursor-pointer transition-colors ${
-                      activeItem === sub
-                        ? "bg-green-100 text-green-700 font-medium"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {sub}
-                  </li>
-                ))}
+                {menu.subItems?.map((sub) => {
+                  const isActive = location.pathname === sub.path;
+
+                  return (
+                    <li
+                      key={sub.label}
+                      onClick={() => navigate(sub.path)}
+                      className={`px-3 py-1.5 text-sm rounded-md cursor-pointer transition-colors ${
+                        isActive
+                          ? "bg-green-100 text-green-700 font-semibold"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {sub.label}
+                    </li>
+                  );
+                })}
               </ul>
             </li>
           ))}
         </ul>
       </nav>
+
       <div className="mt-6">
         <button className="w-full bg-green-600 text-white py-2 rounded-md font-medium shadow hover:bg-green-700 transition">
           + Add asset

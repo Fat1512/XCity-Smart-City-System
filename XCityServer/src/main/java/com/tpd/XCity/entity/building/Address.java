@@ -19,4 +19,5 @@ public class Address {
     private String postalCode;
     private String streetAddress;
     private String streetNr;
+
 }

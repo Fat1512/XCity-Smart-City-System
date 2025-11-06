@@ -12,6 +12,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@mapbox/mapbox-gl-geocoder": "^5.1.2",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/jsonld": "^1.5.15",
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
     "@types/node": "^24.6.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

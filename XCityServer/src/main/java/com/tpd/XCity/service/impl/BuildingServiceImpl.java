@@ -1,20 +1,28 @@
 package com.tpd.XCity.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.tpd.XCity.dto.response.JsonLdWrapperResponse;
+import com.tpd.XCity.dto.request.BuildingUpdateRequest;
+import com.tpd.XCity.dto.response.*;
 import com.tpd.XCity.entity.building.Building;
 import com.tpd.XCity.entity.building.GeoJsonType;
 import com.tpd.XCity.entity.building.GeoProperty;
 import com.tpd.XCity.entity.building.Location;
+import com.tpd.XCity.exception.ResourceNotFoundExeption;
 import com.tpd.XCity.mapper.BuildingMapper;
+import com.tpd.XCity.repository.BuildingRepository;
 import com.tpd.XCity.service.BuildingService;
 import com.tpd.XCity.utils.AppConstant;
+import com.tpd.XCity.utils.Helper;
 import com.tpd.XCity.utils.OSMTagMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -22,6 +30,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.tpd.XCity.utils.APIResponseMessage.SUCCESSFULLY_CREATED;
 
 @RequiredArgsConstructor
 @Service
@@ -30,6 +41,7 @@ public class BuildingServiceImpl implements BuildingService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final BuildingMapper buildingMapper;
+    private final BuildingRepository buildingRepository;
 
     @Value("${app.orion-url}")
     private String ORION_URL;
@@ -44,6 +56,28 @@ public class BuildingServiceImpl implements BuildingService {
                 "<https://smart-data-models.github.io/dataModel.Building/context.jsonld>; " +
                         "rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"");
         return headers;
+    }
+
+    public void patchAttributes(String entityId, Map<String, Object> attrs) {
+        if (attrs == null || attrs.isEmpty()) return;
+
+        Map<String, Object> body = attrs.entrySet().stream().collect(
+                java.util.stream.Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> Map.of("type", "Property", "value", e.getValue())
+                )
+        );
+
+        String url = String.format("%s/%s/attrs", ORION_URL, entityId);
+
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, createJsonLdHeaders());
+        ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, Void.class);
+
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Failed to update Orion-LD entity " + entityId + ": " + response.getStatusCode());
+        }
     }
 
     @Override
@@ -66,22 +100,51 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
-    public JsonLdWrapperResponse<Building> getEntitiesById(String id) {
-        try {
-            String url = String.format("%s/%s", ORION_URL, id);
-            HttpEntity<String> req = new HttpEntity<>(createJsonLdHeaders());
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, req, String.class);
+    public BuildingDetailResponse getEntitiesById(String id) {
+        Building building = buildingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundExeption("Not found building"));
 
-            JsonLdWrapperResponse jsonLdWrapperResponse = JsonLdWrapperResponse.builder()
-                    .context(List.of(AppConstant.DEFAULT_CONTEXT))
-                    .data(objectMapper.readTree(response.getBody()))
-                    .build();
+        return buildingMapper.convertToDetailResponse(building);
+    }
 
-            return jsonLdWrapperResponse;
-        } catch (Exception ex) {
-            log.warn("Failed to get entities {}: {}", ex.getMessage());
-            throw new RuntimeException(ex);
-        }
+    @Override
+    public MessageResponse updateBuilding(String id, BuildingUpdateRequest request) throws JsonProcessingException {
+        Building building = buildingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundExeption("Not found building"));
+        Building oldBuilding = objectMapper.readValue(objectMapper.writeValueAsString(building), Building.class);
+
+        buildingMapper.updateBuilding(request, building);
+        buildingRepository.save(building);
+
+        Map<String, Object> diff = Helper.getChangedFields(oldBuilding, building);
+
+        patchAttributes(id, diff);
+        return MessageResponse.builder()
+                .message(SUCCESSFULLY_CREATED.name())
+                .status(HttpStatus.OK)
+                .build();
+    }
+
+    @Override
+    public PageResponse<BuildingOverviewResponse> getBuildings(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Building> pageBuilding = buildingRepository.findAll(pageable);
+
+        List<BuildingOverviewResponse> data = pageBuilding.get()
+                .map(p -> buildingMapper.convertToOverviewResponse(p))
+                .collect(Collectors.toList());
+
+
+        return PageResponse.<BuildingOverviewResponse>builder()
+                .content(data)
+                .last(pageBuilding.isLast())
+                .totalPages(pageBuilding.getTotalPages())
+                .page(page)
+                .size(pageBuilding.getSize())
+                .totalElements(pageBuilding.getTotalElements())
+                .build();
+
     }
 
     @Override
@@ -158,6 +221,7 @@ public class BuildingServiceImpl implements BuildingService {
             if (elements == null) return;
 
             List<ObjectNode> buildings = new ArrayList<>();
+            List<Building> buildingEntities = new ArrayList<>();
 
             for (JsonNode el : elements) {
                 String type = el.get("type").asText();
@@ -190,10 +254,13 @@ public class BuildingServiceImpl implements BuildingService {
                     }
                 }
                 b.setLocation(loc);
+
+                buildingEntities.add(b);
                 buildings.add(buildingMapper.toOrion(b));
             }
 
             this.createBuildings(buildings);
+            buildingRepository.saveAll(buildingEntities);
             System.out.println("Done: Uploaded " + buildings.size() + " buildings to Orion-LD.");
         } catch (Exception e) {
             e.printStackTrace();

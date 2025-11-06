@@ -3,17 +3,30 @@ package com.tpd.XCity.mapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.tpd.XCity.dto.request.BuildingUpdateRequest;
+import com.tpd.XCity.dto.response.BuildingDetailResponse;
+import com.tpd.XCity.dto.response.BuildingOverviewResponse;
 import com.tpd.XCity.entity.building.Building;
 import com.tpd.XCity.entity.building.BuildingCategory;
 import com.tpd.XCity.entity.building.Location;
-import org.mapstruct.Mapper;
-import org.mapstruct.Named;
+import com.tpd.XCity.mapper.decorator.BuildingMapperDecorator;
+import org.mapstruct.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
+@DecoratedWith(BuildingMapperDecorator.class)
 public interface BuildingMapper {
+    @Mapping(target = "openingHours", ignore = true)
+    BuildingDetailResponse convertToDetailResponse(Building building);
+
+    BuildingOverviewResponse convertToOverviewResponse(Building building);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "openingHours", ignore = true)
+    void updateBuilding(BuildingUpdateRequest request, @MappingTarget Building building);
+
     @Named("fromOrion")
     default Building fromOrion(JsonNode json) {
         ObjectMapper mapper = new ObjectMapper();
@@ -90,7 +103,7 @@ public interface BuildingMapper {
             if (loc.has("bbox")) {
                 JsonNode bbox = loc.get("bbox");
                 if (bbox == null || bbox.isNull()) {
-                    loc.remove("bbox"); // remove null bbox
+                    loc.remove("bbox");
                 }
             }
             root.set("location", loc);

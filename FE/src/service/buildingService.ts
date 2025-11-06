@@ -1,3 +1,5 @@
+import type { Building } from "../feature/building/AdminBuilding";
+import type { PaginationParams } from "../types/PaginationParams";
 import { API } from "../utils/axiosConfig";
 
 export async function getBuildings() {
@@ -14,6 +16,36 @@ export async function getBuildings() {
 export async function getBuilding(id: string) {
   try {
     const res = await API.get(`/building/${id}`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
+export async function getSBuildings({ page, size }: PaginationParams) {
+  try {
+    const params: Record<string, string | number> = { page, size };
+
+    const res = await API.get("/s-buildings", {
+      params,
+    });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
+export async function updateBuilding(building: Building) {
+  try {
+    const {
+      id,
+      dateCreated,
+
+      ...rest
+    } = building;
+    const res = await API.put(`/building/${id}`, { ...rest });
     return res.data;
   } catch (error: any) {
     throw new Error(

@@ -1,13 +1,8 @@
 import useGetBuildings from "./useGetBuildings";
-import type { NgsiLdProperty, NgsiLdGeoProperty } from "../../types/index";
+import type { NgsiLdProperty, NgsiLdGeoProperty } from "../../../types/index";
 import Map from "./Map";
+import type { Address } from "../AdminBuilding";
 
-export interface Address {
-  addressLocality?: string;
-  addressRegion?: string;
-  streetAddress?: string;
-  streetNr?: string;
-}
 export interface Building {
   id: string;
   type: "Building";

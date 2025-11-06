@@ -4,10 +4,11 @@ import { ToastContainer } from "react-toastify";
 import AppLayout from "./ui/AppLayout";
 import Home from "./page/Home";
 
-import BuildingList from "./feature/building/BuildingList";
+import BuildingList from "./feature/building/client/BuildingList";
 
 import AdminLayout from "./ui/AdminLayout";
 import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
+import AdminBuildingList from "./feature/building/AdminBuildingList";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,6 +28,7 @@ const App = () => {
           </Route>
           <Route path="/home" element={<Home />} />
           <Route path="/admin" element={<AdminLayout />}>
+            <Route path="buildings" element={<AdminBuildingList />} />
             <Route
               path="building/:buildingId"
               element={<AdminBuildingWrapper />}

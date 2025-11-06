@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import * as turf from "@turf/turf";
-import type { Building } from "../building/BuildingList";
+import type { Building } from "./BuildingList";
 import { renderBuildingInfo } from "./BuildingPopup";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -40,14 +40,12 @@ export default function Map({ buildings }: MapProps) {
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      // Chuyển dữ liệu NGSI-LD thành FeatureCollection hợp lệ
       const features = buildings
         .filter((b) => b.location?.value?.coordinates)
         .map((b) => {
           const coords = b.location.value.coordinates;
           let polygonCoords: number[][] = [];
 
-          // Nếu coordinates là mảng phẳng: [lng1, lat1, lng2, lat2, ...]
           if (Array.isArray(coords) && typeof coords[0] === "number") {
             for (let i = 0; i < coords.length; i += 2) {
               polygonCoords.push([coords[i], coords[i + 1]]);
@@ -70,7 +68,6 @@ export default function Map({ buildings }: MapProps) {
           };
         });
 
-      // Add GeoJSON source
       map.addSource("buildings", {
         type: "geojson",
         data: {
@@ -79,7 +76,6 @@ export default function Map({ buildings }: MapProps) {
         },
       });
 
-      // Layer fill
       map.addLayer({
         id: "building-fill",
         type: "fill",
@@ -90,7 +86,6 @@ export default function Map({ buildings }: MapProps) {
         },
       });
 
-      // Layer outline
       map.addLayer({
         id: "building-outline",
         type: "line",
@@ -101,7 +96,6 @@ export default function Map({ buildings }: MapProps) {
         },
       });
 
-      // Thay đổi con trỏ chuột khi hover vào building
       map.on("mouseenter", "building-fill", () => {
         map.getCanvas().style.cursor = "pointer";
       });
@@ -110,13 +104,11 @@ export default function Map({ buildings }: MapProps) {
         map.getCanvas().style.cursor = "";
       });
 
-      // Click vào vùng building để hiện info panel
       map.on("click", "building-fill", (e) => {
         if (!e.features || e.features.length === 0) return;
 
         const feature = e.features[0];
 
-        // Tìm building data từ mảng buildings
         const buildingData = buildings.find(
           (b) => b.id === feature.properties?.id
         );
@@ -125,7 +117,6 @@ export default function Map({ buildings }: MapProps) {
           buildingData?.name?.value || feature.properties?.name || "Unknown";
         const buildingId = feature.properties?.id || "";
 
-        // Tạo info panel element với thông tin đầy đủ
         const infoPanel = renderBuildingInfo({
           buildingName,
           buildingId,
@@ -136,12 +127,10 @@ export default function Map({ buildings }: MapProps) {
           description: buildingData?.description?.value,
         });
 
-        // Xóa panel cũ nếu có
         if (infoPanelRef.current) {
           infoPanelRef.current.remove();
         }
 
-        // Thêm panel mới vào container góc phải
         infoPanelRef.current = infoPanel;
         const container = document.getElementById("info-panel-container");
         if (container) {
@@ -151,7 +140,6 @@ export default function Map({ buildings }: MapProps) {
         setSelectedBuilding(feature);
       });
 
-      // Vẫn giữ markers để dễ nhìn thấy vị trí trung tâm
       features.forEach((feature) => {
         const centroid = turf.centroid(feature);
         const [markerLng, markerLat] = centroid.geometry.coordinates as [
@@ -172,7 +160,6 @@ export default function Map({ buildings }: MapProps) {
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       <div ref={mapContainerRef} className="w-full h-full" />
 
-      {/* Container cho info panel góc phải */}
       <div
         style={{
           position: "absolute",

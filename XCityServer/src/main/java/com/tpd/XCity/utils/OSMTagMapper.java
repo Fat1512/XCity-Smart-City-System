@@ -36,7 +36,7 @@ public class OSMTagMapper {
 
             Map.entry("addr:street", (b, v) -> ensureAddress(b).setStreetAddress(v)),
             Map.entry("addr:city", (b, v) -> ensureAddress(b).setAddressLocality(v)),
-            Map.entry("addr:district", (b, v) -> ensureAddress(b).setAddressRegion(v)),
+            Map.entry("addr:district", (b, v) -> ensureAddress(b).setDistrict(v)),
             Map.entry("addr:postcode", (b, v) -> ensureAddress(b).setPostalCode(v)),
             Map.entry("addr:housenumber", (b, v) -> ensureAddress(b).setStreetNr(v))
     );
