@@ -4,8 +4,13 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Helper {
+    public static String getURNId(String type) {
+        return String.format("urn:ngsi-ld:%s:%s", type, UUID.randomUUID());
+    }
+
     public static Map<String, Object> getChangedFields(Object oldObj, Object newObj) {
         Map<String, Object> changes = new HashMap<>();
         if (oldObj == null || newObj == null) return changes;

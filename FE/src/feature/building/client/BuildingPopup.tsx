@@ -15,7 +15,20 @@ interface BuildingPopupProps {
 }
 
 export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
+  const containerWrapper = document.createElement("div");
+  containerWrapper.style.position = "fixed";
+  containerWrapper.style.top = "0";
+  containerWrapper.style.left = "0";
+  containerWrapper.style.width = "100%";
+  containerWrapper.style.height = "100%";
+  containerWrapper.style.background = "rgba(0,0,0,0.3)";
+  containerWrapper.style.display = "flex";
+  containerWrapper.style.alignItems = "center";
+  containerWrapper.style.justifyContent = "center";
+  containerWrapper.style.zIndex = "9999";
+
   const container = document.createElement("div");
+  containerWrapper.appendChild(container);
 
   const {
     buildingName,
@@ -25,19 +38,17 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
     floorsAboveGround,
     floorsBelowGround,
     description,
+    onViewClick,
   } = props;
 
-  // Format địa chỉ đầy đủ
   const fullAddress = [
     address?.streetNr,
     address?.streetAddress,
-    address?.addressRegion,
     address?.addressLocality,
   ]
     .filter(Boolean)
     .join(", ");
 
-  // Format category
   const categoryDisplay = category
     ? category
         .replace(/_/g, " ")
@@ -53,7 +64,19 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
       overflow: hidden;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      position: relative;
     ">
+      <!-- Close Button -->
+      <button id="close-popup" style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+      ">✖️</button>
+
       <!-- Header -->
       <div style="
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -83,11 +106,7 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
       </div>
 
       <!-- Content -->
-      <div style="
-        background: white;
-        padding: 20px;
-      ">
-        <!-- Address Section -->
+      <div style="background: white; padding: 20px;">
         ${
           fullAddress
             ? `
@@ -100,26 +119,16 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
             border-radius: 10px;
             border-left: 3px solid #f093fb;
           ">
-            <div style="
-              font-size: 20px;
-              margin-right: 10px;
-              line-height: 1;
-            ">📍</div>
+            <div style="font-size: 20px; margin-right: 10px; line-height: 1;">📍</div>
             <div>
-              <div style="font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
-                Address
-              </div>
-              <div style="font-size: 13px; color: #2d3436; line-height: 1.4;">
-                ${fullAddress}
-              </div>
+              <div style="font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Address</div>
+              <div style="font-size: 13px; color: #2d3436; line-height: 1.4;">${fullAddress}</div>
             </div>
           </div>
-        </div>
-        `
+        </div>`
             : ""
         }
 
-        <!-- Building Info Section -->
         <div style="margin-bottom: 16px;">
           <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #666; margin-bottom: 12px; letter-spacing: 0.5px;">
             Building Information
@@ -142,17 +151,11 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
           </div>
         </div>
 
-        <!-- Description/Website -->
         ${
           description
             ? `
         <div style="margin-bottom: 20px;">
-          <div style="
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 3px solid #74b9ff;
-          ">
+          <div style="padding: 12px; background: #f8f9fa; border-radius: 10px; border-left: 3px solid #74b9ff;">
             <div style="font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">
               ${description.startsWith("http") ? "Website" : "Description"}
             </div>
@@ -164,12 +167,10 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
               }
             </div>
           </div>
-        </div>
-        `
+        </div>`
             : ""
         }
 
-        <!-- Action Button -->
         <button style="
           width: 100%;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -184,16 +185,34 @@ export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
           box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
           text-transform: uppercase;
           letter-spacing: 0.5px;
-        " 
-        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)';"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+        "
+        id="view-details-btn">
           📊 View Full Details
         </button>
       </div>
     </div>
   `;
 
-  return container.firstElementChild as HTMLDivElement;
+  // Click button close
+  container.querySelector("#close-popup")?.addEventListener("click", () => {
+    containerWrapper.remove();
+  });
+
+  // Click outside to close
+  containerWrapper.addEventListener("click", (e) => {
+    if (e.target === containerWrapper) {
+      containerWrapper.remove();
+    }
+  });
+
+  // View details click
+  container
+    .querySelector("#view-details-btn")
+    ?.addEventListener("click", () => {
+      onViewClick?.();
+    });
+
+  return containerWrapper as HTMLDivElement;
 }
 
 function createInfoCard(

@@ -34,9 +34,11 @@ public class BuildingController {
     }
 
     @GetMapping("/s-buildings")
-    public ResponseEntity<PageResponse> getFoods(@RequestParam(value = "page", defaultValue = PAGE_DEFAULT) String page,
-                                                 @RequestParam(value = "size", defaultValue = PAGE_SIZE) String size) {
-        PageResponse pageResponse = buildingService.getBuildings(Integer.parseInt(page), Integer.parseInt(size));
+    public ResponseEntity<PageResponse> getBuildings(
+            @RequestParam(value = "kw", defaultValue = "", required = false) String kw,
+            @RequestParam(value = "page", defaultValue = PAGE_DEFAULT) String page,
+            @RequestParam(value = "size", defaultValue = PAGE_SIZE) String size) {
+        PageResponse pageResponse = buildingService.getBuildings(kw, Integer.parseInt(page), Integer.parseInt(size));
         return ResponseEntity.ok(pageResponse);
     }
 
@@ -45,6 +47,13 @@ public class BuildingController {
         MessageResponse response = buildingService.updateBuilding(id, request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/building")
+    public ResponseEntity<MessageResponse> createBuilding(@RequestBody BuildingUpdateRequest request) throws JsonProcessingException {
+        MessageResponse response = buildingService.createBuilding(request);
+        return ResponseEntity.ok(response);
+    }
+
 
     @PostMapping("/building/init")
     public ResponseEntity<String> initBuilding() {

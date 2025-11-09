@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { PAGE, PAGE_SIZE } from "../../utils/appConstant";
 import { getSBuildings } from "../../service/buildingService";
 
-export default function useGetFoods() {
+export default function useGetBuildings() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const page: number = searchParams.get("page")
@@ -15,9 +15,11 @@ export default function useGetFoods() {
     ? parseInt(searchParams.get("size") as string, 10)
     : PAGE_SIZE;
 
+  const kw: string = searchParams.get("kw") || "";
+
   const { isLoading, data } = useQuery({
-    queryKey: ["sBuilding", page, size],
-    queryFn: () => getSBuildings({ page, size }),
+    queryKey: ["building", page, size, kw],
+    queryFn: () => getSBuildings({ page, size, kw }),
   });
   const {
     content: buildings = [],
@@ -28,7 +30,7 @@ export default function useGetFoods() {
 
   if (page + 1 < totalPages) {
     queryClient.prefetchQuery({
-      queryKey: ["sBuilding", page + 1, size],
+      queryKey: ["building", page + 1, size, kw],
       queryFn: () =>
         getSBuildings({
           page: page + 1,
@@ -39,7 +41,7 @@ export default function useGetFoods() {
 
   if (page > 1)
     queryClient.prefetchQuery({
-      queryKey: ["sBuilding", page - 1, size],
+      queryKey: ["building", page - 1, size, kw],
       queryFn: () =>
         getSBuildings({
           page: page - 1,

@@ -9,7 +9,10 @@ import com.tpd.XCity.entity.building.Location;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +25,8 @@ public class BuildingDetailResponse {
     private Double collapseRisk;
     private ContainedInPlace containedInPlace;
     private String dataProvider;
-    private OffsetDateTime dateCreated;
-    private OffsetDateTime dateModified;
+    private Instant dateCreated;
+    private Instant dateModified;
     private String description;
     private Double floorsAboveGround;
     private Double floorsBelowGround;
@@ -33,7 +36,6 @@ public class BuildingDetailResponse {
     private Double peopleCapacity;
     private Double peopleOccupancy;
     private String type = "Building";
-
     private Map<String, OH> openingHours;
 
 }

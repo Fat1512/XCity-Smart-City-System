@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.tpd.XCity.utils.APIResponseMessage.SUCCESSFULLY_CREATED;
+import static com.tpd.XCity.utils.APIResponseMessage.SUCCESSFULLY_UPDATED;
 
 @RequiredArgsConstructor
 @Service
@@ -120,16 +121,30 @@ public class BuildingServiceImpl implements BuildingService {
 
         patchAttributes(id, diff);
         return MessageResponse.builder()
-                .message(SUCCESSFULLY_CREATED.name())
+                .message(SUCCESSFULLY_UPDATED.name())
                 .status(HttpStatus.OK)
                 .build();
     }
 
     @Override
-    public PageResponse<BuildingOverviewResponse> getBuildings(int page, int size) {
+    public MessageResponse createBuilding(BuildingUpdateRequest request) {
+        Building building = buildingMapper.convertToEntity(request);
+        building.setId(Helper.getURNId(building.getType()));
+
+        createBuilding(buildingMapper.toOrion(building));
+
+        buildingRepository.save(building);
+        return MessageResponse.builder()
+                .message(SUCCESSFULLY_CREATED.name())
+                .status(HttpStatus.CREATED)
+                .build();
+    }
+
+    @Override
+    public PageResponse<BuildingOverviewResponse> getBuildings(String kw, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Building> pageBuilding = buildingRepository.findAll(pageable);
+        Page<Building> pageBuilding = buildingRepository.searchBuilding(kw, pageable);
 
         List<BuildingOverviewResponse> data = pageBuilding.get()
                 .map(p -> buildingMapper.convertToOverviewResponse(p))
@@ -148,13 +163,13 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
-    public void createBuilding(Building building) {
+    public void createBuilding(ObjectNode building) {
         try {
             HttpEntity<String> req = new HttpEntity<>(objectMapper.writeValueAsString(building), createJsonLdHeaders());
             restTemplate.exchange(ORION_URL, HttpMethod.POST, req, String.class);
-            log.info("Created building: {}", building.getId());
+            log.info("Created building: {}", building.get("id"));
         } catch (Exception ex) {
-            log.warn("Failed to create {}: {}", building.getId(), ex.getMessage());
+            log.warn("Failed to create {}: {}", building.get("id"), ex.getMessage());
         }
     }
 
@@ -199,7 +214,7 @@ public class BuildingServiceImpl implements BuildingService {
                       way["building"](area.searchArea);
                       relation["building"](area.searchArea);
                     );
-                    out tags geom 10;
+                    out tags geom 50;
                     """;
 
             HttpHeaders headers = new HttpHeaders();
@@ -224,6 +239,7 @@ public class BuildingServiceImpl implements BuildingService {
             List<Building> buildingEntities = new ArrayList<>();
 
             for (JsonNode el : elements) {
+
                 String type = el.get("type").asText();
                 if (!List.of("node", "way", "relation").contains(type)) continue;
 
@@ -231,6 +247,7 @@ public class BuildingServiceImpl implements BuildingService {
                 b.setId("urn:ngsi-ld:Building:" + el.get("id").asText());
 
                 JsonNode tags = el.get("tags");
+                if (tags.get("name") == null) continue;
                 if (tags != null) {
                     OSMTagMapper.applyTags(b, tags);
                 }

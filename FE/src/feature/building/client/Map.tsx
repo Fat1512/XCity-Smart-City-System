@@ -19,7 +19,6 @@ export default function Map({ buildings }: MapProps) {
   const [lat, setLat] = useState(10.7602);
   const [zoom, setZoom] = useState(17);
 
-  // State để lưu building được chọn khi click marker
   const [selectedBuilding, setSelectedBuilding] = useState<any>(null);
   const infoPanelRef = useRef<HTMLDivElement | null>(null);
 

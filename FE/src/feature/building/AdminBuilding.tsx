@@ -8,12 +8,15 @@ import { useState } from "react";
 import useUpdateBuilding from "./useUpdateBuilding";
 import { toast } from "react-toastify";
 import MiniSpinner from "../../ui/MiniSpinner";
+import useCreateBuilding from "./useCreateBuilding";
+import MapLocationEditor from "../../ui/MapLocationEditor";
 export interface Building {
   id?: string;
   name?: string;
   description?: string;
   address?: Address;
   areaServed?: string;
+  dateModified?: string;
   category?: string[];
   dataProvider?: string;
   dateCreated?: string;
@@ -49,19 +52,29 @@ export default function AdminBuilding({
   buildingProps = {},
 }: AdminBuildingProps) {
   const [showCoords, setShowCoords] = useState(false);
-  const { register, handleSubmit, watch, control } = useForm<Building>({
-    defaultValues: buildingProps,
-  });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "location.coordinates.0",
-  });
-  const { isPending, updateBuilding } = useUpdateBuilding();
-  const building = watch();
+  const { register, handleSubmit, watch, control, setValue } =
+    useForm<Building>({
+      defaultValues: buildingProps,
+    });
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const { isPending, updateBuilding } = useUpdateBuilding();
+  const { isPending: isCreating, createBuilding } = useCreateBuilding();
+  const building = watch();
+  const handleOnChangeLocation = (coordinates: number[][]) => {
+    console.log(coordinates);
+    setValue("location.coordinates.0", coordinates);
+  };
+  console.log(building.location);
   const onSubmit = (data: Building) => {
-    updateBuilding(data, {
-      onSuccess: () => toast.success("Cập nhật tòa nhà thành công"),
+    if (building.id) {
+      updateBuilding(data, {
+        onSuccess: () => toast.success("Cập nhật tòa nhà thành công"),
+      });
+      return;
+    }
+    createBuilding(data, {
+      onSuccess: () => toast.success("Tạo tòa nhà mới thành công"),
     });
   };
 
@@ -94,10 +107,10 @@ export default function AdminBuilding({
           className="flex items-center gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-all duration-300"
         >
           <FaSave className="text-lg" />
-          {isPending ? <MiniSpinner /> : "Lưu thay đổi"}
+          {isPending || isCreating ? <MiniSpinner /> : "Lưu thay đổi"}
         </button>
       </header>
-      <fieldset disabled={isPending} className="space-y-8">
+      <fieldset disabled={isPending || isCreating} className="space-y-8">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-5 space-y-6">
             <section className="bg-white p-5 rounded-lg shadow-sm">
@@ -214,13 +227,6 @@ export default function AdminBuilding({
                     className="w-full border border-gray-200 rounded px-2 py-1"
                   />
                 </div>
-                <div>
-                  <label className="block text-gray-500">Source</label>
-                  <input
-                    {...register("source")}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
               </div>
             </section>
             <section className="bg-white p-5 rounded-lg shadow-sm">
@@ -229,7 +235,7 @@ export default function AdminBuilding({
               </h3>
 
               <div className="space-y-2">
-                {WEEK_DAYS.map((day, index) => (
+                {WEEK_DAYS.map((day) => (
                   <div
                     key={day}
                     className="grid grid-cols-3 items-center gap-3"
@@ -306,85 +312,65 @@ export default function AdminBuilding({
           </div>
 
           <div className="col-span-7 space-y-6">
-            <MapLocation coordinates={building.location?.coordinates[0]} />
-            <section className="bg-white p-5 rounded-lg shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-600 uppercase">
-                  Coordinates
-                </h3>
-
-                <button
-                  type="button"
-                  onClick={() => setShowCoords(!showCoords)}
-                  className="text-blue-600 text-sm underline"
-                >
-                  {showCoords ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {showCoords && (
-                <>
-                  {fields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className="grid grid-cols-3 gap-3 items-center"
-                    >
-                      <input
-                        type="number"
-                        step="any"
-                        {...register(`location.coordinates.0.${index}.0`, {
-                          valueAsNumber: true,
-                        })}
-                        className="border border-gray-200 rounded px-2 py-1"
-                        placeholder="Longitude"
-                      />
-
-                      <input
-                        type="number"
-                        step="any"
-                        {...register(`location.coordinates.0.${index}.1`, {
-                          valueAsNumber: true,
-                        })}
-                        className="border border-gray-200 rounded px-2 py-1"
-                        placeholder="Latitude"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => remove(index)}
-                        className="text-red-500 text-sm"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => append([0, 0])}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
-                  >
-                    + Add Coordinate
-                  </button>
-                </>
-              )}
-            </section>
-            <section className="bg-white p-5 rounded-lg shadow-sm">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-600 uppercase mb-4">
-                <IoCalendar /> Recent Activity
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-600 uppercase">
+                Vị trí
               </h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="p-2 bg-gray-50 rounded">
-                  01/10/2025 — Occupancy updated
-                </li>
-                <li className="p-2 bg-gray-50 rounded">
-                  29/09/2025 — Maintenance completed
-                </li>
-                <li className="p-2 bg-gray-50 rounded">
-                  25/09/2025 — New floor sensors added
-                </li>
-              </ul>
-            </section>
+
+              <button
+                type="button"
+                onClick={() => setModalOpen(true)}
+                className="px-3 py-1 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+              >
+                Thay đổi vị trí
+              </button>
+            </div>
+
+            <div className="rounded-lg overflow-hidden shadow-md border border-gray-200">
+              <MapLocation coordinates={building.location?.coordinates[0]} />
+            </div>
+
+            {modalOpen && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl w-[700px] max-w-full p-6 space-y-4 shadow-lg relative">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-semibold text-gray-700">
+                      Edit Location
+                    </h4>
+                    <button
+                      onClick={() => setModalOpen(false)}
+                      className="text-gray-400 hover:text-gray-600 transition text-xl font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-inner h-[400px]">
+                    <MapLocationEditor
+                      onConfirm={handleOnChangeLocation}
+                      coordinates={building.location?.coordinates[0]}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-2">
+                    <button
+                      className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
+                      onClick={() => setModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+                      onClick={() => {
+                        setModalOpen(false);
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </fieldset>

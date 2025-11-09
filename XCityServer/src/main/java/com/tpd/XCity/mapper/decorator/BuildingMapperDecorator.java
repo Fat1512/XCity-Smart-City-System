@@ -42,42 +42,19 @@ public abstract class BuildingMapperDecorator implements BuildingMapper {
         delegate.updateBuilding(request, building);
 
         if (request.getOpeningHours() != null) {
-            List<Map.Entry<String, OH>> days = request.getOpeningHours().entrySet()
-                    .stream()
-                    .filter(e -> e.getValue() != null && e.getValue().checkExists())
-                    .sorted(Comparator.comparing(e -> List.of(
-                            "monday", "tuesday", "wednesday", "thursday",
-                            "friday", "saturday", "sunday"
-                    ).indexOf(e.getKey())))
-                    .toList();
-
-            List<String> result = new ArrayList<>();
-
-            String startDay = null;
-            String prevDay = null;
-            OH prevTime = null;
-
-            for (var e : days) {
-                String day = e.getKey();
-                OH time = new OH(e.getValue().getOpens(), e.getValue().getCloses());
-
-                if (prevTime == null || !prevTime.equals(time)) {
-                    if (startDay != null && prevDay != null) {
-                        result.add(formatRange(startDay, prevDay, prevTime));
-                    }
-                    startDay = day;
-                }
-
-                prevDay = day;
-                prevTime = time;
-            }
-
-            if (startDay != null && prevDay != null && prevTime != null) {
-                result.add(formatRange(startDay, prevDay, prevTime));
-            }
-
+            List<String> result = formatOH(request);
             building.setOpeningHours(result);
         }
+    }
+
+    @Override
+    public Building convertToEntity(BuildingUpdateRequest request) {
+        Building building = delegate.convertToEntity(request);
+        if (request.getOpeningHours() != null) {
+            List<String> result = formatOH(request);
+            building.setOpeningHours(result);
+        }
+        return building;
     }
 
     @Override
@@ -127,5 +104,41 @@ public abstract class BuildingMapperDecorator implements BuildingMapper {
         return range + " " + time.getOpens() + "-" + time.getCloses();
     }
 
+    private List<String> formatOH(BuildingUpdateRequest request) {
+        List<Map.Entry<String, OH>> days = request.getOpeningHours().entrySet()
+                .stream()
+                .filter(e -> e.getValue() != null && e.getValue().checkExists())
+                .sorted(Comparator.comparing(e -> List.of(
+                        "monday", "tuesday", "wednesday", "thursday",
+                        "friday", "saturday", "sunday"
+                ).indexOf(e.getKey())))
+                .toList();
+
+        List<String> result = new ArrayList<>();
+
+        String startDay = null;
+        String prevDay = null;
+        OH prevTime = null;
+
+        for (var e : days) {
+            String day = e.getKey();
+            OH time = new OH(e.getValue().getOpens(), e.getValue().getCloses());
+
+            if (prevTime == null || !prevTime.equals(time)) {
+                if (startDay != null && prevDay != null) {
+                    result.add(formatRange(startDay, prevDay, prevTime));
+                }
+                startDay = day;
+            }
+
+            prevDay = day;
+            prevTime = time;
+        }
+
+        if (startDay != null && prevDay != null && prevTime != null) {
+            result.add(formatRange(startDay, prevDay, prevTime));
+        }
+        return result;
+    }
 
 }

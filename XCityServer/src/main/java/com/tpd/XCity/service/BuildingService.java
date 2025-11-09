@@ -15,9 +15,11 @@ public interface BuildingService {
 
     MessageResponse updateBuilding(String id, BuildingUpdateRequest request) throws JsonProcessingException;
 
-    PageResponse<BuildingOverviewResponse> getBuildings(int page, int size);
+    MessageResponse createBuilding(BuildingUpdateRequest request) throws JsonProcessingException;
 
-    void createBuilding(Building building) throws JsonProcessingException;
+    PageResponse<BuildingOverviewResponse> getBuildings(String kw, int page, int size);
+
+    void createBuilding(ObjectNode building);
 
     void createBuildings(List<ObjectNode> building) throws JsonProcessingException;
 

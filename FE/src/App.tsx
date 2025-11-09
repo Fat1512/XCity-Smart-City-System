@@ -29,6 +29,7 @@ const App = () => {
           <Route path="/home" element={<Home />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="buildings" element={<AdminBuildingList />} />
+            <Route path="building" element={<AdminBuildingWrapper />} />
             <Route
               path="building/:buildingId"
               element={<AdminBuildingWrapper />}

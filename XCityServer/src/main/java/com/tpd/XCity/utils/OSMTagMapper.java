@@ -13,8 +13,6 @@ public class OSMTagMapper {
     private static final Map<String, BiConsumer<Building, String>> TAG_MAPPING = Map.ofEntries(
             Map.entry("name", (b, v) -> b.setName(v)),
             Map.entry("description", (b, v) -> b.setDescription(v)),
-            Map.entry("opening_hours", (b, v) -> b.setOpeningHours(List.of(v))),
-
             Map.entry("building", (b, v) -> {
                 try {
                     b.setCategory(List.of(BuildingCategory.valueOf(v.toUpperCase())));

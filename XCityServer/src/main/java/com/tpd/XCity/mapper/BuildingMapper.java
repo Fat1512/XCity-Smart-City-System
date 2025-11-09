@@ -22,6 +22,8 @@ public interface BuildingMapper {
     BuildingDetailResponse convertToDetailResponse(Building building);
 
     BuildingOverviewResponse convertToOverviewResponse(Building building);
+    @Mapping(target = "openingHours", ignore = true)
+    Building convertToEntity(BuildingUpdateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "openingHours", ignore = true)
