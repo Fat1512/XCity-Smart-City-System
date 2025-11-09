@@ -3,7 +3,12 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import AppLayout from "./ui/AppLayout";
 import Home from "./page/Home";
-import Map from "./feature/map/Map";
+
+import BuildingList from "./feature/building/client/BuildingList";
+
+import AdminLayout from "./ui/AdminLayout";
+import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
+import AdminBuildingList from "./feature/building/AdminBuildingList";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,9 +24,17 @@ const App = () => {
         <Routes>
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/map" replace />} />
-            <Route path="/map" element={<Map />} />
+            <Route path="/map" element={<BuildingList />} />
           </Route>
           <Route path="/home" element={<Home />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="buildings" element={<AdminBuildingList />} />
+            <Route path="building" element={<AdminBuildingWrapper />} />
+            <Route
+              path="building/:buildingId"
+              element={<AdminBuildingWrapper />}
+            />
+          </Route>
         </Routes>
       </BrowserRouter>
 

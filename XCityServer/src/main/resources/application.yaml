@@ -10,6 +10,8 @@ app:
     secret: ${AUTH_SECRET_KEY}
     expirationTime: 200000
   ai-server: ${AI_SERVER_URL}
+  overpass-url: https://overpass-api.de/api/interpreter
+  orion-url: ${ORION-LD-URL}
 
 server:
   port: 8080

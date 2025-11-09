@@ -25,3 +25,22 @@ export const clearToken = () => {
   window.localStorage.removeItem("refresh_token");
   window.localStorage.removeItem("access_token");
 };
+export const flattenNGSILD = (entity: any) => {
+  if (!entity) return null;
+
+  const result: Record<string, any> = { id: entity.id, type: entity.type };
+
+  for (const [key, value] of Object.entries(entity)) {
+    if (key === "id" || key === "type") continue;
+
+    if (value?.type === "Property") {
+      result[key] = value.value;
+    } else if (value?.type === "GeoProperty") {
+      result[key] = value.value;
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+};
