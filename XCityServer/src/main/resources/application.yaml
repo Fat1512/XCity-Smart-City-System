@@ -12,6 +12,7 @@ app:
   ai-server: ${AI_SERVER_URL}
   overpass-url: https://overpass-api.de/api/interpreter
   orion-url: ${ORION-LD-URL}
+  client-url: ${CLIENT-URL}
 
 server:
   port: 8080

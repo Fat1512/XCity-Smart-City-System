@@ -8,6 +8,7 @@ import com.tpd.XCity.repository.SensorMetadataRepository;
 import com.tpd.XCity.service.AirQualityObservedService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
     private final AirQualityObservedRepository airQualityObservedRepository;
     private final AirQualityObservedMapper airQualityObservedMapper;
     private final SensorMetadataRepository sensorMetadataRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public void saveMeasurementSensor(Map<String, Object> measurement) {
@@ -52,7 +54,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
                 .address(metadata.getAddress())
                 .build();
         airQualityObservedRepository.save(airQualityObservedTS);
-
+        messagingTemplate.convertAndSend("/topic/air-quality", airQualityObservedTS);
         log.info("Saved AirQualityObservedTS entity | sensorId: {} | dateObserved: {}",
                 airQualityObservedTS.getSensorId(), airQualityObservedTS.getDateObserved());
     }

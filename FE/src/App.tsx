@@ -9,6 +9,7 @@ import BuildingList from "./feature/building/client/BuildingList";
 import AdminLayout from "./ui/AdminLayout";
 import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
 import AdminBuildingList from "./feature/building/AdminBuildingList";
+import AirQualityRealtime from "./feature/air-quality-observed/AirQualityRealtime ";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -25,6 +26,7 @@ const App = () => {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/map" replace />} />
             <Route path="/map" element={<BuildingList />} />
+            <Route path="/air" element={<AirQualityRealtime />} />
           </Route>
           <Route path="/home" element={<Home />} />
           <Route path="/admin" element={<AdminLayout />}>
