@@ -7,6 +7,7 @@ import com.tpd.XCity.dto.response.JsonLdWrapperResponse;
 import com.tpd.XCity.dto.response.MessageResponse;
 import com.tpd.XCity.dto.response.PageResponse;
 import com.tpd.XCity.service.BuildingService;
+import com.tpd.XCity.service.OrionService;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.ap.internal.util.Message;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +21,11 @@ import static com.tpd.XCity.utils.AppConstant.*;
 @CrossOrigin(origins = "http://localhost:5173")
 public class BuildingController {
     private final BuildingService buildingService;
+    private final OrionService orionService;
 
     @GetMapping("/buildings")
     public ResponseEntity<JsonLdWrapperResponse> getBuildings() {
-        JsonLdWrapperResponse response = buildingService.getEntitiesByType();
+        JsonLdWrapperResponse response = orionService.getEntitiesByType(BUILDING_TYPE);
         return ResponseEntity.ok(response);
     }
 

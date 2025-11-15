@@ -2,14 +2,14 @@ import CreatableSelect from "react-select/creatable";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { IoBusiness, IoCalendar } from "react-icons/io5";
 import { FaSave } from "react-icons/fa";
-import MapLocation from "../../ui/MapLocation";
+
 import { BUILDING_TYPES, WEEK_DAYS } from "../../utils/appConstant";
 import { useState } from "react";
 import useUpdateBuilding from "./useUpdateBuilding";
 import { toast } from "react-toastify";
 import MiniSpinner from "../../ui/MiniSpinner";
 import useCreateBuilding from "./useCreateBuilding";
-import MapLocationEditor from "../../ui/MapLocationEditor";
+
 export interface Building {
   id?: string;
   name?: string;
@@ -30,8 +30,8 @@ export interface Building {
   openingHours?: string[];
   location?: Location;
 }
-interface Location {
-  coordinates: [][];
+export interface Location {
+  coordinates: [];
   type: string;
 }
 export interface Address {
@@ -327,7 +327,7 @@ export default function AdminBuilding({
             </div>
 
             <div className="rounded-lg overflow-hidden shadow-md border border-gray-200">
-              <MapLocation coordinates={building.location?.coordinates[0]} />
+              {/* <MapLocation coordinates={building.location?.coordinates[0]} /> */}
             </div>
 
             {modalOpen && (
@@ -346,10 +346,10 @@ export default function AdminBuilding({
                   </div>
 
                   <div className="rounded-lg overflow-hidden border border-gray-200 shadow-inner h-[400px]">
-                    <MapLocationEditor
+                    {/* <MapLocationEditor
                       onConfirm={handleOnChangeLocation}
                       coordinates={building.location?.coordinates[0]}
-                    />
+                    /> */}
                   </div>
 
                   <div className="flex justify-end gap-3 mt-2">

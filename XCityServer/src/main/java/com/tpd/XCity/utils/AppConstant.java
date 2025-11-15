@@ -8,4 +8,5 @@ public class AppConstant {
     public static final String PAGE_DEFAULT = "0";
     public static final String POST_STATUS_DEFAULT = "SHOW";
     public static final Integer PRICE_CREATED = 50000;
+    public static final String BUILDING_TYPE = "https://smartdatamodels.org/dataModel.Building/Building";
 }

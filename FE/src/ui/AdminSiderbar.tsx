@@ -43,7 +43,7 @@ const menuData: MenuItem[] = [
     label: "Môi trường",
     icon: <IoLeaf className="text-green-600" />,
     subItems: [
-      { label: "Nhiệt độ", path: "/admin/temperature" },
+      { label: "Thiết bị", path: "/admin/devices" },
       { label: "Chất lượng không khí (AQI)", path: "/admin/aqi" },
       { label: "Tiếng ồn", path: "/admin/noise" },
     ],

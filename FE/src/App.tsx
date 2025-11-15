@@ -10,6 +10,9 @@ import AdminLayout from "./ui/AdminLayout";
 import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
 import AdminBuildingList from "./feature/building/AdminBuildingList";
 import AirQualityRealtime from "./feature/air-quality-observed/AirQualityRealtime ";
+import AirQualityAdmin from "./feature/air-quality-observed/AirQualityAdmin";
+import AirQualityList from "./feature/air-quality-observed/AirQualityList";
+import AirQualityAdminWrapper from "./feature/air-quality-observed/AirQualityAdminWrapper";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,6 +39,12 @@ const App = () => {
               path="building/:buildingId"
               element={<AdminBuildingWrapper />}
             />
+            <Route path="devices" element={<AirQualityList />} />
+            <Route
+              path="device/:deviceId"
+              element={<AirQualityAdminWrapper />}
+            />
+            <Route path="device" element={<AirQualityAdminWrapper />} />
           </Route>
         </Routes>
       </BrowserRouter>
