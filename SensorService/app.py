@@ -18,12 +18,12 @@ running_sensors = {}
 
 def generate_air_quality_data():
     return {
-        "pm25": round(random.uniform(0, 150), 2),
-        "pm1": round(random.uniform(0, 80), 2),
-        "o3": round(random.uniform(0, 300), 2),
-        "co2": round(random.uniform(300, 1000), 2),
-        "so2": round(random.uniform(0, 50), 2),
-        "temperature": round(random.uniform(15, 40), 2),
+        "pm25": round(random.uniform(5, 80), 2),
+        "pm1": round(random.uniform(3, 50), 2),
+        "o3": round(random.uniform(20, 120), 2),
+        "co2": round(random.uniform(400, 800), 2),
+        "so2": round(random.uniform(1, 20), 2),  
+        "temperature": round(random.uniform(22, 35), 2),
     }
 
 def sensor_worker(sensor_id):

@@ -1,6 +1,7 @@
 package com.tpd.XCity.controller;
 
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
+import com.tpd.XCity.dto.response.DeviceLocation;
 import com.tpd.XCity.dto.response.DeviceResponse;
 import com.tpd.XCity.dto.response.MessageResponse;
 import com.tpd.XCity.dto.response.PageResponse;
@@ -8,6 +9,8 @@ import com.tpd.XCity.service.DeviceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.tpd.XCity.utils.AppConstant.PAGE_DEFAULT;
 import static com.tpd.XCity.utils.AppConstant.PAGE_SIZE;
@@ -25,9 +28,22 @@ public class DeviceController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/device/{id}")
+    public ResponseEntity<MessageResponse> updateDevice(@PathVariable String id,
+                                                        @RequestBody DeviceCreateRequest request) {
+        MessageResponse response = deviceService.updateDevice(id, request);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/device/{id}")
     public ResponseEntity<DeviceResponse> getDevice(@PathVariable String id) {
         DeviceResponse pageResponse = deviceService.getDeviceById(id);
+        return ResponseEntity.ok(pageResponse);
+    }
+
+    @GetMapping("/devices-map")
+    public ResponseEntity<List<DeviceLocation>> getAllDevice() {
+        List<DeviceLocation> pageResponse = deviceService.getDevices();
         return ResponseEntity.ok(pageResponse);
     }
 

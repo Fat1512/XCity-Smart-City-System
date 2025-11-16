@@ -1,10 +1,9 @@
 package com.tpd.XCity.service;
 
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
-import com.tpd.XCity.dto.response.BuildingOverviewResponse;
-import com.tpd.XCity.dto.response.DeviceResponse;
-import com.tpd.XCity.dto.response.MessageResponse;
-import com.tpd.XCity.dto.response.PageResponse;
+import com.tpd.XCity.dto.response.*;
+
+import java.util.List;
 
 public interface DeviceService {
     MessageResponse createDevice(DeviceCreateRequest request);
@@ -13,7 +12,11 @@ public interface DeviceService {
 
     MessageResponse stopSensor(String id);
 
+    MessageResponse updateDevice(String deviceId, DeviceCreateRequest request);
+
     PageResponse<DeviceResponse> getDevices(String kw, int page, int size);
+
+    List<DeviceLocation> getDevices();
 
     DeviceResponse getDeviceById(String id);
 }

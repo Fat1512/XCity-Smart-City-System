@@ -57,7 +57,7 @@ const AdminBuildingList = () => {
         </h2>
 
         <button
-          onClick={() => navigate(`/admin/building/`)}
+          onClick={() => navigate(`/admin/infrastructure/`)}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white cursor-pointer
                    text-sm px-4 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-sm"
         >

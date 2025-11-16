@@ -24,4 +24,6 @@ public class DeviceCreateRequest {
     private String description;
     private Location location;
     private String provider;
+    private List<String> owner;
+    private String source;
 }

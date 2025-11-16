@@ -1,10 +1,10 @@
 import { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import useGetDevices from "./useGetDevices";
 import MiniSpinner from "../../ui/MiniSpinner";
 import AirQualityItem, { type Device } from "./AirQualityItem";
 import PaginationStack from "../../ui/PaginationStack";
-import { Search, Settings } from "lucide-react";
+import { Search, Settings, Plus } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
 const AirQualityList = () => {
@@ -12,25 +12,42 @@ const AirQualityList = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { isLoading, devices, totalPages, page } = useGetDevices();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   if (isLoading) return <MiniSpinner />;
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       searchParams.set("kw", searchTerm);
       setSearchParams(searchParams);
     }
   };
+
   const categories = ["all", "sensor", "actuator", "meter"];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Device Management
-          </h1>
-          <p className="text-gray-600">
-            Monitor and manage all your IoT devices
-          </p>
+        {/* HEADER + ADD DEVICE BUTTON */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Device Management
+            </h1>
+            <p className="text-gray-600">
+              Monitor and manage all your IoT devices
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate("/admin/device")}
+            className="flex cursor-pointer items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 
+                       text-white font-semibold rounded-xl shadow-lg 
+                       transition-all duration-200 active:scale-95"
+          >
+            <Plus size={20} />
+            Add Device
+          </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-100">
@@ -43,9 +60,12 @@ const AirQualityList = () => {
                 placeholder="Search devices..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg 
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                           outline-none transition"
               />
             </div>
+
             <div className="flex gap-2">
               {categories.map((cat) => (
                 <button
@@ -63,9 +83,12 @@ const AirQualityList = () => {
             </div>
           </div>
         </div>
-        {devices.map((item: Device) => (
-          <AirQualityItem key={item.id} device={item} />
-        ))}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {devices.map((item: Device) => (
+            <AirQualityItem key={item.id} device={item} />
+          ))}
+        </div>
 
         {devices.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl shadow-md">
@@ -78,6 +101,7 @@ const AirQualityList = () => {
             </p>
           </div>
         )}
+
         {totalPages > 1 && (
           <div className="flex justify-center pt-2">
             <PaginationStack currentPage={page} totalPage={totalPages} />

@@ -22,6 +22,7 @@ import MiniSpinner from "../../ui/MiniSpinner";
 import ErrorMessage from "../../ui/ErrorMessage";
 import { toast } from "react-toastify";
 import useTriggerSensor from "./useTriggerSensor";
+import useUpdateDevice from "./useUpdateDevice";
 
 export interface Address {
   addressLocality?: string;
@@ -41,7 +42,6 @@ export interface DeviceCreated {
   name?: string;
   description?: string;
   address?: Address;
-  areaServed?: string;
   dateModified?: string;
   dataProvider?: string;
   dateCreated?: string;
@@ -50,7 +50,8 @@ export interface DeviceCreated {
   provider?: string;
   owner?: string[];
   location?: Location;
-  deviceState?: "active" | "inactive";
+  deviceState?: "ACTIVE" | "INACTIVE";
+  type?: "Device";
 }
 
 interface DeviceProps {
@@ -70,6 +71,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
   });
 
   const { isPending, createDevice } = useCreateDevice();
+  const { isPending: isUpdating, updateDevice } = useUpdateDevice();
   const { triggerSensor } = useTriggerSensor();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -84,11 +86,11 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
     if (!device.id) return;
 
     triggerSensor(
-      { id: device.id, deviceState: "active" },
+      { id: device.id, deviceState: "ACTIVE" },
       {
         onSuccess: () => {
           toast.success("Thiết bị đã được kích hoạt");
-          setValue("deviceState", "active");
+          setValue("deviceState", "ACTIVE");
         },
       }
     );
@@ -98,11 +100,11 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
     if (!device.id) return;
 
     triggerSensor(
-      { id: device.id, deviceState: "inactive" },
+      { id: device.id, deviceState: "INACTIVE" },
       {
         onSuccess: () => {
           toast.success("Thiết bị đã dừng hoạt động");
-          setValue("deviceState", "inactive");
+          setValue("deviceState", "INACTIVE");
         },
       }
     );
@@ -118,18 +120,27 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
       ...data,
       location: { type: "Point", coordinates: data.location.coordinates },
     };
-    createDevice(request, {
-      onSuccess: () => toast.success("Tạo thiết bị mới thành công"),
+
+    if (!device.id) {
+      createDevice(request, {
+        onSuccess: () => toast.success("Tạo thiết bị mới thành công"),
+        onError: (err) => toast.error(err.message),
+      });
+      return;
+    }
+
+    updateDevice(request, {
+      onSuccess: () => toast.success("Cập thiết bị mới thành công"),
       onError: (err) => toast.error(err.message),
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="space-y-6">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
+          <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
@@ -150,22 +161,22 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                   <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
                     <div
                       className={`w-3 h-3 rounded-full ${
-                        deviceStatus === "active"
+                        deviceStatus === "ACTIVE"
                           ? "bg-green-400 animate-pulse"
                           : "bg-gray-400"
                       }`}
                     />
                     <span className="text-white text-sm font-medium">
-                      {deviceStatus === "active" ? "Hoạt động" : "Dừng"}
+                      {deviceStatus === "ACTIVE" ? "Hoạt động" : "Dừng"}
                     </span>
                   </div>
                 )}
 
                 {device.id &&
-                  (deviceStatus === "inactive" ? (
+                  (deviceStatus === "INACTIVE" ? (
                     <button
                       onClick={handleStartDevice}
-                      className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                      className="flex cursor-pointer items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                     >
                       <FaPlay className="text-sm" />
                       <span>Start</span>
@@ -173,7 +184,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                   ) : (
                     <button
                       onClick={handleStopDevice}
-                      className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                      className="flex cursor-pointer items-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                     >
                       <FaStop className="text-sm" />
                       <span>Stop</span>
@@ -233,7 +244,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
           <div className="lg:col-span-5 space-y-6">
             {/* General Info */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4">
+              <div className="bg-linear-to-r from-emerald-500 to-teal-500 px-6 py-4">
                 <div className="flex items-center gap-2">
                   <FaInfoCircle className="text-white text-xl" />
                   <h3 className="text-white font-bold text-lg">
@@ -338,14 +349,14 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                     Bên cung cấp
                   </label>
                   <input
-                    {...register("dataProvider", {
+                    {...register("provider", {
                       required: "Nhà cung cấp bắt buộc",
                     })}
                     className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
                     placeholder="Nhập tên nhà cung cấp"
                   />
-                  {errors.dataProvider && (
-                    <ErrorMessage message={errors.dataProvider.message} />
+                  {errors.provider && (
+                    <ErrorMessage message={errors.provider.message} />
                   )}
                 </div>
               </div>
@@ -353,7 +364,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
             {/* Device Config */}
             <div className="shadow-lg border border-gray-100">
-              <div className="bg-gradient-to-r rounded-t-2xl from-purple-500 to-pink-500 px-6 py-4">
+              <div className="bg-linear-to-r rounded-t-2xl from-purple-500 to-pink-500 px-6 py-4">
                 <div className="flex items-center gap-2">
                   <MdDevices className="text-white text-xl" />
                   <h3 className="text-white font-bold text-lg">
@@ -364,7 +375,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
               <div className="bg-white p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-2 flex items-center gap-2">
+                  <label className="text-xs font-semibold text-gray-600 uppercase mb-2 flex items-center gap-2">
                     <FaBuilding className="text-purple-500" />
                     Loại thiết bị
                   </label>
@@ -412,7 +423,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-2 flex items-center gap-2">
+                  <label className=" text-xs font-semibold text-gray-600 uppercase mb-2 flex items-center gap-2">
                     <MdMonitor className="text-purple-500" />
                     Đối tượng theo dõi
                   </label>
@@ -461,7 +472,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
           <div className="lg:col-span-7">
             <div className="rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-4 flex items-center justify-between">
+              <div className="bg-linear-to-r from-blue-500 to-cyan-500 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FaMapMarkerAlt className="text-white text-xl" />
                   <h3 className="text-white font-bold text-lg">

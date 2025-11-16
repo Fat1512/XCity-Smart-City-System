@@ -11,7 +11,7 @@ export default function useTriggerSensor() {
     DeviceCreated
   >({
     mutationFn: async ({ id, deviceState }) => {
-      if (deviceState === "active") {
+      if (deviceState === "ACTIVE") {
         return await startSensor(id!);
       } else {
         return await stopSensor(id!);

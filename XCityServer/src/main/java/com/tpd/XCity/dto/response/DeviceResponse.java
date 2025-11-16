@@ -19,10 +19,9 @@ public class DeviceResponse {
 
     private String id;
     private String name;
-    private String areaServed;
+    private String deviceState;
     private Address address;
     private List<DeviceCategoryEnum> category;
-    private List<String> controlledAsset;
     private List<ControlledPropertyEnum> controlledProperty;
     private LocalDateTime dateCreated;
     private LocalDateTime dateModified;
