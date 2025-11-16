@@ -22,7 +22,8 @@ logger.setLevel(logging.INFO)
 # ---------- defaults (can be overridden on class/instance) ----------
 DEFAULT_SPEED_KMH = 50.0
 GRAPH_CENTER = (10.7769, 106.7009)
-GRAPH_DIST = 10000
+# GRAPH_CENTER = (40.7258, -73.9945)
+GRAPH_DIST = 2000
 GRAPH_CACHE = "cache/hcm.graphml"
 USE_SENSORS = False
 NGSI_URL = "http://localhost:1026/ngsi-ld/v1"
