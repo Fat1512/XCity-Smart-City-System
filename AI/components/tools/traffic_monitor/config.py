@@ -1,0 +1,5 @@
+MPS_TO_KPH = 3.6
+
+DEFAULT_CLASSES = [2, 3, 5, 7]
+DEFAULT_CONF = 0.4
+DEFAULT_TRACKER = "bytetrack.yaml"
