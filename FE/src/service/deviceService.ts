@@ -1,18 +1,7 @@
 import type { DeviceCreated } from "../feature/air-quality-observed/AirQualityAdmin";
 import type { PaginationParams } from "../types/PaginationParams";
-import { API, SENSOR_API } from "../utils/axiosConfig";
+import { API } from "../utils/axiosConfig";
 
-// export async function updateBuilding(building: Building) {
-//   try {
-//     const { id, dateCreated, dateModified, ...rest } = building;
-//     const res = await API.put(`/building/${id}`, { ...rest });
-//     return res.data;
-//   } catch (error: any) {
-//     throw new Error(
-//       error.response?.data?.message || error.message || "Unknown error"
-//     );
-//   }
-// }
 interface DeviceParams extends PaginationParams {
   kw?: string;
 }
@@ -37,6 +26,7 @@ export async function getDevicesMap() {
     );
   }
 }
+
 export async function getDevices({ page, size, kw }: DeviceParams) {
   try {
     const params: Record<string, string | number> = { page, size };

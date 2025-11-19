@@ -44,3 +44,22 @@ export const flattenNGSILD = (entity: any) => {
 
   return result;
 };
+
+export function formatVietnamTime(timeString: string) {
+  // timeString: "HH:mm"
+  const [h, m] = timeString.split(":").map(Number);
+
+  // Tạo Date hiện tại
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+
+  // Convert sang giờ VN (UTC+7)
+  const vnDate = new Date(
+    date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })
+  );
+
+  const hh = vnDate.getHours().toString().padStart(2, "0");
+  const mm = vnDate.getMinutes().toString().padStart(2, "0");
+
+  return `${hh}:${mm}`;
+}

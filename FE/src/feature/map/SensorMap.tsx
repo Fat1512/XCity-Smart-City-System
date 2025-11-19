@@ -7,7 +7,7 @@ import type { Address } from "../air-quality-observed/AirQualityAdmin";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-interface SensorLocation {
+export interface SensorLocation {
   id: string;
   location: Location;
   address: Address;

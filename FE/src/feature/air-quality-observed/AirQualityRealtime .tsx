@@ -12,6 +12,7 @@ import {
 import AirQualityTypeDashboard from "./AirQualityTypeDashboard";
 
 import { useAirQuality } from "../../context/AirQualityContext";
+import AirQualityDashboardAdvanced from "./dashboard/AirQualityDashboardStatics";
 
 ChartJS.register(
   LineElement,
@@ -60,9 +61,7 @@ const AirQualityRealtime = () => {
       </div>
 
       {connected && !active && (
-        <p className="text-orange-500 font-medium text-center text-lg mb-4">
-          ⚠️ No data received in last 10 seconds
-        </p>
+        <p className="text-orange-500 font-medium text-center text-lg mb-4"></p>
       )}
 
       {connected && active && mode === "realtime" && (
@@ -76,11 +75,7 @@ const AirQualityRealtime = () => {
         </div>
       )}
 
-      {mode === "static" && (
-        <div className="text-center text-gray-500 mt-10">
-          <p className="text-xl">Static mode - Coming soon</p>
-        </div>
-      )}
+      {mode === "static" && <AirQualityDashboardAdvanced />}
     </div>
   );
 };

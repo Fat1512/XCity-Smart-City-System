@@ -1,5 +1,7 @@
 package com.tpd.XCity.service.impl;
 
+import com.sun.source.tree.Tree;
+import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
 import com.tpd.XCity.entity.air.AirQualityObserved;
 import com.tpd.XCity.entity.device.Device;
 import com.tpd.XCity.mapper.AirQualityObservedMapper;
@@ -11,10 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static com.tpd.XCity.utils.OrionExtractHelper.*;
 
@@ -53,6 +56,38 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
 
         log.info("Saved AirQualityObservedTS entity | sensorId: {} | dateObserved: {}",
                 airQualityObserved.getRefDevice(), airQualityObserved.getDateObserved());
+    }
+
+    @Override
+    public AirQualityMonthlyStatics getDailyStats(String sensorId, int year, int month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        Instant start = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        List<AirQualityMonthlyStatics.AirQualityMonthlyValue> stats =
+                airQualityObservedRepository.getAirQualityByMonth(sensorId, start, end);
+
+
+        TreeMap<LocalDate, AirQualityMonthlyStatics.AirQualityMonthlyValue> map = new TreeMap<>();
+        for (int d = 1; d <= startDate.lengthOfMonth(); d++) {
+            LocalDate date = startDate.withDayOfMonth(d);
+            AirQualityMonthlyStatics.AirQualityMonthlyValue value = AirQualityMonthlyStatics.AirQualityMonthlyValue
+                    .builder()
+                    .day(date)
+                    .build();
+            map.put(date,value);
+        }
+
+        for (AirQualityMonthlyStatics.AirQualityMonthlyValue s : stats) {
+            map.put(s.getDay(), s);
+        }
+
+        return AirQualityMonthlyStatics.builder()
+                .sensorId(sensorId)
+                .dataPoints(map.values().stream()
+                        .toList())
+                .build();
     }
 
 }
