@@ -72,30 +72,48 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] =
 
     try:
         observed_at = datetime.now(timezone.utc).isoformat()
-
         entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id}"
         entity_type = "TrafficFlowObserved"
 
+        cur_count = float(metrics.get("current_count", 0) or 0)
+        cur_avg_speed = float(metrics.get("current_avg_speed", 0) or 0)
+
+        capacity = float(metrics.get("capacity", 20))            # default capacity for occupancy calc
+        threshold_speed = float(metrics.get("threshold_speed", 30))  # speed threshold for congested
+
+        occupancy = min(cur_count / capacity, 1.0) if capacity > 0 else 0.0
+        congested = bool(cur_avg_speed < threshold_speed)
+
         attrs = {
-            "address": {
+            "https://smartdatamodels.org/address": {
                 "type": "Property",
-                "value": to_native(address)
+                "value": to_native(address),
+                "observedAt": observed_at
+            },
+            "https://smartdatamodels.org/averageVehicleSpeed": {
+                "type": "Property",
+                "value": to_native(cur_avg_speed),
+                "observedAt": observed_at
+            },
+            "https://smartdatamodels.org/intensity": {
+                "type": "Property",
+                "value": to_native(cur_count),
+                "observedAt": observed_at
+            },
+            "https://smartdatamodels.org/occupancy": {
+                "type": "Property",
+                "value": to_native(occupancy),
+                "observedAt": observed_at
+            },
+            "https://smartdatamodels.org/congested": {
+                "type": "Property",
+                "value": to_native(congested),
+                "observedAt": observed_at
+            },
+            "https://smartdatamodels.org/dateObserved": {
+                "type": "Property",
+                "value": observed_at
             }
-        }
-
-        attrs["averageVehicleSpeed"] = {
-            "type": "Property",
-            "value": to_native(metrics.get("current_avg_speed"))
-        }
-
-        attrs["intensity"] = {
-            "type": "Property",
-            "value": to_native(metrics.get("current_count"))
-        }
-
-        attrs["dateObserved"] = {
-            "type": "Property",
-            "value": observed_at
         }
 
         entity_body = {
@@ -109,22 +127,22 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] =
         }
 
         payload = [entity_body]
-
         upsert_url = ORION_URL.rstrip("/") + "/ngsi-ld/v1/entityOperations/upsert"
-
         headers = {
             "Content-Type": "application/ld+json",
             "Fiware-Service": FIWARE_SERVICE,
             "Fiware-ServicePath": "/"
         }
 
+        logger.info(f"[ORION UPSERT] sending entity {entity_id} with occupancy={occupancy:.3f} congested={congested}")
         resp = requests.post(upsert_url, json=payload, headers=headers, timeout=8)
-
+        logger.info(f"[ORION UPSERT] status={resp.status_code} body={resp.text[:500]}")
         return resp.status_code in (200, 201, 204)
 
     except Exception:
         logger.exception("[ORION UPSERT] Unexpected error")
         return False
+
 
 
 @router.websocket("/ws/frontend")
