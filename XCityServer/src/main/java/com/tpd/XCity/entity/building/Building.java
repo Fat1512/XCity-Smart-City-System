@@ -1,5 +1,6 @@
 package com.tpd.XCity.entity.building;
 
+import com.tpd.XCity.entity.Address;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +11,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Data
@@ -37,7 +35,6 @@ public class Building {
     private Double floorsBelowGround;
     private Location location;
     private String name;
-
     private List<String> openingHours;
     private List<String> owner;
     private Double peopleCapacity;

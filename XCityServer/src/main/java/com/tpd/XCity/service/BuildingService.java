@@ -9,7 +9,6 @@ import com.tpd.XCity.entity.building.Building;
 import java.util.List;
 
 public interface BuildingService {
-    JsonLdWrapperResponse<Building> getEntitiesByType();
 
     BuildingDetailResponse getEntitiesById(String id);
 
@@ -18,10 +17,5 @@ public interface BuildingService {
     MessageResponse createBuilding(BuildingUpdateRequest request) throws JsonProcessingException;
 
     PageResponse<BuildingOverviewResponse> getBuildings(String kw, int page, int size);
-
-    void createBuilding(ObjectNode building);
-
-    void createBuildings(List<ObjectNode> building) throws JsonProcessingException;
-
     void initBuildingFromOverpass();
 }

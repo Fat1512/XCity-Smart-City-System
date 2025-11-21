@@ -15,6 +15,8 @@ import org.mapstruct.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.tpd.XCity.utils.Helper.*;
+
 @Mapper(componentModel = "spring")
 @DecoratedWith(BuildingMapperDecorator.class)
 public interface BuildingMapper {
@@ -22,6 +24,7 @@ public interface BuildingMapper {
     BuildingDetailResponse convertToDetailResponse(Building building);
 
     BuildingOverviewResponse convertToOverviewResponse(Building building);
+
     @Mapping(target = "openingHours", ignore = true)
     Building convertToEntity(BuildingUpdateRequest request);
 
@@ -111,26 +114,5 @@ public interface BuildingMapper {
             root.set("location", loc);
         }
         return root;
-    }
-
-    private void safeSet(ObjectNode root, String key, ObjectMapper mapper, Object value) {
-        if (value != null) {
-            ObjectNode node = mapper.createObjectNode();
-            node.put("type", "Property");
-            node.set("value", mapper.valueToTree(value));
-            root.set(key, node);
-        }
-    }
-
-    private static String getValue(JsonNode json, String key) {
-        return json.has(key) ? json.path(key).path("value").asText(null) : null;
-    }
-
-    private static Integer getIntValue(JsonNode json, String key) {
-        return json.has(key) ? json.path(key).path("value").asInt() : null;
-    }
-
-    private static Double getDoubleValue(JsonNode json, String key) {
-        return json.has(key) ? json.path(key).path("value").asDouble() : null;
     }
 }

@@ -79,7 +79,7 @@ const AdminBuildingItem: React.FC<BuildingOverview> = ({
       </div>
 
       <button
-        onClick={() => navigate(`/admin/building/${id}`)}
+        onClick={() => navigate(`/admin/infrastructure/${id}`)}
         className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm py-2.5 rounded-lg font-medium transition-all duration-300 shadow-sm"
       >
         <IoSettingsSharp size={16} />

@@ -10,7 +10,9 @@ export const AI_REQUEST = axios.create({
 export const API = axios.create({
   baseURL: BASE_URL,
 });
-
+export const SENSOR_API = axios.create({
+  baseURL: BASE_URL,
+});
 export const AUTH_REQUEST = axios.create({
   baseURL: BASE_URL,
 });

@@ -2,9 +2,8 @@ package com.tpd.XCity.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.tpd.XCity.entity.building.Building;
-import com.tpd.XCity.entity.building.Address;
+import com.tpd.XCity.entity.Address;
 import com.tpd.XCity.entity.building.BuildingCategory;
-import com.tpd.XCity.entity.building.Property;
 
 import java.util.*;
 import java.util.function.BiConsumer;
