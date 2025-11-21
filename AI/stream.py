@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any, List
 
 DEFAULT_CONFIG_PATH = "config/streams_config.json"
-DEFAULT_WS = "ws://localhost:8000/ws/process"
+DEFAULT_WS = "ws://localhost:5000/ws/process"
 
 async def run_stream(config: Dict[str, Any], ws_url: str, semaphore: asyncio.Semaphore = None):
     stream_id = config.get("stream_id", "default")
@@ -137,7 +137,7 @@ async def main(config_path: str, ws_url: str, concurrency: int):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simulate multiple video streams via websocket using a JSON config list.")
     parser.add_argument("--config", "-c", default=DEFAULT_CONFIG_PATH, help="Path to JSON config file (array of stream objects).")
-    parser.add_argument("--ws", default=DEFAULT_WS, help="Websocket process endpoint (producer): e.g. ws://localhost:8000/ws/process")
+    parser.add_argument("--ws", default=DEFAULT_WS, help="Websocket process endpoint (producer): e.g. ws://localhost:5000/ws/process")
     parser.add_argument("--concurrency", "-n", type=int, default=4, help="Max concurrent active producers (useful to limit resource usage).")
     args = parser.parse_args()
 
