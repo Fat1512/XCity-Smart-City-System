@@ -1,6 +1,7 @@
 package com.tpd.XCity.service.impl;
 
 import com.sun.source.tree.Tree;
+import com.tpd.XCity.dto.response.AirQualityDailyStatics;
 import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
 import com.tpd.XCity.entity.air.AirQualityObserved;
 import com.tpd.XCity.entity.device.Device;
@@ -14,10 +15,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.tpd.XCity.utils.OrionExtractHelper.*;
 
@@ -59,7 +58,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
     }
 
     @Override
-    public AirQualityMonthlyStatics getDailyStats(String sensorId, int year, int month) {
+    public AirQualityMonthlyStatics getStatics(String sensorId, int year, int month) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
         Instant start = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
@@ -76,7 +75,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
                     .builder()
                     .day(date)
                     .build();
-            map.put(date,value);
+            map.put(date, value);
         }
 
         for (AirQualityMonthlyStatics.AirQualityMonthlyValue s : stats) {
@@ -87,6 +86,47 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
                 .sensorId(sensorId)
                 .dataPoints(map.values().stream()
                         .toList())
+                .build();
+    }
+
+    @Override
+    public AirQualityDailyStatics getStatics(String sensorId, String date) {
+        LocalDate localDate = LocalDate.parse(date);
+        ZoneId zoneVN = ZoneId.of("Asia/Ho_Chi_Minh");
+
+        Instant start = localDate.atStartOfDay(zoneVN).toInstant();
+
+        Instant end = localDate.atTime(LocalTime.MAX).atZone(zoneVN).toInstant();
+
+        List<AirQualityDailyStatics.AirQualityDailyValue> values =
+                airQualityObservedRepository.getAirQualityByHourRange(sensorId, start, end);
+
+
+        Map<LocalDateTime, AirQualityDailyStatics.AirQualityDailyValue> valueMap = new HashMap<>();
+        for (var v : values) {
+            valueMap.put(v.getHour(), v);
+        }
+
+
+        List<AirQualityDailyStatics.AirQualityDailyValue> fullList = new ArrayList<>();
+
+        for (int h = 0; h < 24; h++) {
+            LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
+
+            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(h);
+            if (value == null) {
+                value = AirQualityDailyStatics.AirQualityDailyValue.builder()
+                        .hour(hourLocalDateTime)
+                        .build();
+            }
+            fullList.add(value);
+        }
+
+        return AirQualityDailyStatics.builder()
+                .sensorId(sensorId)
+                .dataPoints(fullList.stream()
+                        .sorted(Comparator.comparing(AirQualityDailyStatics.AirQualityDailyValue::getHour))
+                        .collect(Collectors.toList()))
                 .build();
     }
 

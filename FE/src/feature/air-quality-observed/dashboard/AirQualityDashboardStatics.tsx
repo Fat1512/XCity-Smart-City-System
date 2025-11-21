@@ -73,15 +73,23 @@ const AirQualityDashboard4Charts = () => {
   const [viewMode, setViewMode] = useState<"day" | "month">("month");
   const [selectedDate, setSelectedDate] = useState(getCurrentDate());
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
-
-  const [timeRange, setTimeRange] = useState({ start: "00:00", end: "23:59" });
-
   const { isLoading, devices } = useGetSensorMap();
 
+  const staticsStrategy =
+    viewMode === "month"
+      ? {
+          sensorId: selectedSensors[selectedSensors.length - 1]?.id,
+          year: selectedMonth.slice(0, 4),
+          month: selectedMonth.slice(5, 7),
+        }
+      : {
+          sensorId: selectedSensors[selectedSensors.length - 1]?.id,
+          date: selectedDate,
+        };
+
   const { isLoading: isStaticsting, statics } = useGetAirQualityMonthlyStatics({
-    sensorId: selectedSensors[selectedSensors.length - 1]?.id,
-    year: selectedMonth.slice(0, 4),
-    month: selectedMonth.slice(5, 7),
+    mode: viewMode,
+    staticsStrategy,
   });
 
   const sensorOptions = useMemo(
@@ -153,7 +161,10 @@ const AirQualityDashboard4Charts = () => {
 
         return {
           label: sensor.name,
-          data: allTimestamps.map((t) => ({ x: t, y: dataMap.get(t) ?? null })),
+          data: allTimestamps.map((t) => ({
+            x: t,
+            y: dataMap.get(t) ?? null,
+          })),
           borderColor: color,
           backgroundColor: color + "33",
           tension: 0.3,
@@ -275,78 +286,6 @@ const AirQualityDashboard4Charts = () => {
                 )}
               </div>
             </div>
-
-            {viewMode === "day" && (
-              <div className="bg-linear-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="bg-linear-to-r from-blue-500 to-indigo-500 p-2 rounded-lg">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <label className="font-semibold text-gray-800">
-                    Khoảng thời gian trong ngày
-                  </label>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 mb-1 block">
-                      Từ giờ
-                    </label>
-                    <input
-                      type="time"
-                      value={timeRange.start}
-                      onChange={(e) =>
-                        setTimeRange({ ...timeRange, start: e.target.value })
-                      }
-                      className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 bg-white font-medium text-gray-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600 mb-1 block">
-                      Đến giờ
-                    </label>
-                    <input
-                      type="time"
-                      value={timeRange.end}
-                      onChange={(e) =>
-                        setTimeRange({ ...timeRange, end: e.target.value })
-                      }
-                      className="w-full px-4 py-2 rounded-lg border-2 border-gray-200 bg-white font-medium text-gray-700 hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 text-sm text-gray-600 flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>
-                    Đang xem dữ liệu từ {timeRange.start} đến {timeRange.end}{" "}
-                    ngày {selectedDate}
-                  </span>
-                </div>
-              </div>
-            )}
 
             {selectedSensors.length > 0 && <DownloadSection />}
           </div>

@@ -81,7 +81,7 @@ const AirQualityStaticChart = ({
   timeUnit: "hour" | "day";
 }) => {
   const details = METRIC_DETAILS[type];
-
+  console.log(chartData);
   const chartOptions = useMemo(
     () => getBaseChartOptions(details.unit, timeUnit),
     [details.unit, timeUnit]

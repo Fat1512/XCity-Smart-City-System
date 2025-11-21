@@ -1,5 +1,6 @@
 package com.tpd.XCity.controller;
 
+import com.tpd.XCity.dto.response.AirQualityDailyStatics;
 import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
 import com.tpd.XCity.service.AirQualityObservedService;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +34,19 @@ public class AirQualityObserverController {
             @RequestParam(value = "month") String month
     ) {
 
-        AirQualityMonthlyStatics airQualityMonthlyStatics = airQualityObservedService.getDailyStats(sensorId
+        AirQualityMonthlyStatics airQualityMonthlyStatics = airQualityObservedService.getStatics(sensorId
                 , Integer.parseInt(year), Integer.parseInt(month));
+        return ResponseEntity.ok(airQualityMonthlyStatics);
+    }
+
+    @GetMapping("/air/daily-statics")
+    public ResponseEntity<AirQualityDailyStatics> getDailyStatics(
+            @RequestParam(value = "sensorId") String sensorId,
+            @RequestParam(value = "date") String date
+
+    ) {
+
+        AirQualityDailyStatics airQualityMonthlyStatics = airQualityObservedService.getStatics(sensorId, date);
         return ResponseEntity.ok(airQualityMonthlyStatics);
     }
 }
