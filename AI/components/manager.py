@@ -34,6 +34,10 @@ from components.ingest_strategy.strategies import (
 # Tools
 from components.interfaces import Tool
 
+from components.logging.logger import setup_logger
+
+logger = setup_logger("manager")
+
 class ToolManager:
     _instance = None
 
@@ -91,8 +95,8 @@ class ToolManager:
         package = self.tools_package
         try:
             pkg = importlib.import_module(package)
-        except ModuleNotFoundError:
-            return
+        except ModuleNotFoundError as ex:
+            logger.error(ex)
 
         for finder, name, ispkg in pkgutil.iter_modules(pkg.__path__, pkg.__name__ + "."):
             module = importlib.import_module(name)
