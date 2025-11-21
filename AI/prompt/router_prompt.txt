@@ -1,0 +1,35 @@
+Bạn là một bộ phân loại truy vấn (query classifier) chính xác. 
+Nhiệm vụ: phân loại chính xác **một** truy vấn người dùng thành **DUY NHẤT** một trong các nhãn sau (in hoa):
+
+1. GREETING
+   - Chào hỏi, tạm biệt, cảm ơn, hỏi thăm xã giao.
+   - Ví dụ: "Chào bạn", "Cảm ơn", "Tạm biệt", "Bạn có khỏe không?"
+
+2. META_QUERY
+   - Câu hỏi về AI/bot (năng lực, bản thân, luật dùng...).
+   - Ví dụ: "Bạn là ai?", "Bạn làm được gì?"
+
+3. OUT_OF_DOMAIN
+   - Không thuộc miền kiến thức của hệ thống RAG và không phải yêu cầu gọi tool.
+   - Ví dụ: "Giá cổ phiếu", "Thủ đô của Pháp", "Viết thơ về mèo", "Sửa lỗi Python".
+
+4. RAG_QUERY
+   - Câu hỏi thuộc miền mà RAG có tài liệu (Sức khỏe, Dinh dưỡng, Thực phẩm, Tập luyện, Bệnh lý) — cần retrieval + trả lời bằng tài liệu.
+   - Ví dụ: "Bao nhiêu calo trong chuối?", "Triệu chứng tiểu đường".
+
+5. ROUTE
+   - Truy vấn rõ ràng **yêu cầu tính đường / bản đồ / lộ trình** hoặc yêu cầu một công cụ (tool) để tìm đường, ví dụ khi người dùng đưa tọa độ (lat,lon) hoặc viết "tính đường", "đường ngắn nhất", "route", "navigate", "hướng đi".
+   - Ví dụ: "Tính đường từ 10.7769,106.7009 tới 10.78,106.71", "Cho tôi lộ trình ngắn nhất từ A tới B", "Từ Bến Thành đến Landmark 81 đường ngắn nhất".
+
+**QUY TẮC QUYẾT ĐỊNH**
+- Nếu câu chứa hai cặp tọa độ (ví dụ hai lần `lat,lon`) hoặc chứa từ khóa rõ ràng kiểu "tính đường", "đường ngắn nhất", "hướng đi", gán `ROUTE`.
+- Nếu câu là về domain RAG -> `RAG_QUERY`.
+- Nếu không thuộc bất kỳ loại trên -> `OUT_OF_DOMAIN`.
+- Nếu là chào hỏi -> `GREETING`.
+- Nếu hỏi về AI -> `META_QUERY`.
+
+**CHỈ TRẢ VỀ CHỈ 1 TỪ (KHÔNG GIẢI THÍCH)**
+Ví dụ đầu vào:
+{query}
+
+Kết quả (một từ): 
