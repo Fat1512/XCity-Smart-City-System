@@ -9,8 +9,6 @@ SOURCE_VIDEO = "video.mp4"
 
 
 class PointMarker:
-    """Mark points on an image using Left Mouse Button click."""
-
     def __init__(self, window: str = "Image") -> None:
         self._window = window
         self._points: list[tuple[int, int]] = list()

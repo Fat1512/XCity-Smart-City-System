@@ -1,7 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Optional, Dict, Any
-from pathlib import Path
-import math
+from typing import Optional
 import cv2 as cv
 import numpy as np
 from collections import defaultdict
@@ -47,7 +45,6 @@ class VehicleSpeedTool(Tool):
         self.zone = None
         self.poly_pts = None
         
-        # Metrics tracking for streaming
         self.vehicle_counts = defaultdict(int)
         self.current_speeds = {}
         self.all_speeds = []
@@ -65,34 +62,27 @@ class VehicleSpeedTool(Tool):
         fps_override=30,
     ):
         try:
-            # Load speed model (tracking model - yolo11m)
             weights_speed = yolo_weights or self.yolo_weights
             self.model = YOLO(weights_speed, task="detect")
 
-            # Load detector model (yolov8m) for better detection
             weights_detector = detector_weights or self.detector_weights
             self.detector_model = YOLO(weights_detector, task="detect")
 
-            # Save stream config
             self.stream_classes = classes or [2, 3, 5, 6]
             self.stream_conf = conf or 0.4
             self.stream_tracker = tracker_cfg or "bytetrack.yaml"
             self.stream_fps = fps_override
 
-            # mapper + speedometer
             self.mapper = Cam2WorldMapper()
             self.mapper.find_perspective_transform(image_pts, world_pts)
             self.speedometer = Speedometer(self.mapper, self.stream_fps, unit=MPS_TO_KPH)
 
-            # Initialize annotators
             self._init_annotators()
 
-            # polygon zone
             poly = np.array(image_pts, dtype=np.int32)
             self.poly_pts = poly.reshape((-1, 1, 2))
             self.zone = sv.PolygonZone(poly, (sv.Position.TOP_CENTER, sv.Position.BOTTOM_CENTER))
 
-            # reset metrics
             self.vehicle_counts = defaultdict(int)
             self.current_speeds = {}
             self.all_speeds = []
@@ -108,7 +98,6 @@ class VehicleSpeedTool(Tool):
             return False
 
     def _init_annotators(self):
-        """Initialize annotators for stream mode"""
         try:
             colors = ("#007fff", "#0072e6", "#0066cc", "#0059b3", "#004c99", "#004080")
             color_palette = sv.ColorPalette([sv.Color.from_hex(c) for c in colors])
@@ -175,152 +164,11 @@ class VehicleSpeedTool(Tool):
 
     def call(
         self,
-        source_video: str,
-        output_video: Optional[str] = None,
-        image_pts: List[Tuple[int, int]] = None,
-        world_pts: List[Tuple[float, float]] = None,
-        yolo_weights: str = "yolo11m.pt",
-        classes: Optional[List[int]] = None,
-        conf: float = 0.4,
-        tracker_cfg: str = "bytetrack.yaml",
-        imgsz_multiple_of: int = 32,
-        fps_override: Optional[int] = None,
     ):
+        pass
 
-        if classes is None:
-            classes = [2, 4, 5, 7]
-
-        if output_video is None:
-            p = Path(source_video)
-            output_video = str(p.with_name(p.stem + "_annotated" + p.suffix))
-
-        mapper = Cam2WorldMapper()
-        mapper.find_perspective_transform(image_pts, world_pts)
-
-        model = YOLO(yolo_weights, task="detect")
-
-        video_info = sv.VideoInfo.from_video_path(source_video)
-        FPS = int(fps_override or video_info.fps)
-
-        colors = ("#007fff", "#0072e6", "#0066cc", "#0059b3", "#004c99", "#004080")
-        color_palette = sv.ColorPalette([sv.Color.from_hex(c) for c in colors])
-
-        bbox_annot = sv.BoxAnnotator(color=color_palette, thickness=2, color_lookup=sv.ColorLookup.TRACK)
-        trace_annot = sv.TraceAnnotator(
-            color=color_palette,
-            trace_length=FPS,
-            position=sv.Position.CENTER,
-            thickness=2,
-            color_lookup=sv.ColorLookup.TRACK
-        )
-        try:
-            label_annot = sv.RichLabelAnnotator(
-                color=color_palette,
-                font_size=16,
-                border_radius=3,
-                text_padding=5,
-                color_lookup=sv.ColorLookup.TRACK
-            )
-        except:
-            label_annot = sv.LabelAnnotator()
-
-        speedometer = Speedometer(mapper, FPS, unit=MPS_TO_KPH)
-
-        poly = np.array(image_pts, dtype=np.int32)
-        poly_pts = poly.reshape((-1, 1, 2))
-
-        zone = sv.PolygonZone(poly, (sv.Position.TOP_CENTER, sv.Position.BOTTOM_CENTER))
-
-        overlay_color_bgr = (0, 180, 0)
-        overlay_alpha = 0.22
-        border_color_bgr = (0, 255, 0)
-        border_thickness = 2
-
-        w, h = video_info.resolution_wh
-        imgsz_w = int(math.ceil(w / imgsz_multiple_of) * imgsz_multiple_of)
-        imgsz_h = int(math.ceil(h / imgsz_multiple_of) * imgsz_multiple_of)
-
-        frames_processed = 0
-
-        with sv.VideoSink(output_video, video_info) as sink:
-            for frame in sv.get_video_frames_generator(source_video):
-                frames_processed += 1
-
-                orig = frame
-
-                result = model.track(
-                    orig,
-                    classes=classes,
-                    conf=conf,
-                    imgsz=(imgsz_h, imgsz_w),
-                    persist=True,
-                    verbose=False,
-                    tracker=tracker_cfg,
-                )
-                detection_all = sv.Detections.from_ultralytics(result[0])
-
-                try:
-                    mask = zone.trigger(detection_all)
-                    detection = detection_all[mask]
-                except Exception:
-                    detection = sv.Detections.from_ultralytics([])
-
-                COCO_NAMES = [
-                    "person","bicycle","car","motorcycle","airplane","bus","train","truck"
-                ] + [""]*72
-
-                labels = []
-                n = len(detection)
-
-                for i in range(n):
-                    cid = int(detection.class_id[i]) if detection.class_id is not None else -1
-                    cls_name = COCO_NAMES[cid] if 0 <= cid < len(COCO_NAMES) else "vehicle"
-
-                    tid = int(detection.tracker_id[i]) if detection.tracker_id is not None else None
-
-                    if tid is not None:
-                        trace = trace_annot.trace.get(tid)
-                        speedometer.update_with_trace(tid, trace)
-                        sp = speedometer.get_current_speed(tid)
-                    else:
-                        sp = 0
-
-                    labels.append(f"{cls_name} {sp} km/h")
-
-                annot_frame = orig.copy()
-                overlay = annot_frame.copy()
-                cv.fillPoly(overlay, [poly_pts], color=overlay_color_bgr)
-                annot_frame = cv.addWeighted(overlay, overlay_alpha, annot_frame, 1 - overlay_alpha, 0)
-                cv.polylines(annot_frame, [poly_pts], True, border_color_bgr, border_thickness)
-
-                out = annot_frame.copy()
-                out = bbox_annot.annotate(out, detection)
-                out = trace_annot.annotate(out, detection)
-                out = label_annot.annotate(out, detection, labels=labels)
-
-                sink.write_frame(out)
-
-        avg_speeds = {}
-        for tid, arr in speedometer.speeds.items():
-            if arr:
-                avg_speeds[int(tid)] = int(np.mean(arr))
-
-        return {
-            "output": output_video,
-            "summary": {
-                "frames_processed": frames_processed,
-                "average_speeds_per_track": avg_speeds
-            }
-        }
 
     def process_frame(self, frame_bgr):
-        """
-        CHIẾN LƯỢC MỚI:
-        1. Chạy yolo11m với tracking để có tracker_id và tính tốc độ
-        2. Chạy yolov8m để có detection tốt hơn (không tracking)
-        3. Map detection từ yolov8m với tracked objects từ yolo11m dựa trên IoU
-        4. Hiển thị bboxes từ yolov8m nhưng với tracker_id và speed từ yolo11m
-        """
         if not getattr(self, "stream_ready", False):
             raise RuntimeError("Stream mode not initialized.")
 
@@ -328,7 +176,6 @@ class VehicleSpeedTool(Tool):
         imgsz_h = (H + 31) // 32 * 32
         imgsz_w = (W + 31) // 32 * 32
 
-        # BƯỚC 1: Chạy yolo11m với tracking để có tracker_id và tính tốc độ
         track_res = self.model.track(
             frame_bgr,
             classes=self.stream_classes,
@@ -340,19 +187,15 @@ class VehicleSpeedTool(Tool):
         )
         det_tracked = sv.Detections.from_ultralytics(track_res[0])
 
-        # Filter tracked detections inside zone
         try:
             mask_tracked = self.zone.trigger(det_tracked)
             det_tracked = det_tracked[mask_tracked]
         except Exception:
             det_tracked = sv.Detections.empty()
 
-        # Update trace annotator với tracked detections
-        # Trace annotator cần được update để speedometer có thể lấy trace
         dummy_frame = frame_bgr.copy()
         self.trace_annot.annotate(dummy_frame, det_tracked)
 
-        # BƯỚC 2: Chạy yolov8m để có detection tốt hơn
         det_res = self.detector_model.predict(
             frame_bgr,
             imgsz=(imgsz_h, imgsz_w),
@@ -362,22 +205,17 @@ class VehicleSpeedTool(Tool):
         )
         det_display = sv.Detections.from_ultralytics(det_res[0])
 
-        # Filter display detections inside zone
         try:
             mask_display = self.zone.trigger(det_display)
             det_display = det_display[mask_display]
         except Exception:
             det_display = sv.Detections.empty()
 
-        # BƯỚC 3: Map detections từ yolov8m với tracked objects từ yolo11m
-        # Tạo dictionary để map tracker_id với speed
         tracker_speeds = {}
         
-        # Reset per-frame counts
         frame_vehicle_counts = defaultdict(int)
         frame_speeds = []
 
-        # Update speeds từ tracked detections
         for i in range(len(det_tracked)):
             tid = int(det_tracked.tracker_id[i]) if det_tracked.tracker_id is not None else None
             if tid is not None:
@@ -391,7 +229,6 @@ class VehicleSpeedTool(Tool):
                     frame_speeds.append(sp)
                     self.all_speeds.append(sp)
 
-        # BƯỚC 4: Tạo labels cho display detections (chỉ tên phương tiện, không có tốc độ)
         labels = []
         matched_tracker_ids = []
         
@@ -401,7 +238,6 @@ class VehicleSpeedTool(Tool):
             
             frame_vehicle_counts[cls_name] += 1
             
-            # Tìm tracked detection gần nhất dựa trên IoU để lấy tracker_id
             best_iou = 0
             best_tid = None
             display_box = det_display.xyxy[i]
@@ -415,31 +251,25 @@ class VehicleSpeedTool(Tool):
                     best_iou = iou
                     best_tid = int(det_tracked.tracker_id[j])
             
-            # Chỉ hiển thị tên phương tiện, không có tốc độ
             labels.append(f"{cls_name}")
             
-            # Gán tracker_id nếu có match, nếu không thì dùng index
             if best_tid is not None:
                 matched_tracker_ids.append(best_tid)
             else:
                 matched_tracker_ids.append(i)  # Fallback: dùng index làm pseudo tracker_id
         
-        # Gán tracker_id cho det_display để annotators hoạt động đúng
         if len(det_display) > 0:
             det_display.tracker_id = np.array(matched_tracker_ids, dtype=int)
 
-        # Update cumulative vehicle_counts
         for cls_name, count in frame_vehicle_counts.items():
             self.vehicle_counts[cls_name] = max(self.vehicle_counts[cls_name], count)
 
-        # BƯỚC 5: Annotate frame
         annot = frame_bgr.copy()
         overlay = annot.copy()
         cv.fillPoly(overlay, [self.poly_pts], (0, 180, 0))
         annot = cv.addWeighted(overlay, 0.2, annot, 0.8, 0)
         cv.polylines(annot, [self.poly_pts], True, (0, 255, 0), 2)
 
-        # Annotate với display detections (đã có tracker_id)
         if len(det_display) > 0:
             try:
                 annot = self.bbox_annot.annotate(annot, det_display)
@@ -450,14 +280,12 @@ class VehicleSpeedTool(Tool):
                 annot = self.label_annot.annotate(annot, det_display, labels=labels)
             except Exception as e:
                 print(f"Label annotation error: {e}")
-                # Fallback: vẽ label thủ công
                 for i in range(len(det_display)):
                     x1, y1, x2, y2 = det_display.xyxy[i]
                     cv.putText(annot, labels[i], (int(x1), int(y1) - 10),
                               cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Build metrics
-        total_vehicles = len(det_display)  # Đếm từ yolov8m detections
+        total_vehicles = len(det_display)
         avg_speed = np.mean(frame_speeds) if frame_speeds else 0
 
         metrics = {
@@ -468,7 +296,6 @@ class VehicleSpeedTool(Tool):
         return annot, metrics
 
     def _calculate_iou(self, box1, box2):
-        """Calculate IoU between two boxes [x1, y1, x2, y2]"""
         x1 = max(box1[0], box2[0])
         y1 = max(box1[1], box2[1])
         x2 = min(box1[2], box2[2])
@@ -485,7 +312,6 @@ class VehicleSpeedTool(Tool):
         return intersection / union if union > 0 else 0.0
 
     def get_stream_metrics(self):
-        """Get current stream metrics"""
         if not self.stream_ready:
             return {}
         

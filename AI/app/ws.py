@@ -3,14 +3,13 @@ import asyncio
 import base64
 import json
 import traceback
-from typing import Dict, Set, Optional, Any, List
+from typing import Dict, Set, Optional, Any
 import numpy as np
 import cv2
 import time
-import requests
-from datetime import datetime, timezone
 
 from service.vehicle_speed_stream_service import VehicleSpeedStreamService
+from .utils import publish_to_orion_ld
 
 router = APIRouter()
 
@@ -24,8 +23,7 @@ _clients_lock = asyncio.Lock()
 
 _address_by_stream: Dict[str, Dict[str, Any]] = {}
 
-ORION_URL = "http://localhost:1026"
-FIWARE_SERVICE = "openiot"
+
 
 
 async def get_or_create_service(stream_id: str) -> VehicleSpeedStreamService:
@@ -44,104 +42,7 @@ def _safe_discard(ws_set: Set[WebSocket], ws: WebSocket):
         pass
 
 
-def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] = None) -> bool:
-    import logging
-    logger = logging.getLogger("ws.orion.upsert")
 
-    if not address or not isinstance(address, dict):
-        logger.error(f"[ORION UPSERT] Missing required address for stream_id={sensor_id}")
-        return False
-
-    def to_native(o):
-        if isinstance(o, np.generic):
-            return o.item()
-        if isinstance(o, np.ndarray):
-            return [to_native(x) for x in o.tolist()]
-        if isinstance(o, (list, tuple, set)):
-            return [to_native(x) for x in o]
-        if isinstance(o, dict):
-            return {str(k): to_native(v) for k, v in o.items()}
-        if isinstance(o, datetime):
-            return o.isoformat()
-        if isinstance(o, (bytes, bytearray)):
-            try:
-                return o.decode("utf-8")
-            except:
-                return list(o)
-        return o
-
-    try:
-        observed_at = datetime.now(timezone.utc).isoformat()
-        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id}"
-        entity_type = "TrafficFlowObserved"
-
-        cur_count = float(metrics.get("current_count", 0) or 0)
-        cur_avg_speed = float(metrics.get("current_avg_speed", 0) or 0)
-
-        capacity = float(metrics.get("capacity", 20))            # default capacity for occupancy calc
-        threshold_speed = float(metrics.get("threshold_speed", 30))  # speed threshold for congested
-
-        occupancy = min(cur_count / capacity, 1.0) if capacity > 0 else 0.0
-        congested = bool(cur_avg_speed < threshold_speed)
-
-        attrs = {
-            "https://smartdatamodels.org/address": {
-                "type": "Property",
-                "value": to_native(address),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/averageVehicleSpeed": {
-                "type": "Property",
-                "value": to_native(cur_avg_speed),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/intensity": {
-                "type": "Property",
-                "value": to_native(cur_count),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/occupancy": {
-                "type": "Property",
-                "value": to_native(occupancy),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/congested": {
-                "type": "Property",
-                "value": to_native(congested),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/dateObserved": {
-                "type": "Property",
-                "value": observed_at
-            }
-        }
-
-        entity_body = {
-            "id": entity_id,
-            "type": entity_type,
-            "@context": [
-                "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld",
-                "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld"
-            ],
-            **attrs
-        }
-
-        payload = [entity_body]
-        upsert_url = ORION_URL.rstrip("/") + "/ngsi-ld/v1/entityOperations/upsert"
-        headers = {
-            "Content-Type": "application/ld+json",
-            "Fiware-Service": FIWARE_SERVICE,
-            "Fiware-ServicePath": "/"
-        }
-
-        logger.info(f"[ORION UPSERT] sending entity {entity_id} with occupancy={occupancy:.3f} congested={congested}")
-        resp = requests.post(upsert_url, json=payload, headers=headers, timeout=8)
-        logger.info(f"[ORION UPSERT] status={resp.status_code} body={resp.text[:500]}")
-        return resp.status_code in (200, 201, 204)
-
-    except Exception:
-        logger.exception("[ORION UPSERT] Unexpected error")
-        return False
 
 
 
