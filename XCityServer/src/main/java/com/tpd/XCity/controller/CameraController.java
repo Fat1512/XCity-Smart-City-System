@@ -1,0 +1,51 @@
+package com.tpd.XCity.controller;
+
+import com.tpd.XCity.dto.request.CameraCreateRequest;
+import com.tpd.XCity.dto.request.DeviceCreateRequest;
+import com.tpd.XCity.dto.response.CameraResponse;
+import com.tpd.XCity.dto.response.MessageResponse;
+import com.tpd.XCity.dto.response.PageResponse;
+import com.tpd.XCity.service.CameraService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import static com.tpd.XCity.utils.AppConstant.PAGE_DEFAULT;
+import static com.tpd.XCity.utils.AppConstant.PAGE_SIZE;
+
+@RestController
+@RequestMapping(value = "/api/v1")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
+public class CameraController {
+    private final CameraService cameraService;
+
+    @GetMapping("/camera/{id}")
+    public ResponseEntity<CameraResponse> getCamera(@PathVariable String id) {
+        CameraResponse response = cameraService.getCamera(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/camera")
+    public ResponseEntity<MessageResponse> createCamera(@RequestBody CameraCreateRequest request) {
+        MessageResponse response = cameraService.createCamera(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/camera/{id}")
+    public ResponseEntity<MessageResponse> updateCamera(@PathVariable String id, @RequestBody CameraCreateRequest request) {
+        MessageResponse response = cameraService.updateCamera(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/cameras")
+    public ResponseEntity<PageResponse> searchCamera(
+            @RequestParam(value = "kw", defaultValue = "", required = false) String kw,
+            @RequestParam(value = "page", defaultValue = PAGE_DEFAULT) String page,
+            @RequestParam(value = "size", defaultValue = PAGE_SIZE) String size) {
+        PageResponse pageResponse = cameraService.searchCamera(kw, Integer.parseInt(page), Integer.parseInt(size));
+        return ResponseEntity.ok(pageResponse);
+    }
+
+
+}

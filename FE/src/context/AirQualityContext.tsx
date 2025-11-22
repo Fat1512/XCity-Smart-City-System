@@ -8,6 +8,7 @@ import {
 } from "react";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { BASE_URL } from "../utils/Url";
 
 export interface SensorValues {
   id: string;
@@ -42,7 +43,7 @@ interface AirQualityProviderProps {
 
 export const AirQualityProvider = ({
   children,
-  wsUrl = "http://localhost:8080/xcity-service/api/v1/ws",
+  wsUrl = `${BASE_URL}/ws`,
   maxDataPoints = 5,
   inactiveTimeout = 10000,
 }: AirQualityProviderProps) => {

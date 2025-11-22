@@ -96,6 +96,11 @@ export const DEVICE_CATEGORIES = [
   { label: "Sensor", value: "sensor" },
 ];
 
+export const CAMERA_USAGE = [
+  { label: "Surveillance", value: "SURVEILLANCE" },
+  { label: "RLVD", value: "RLVD" },
+  { label: "Traffic", value: "TRAFFIC" },
+];
 export const CONTROLLED_PROPERTIES = [
   { label: "Air Pollution", value: "airPollution" },
   { label: "Atmospheric Pressure", value: "atmosphericPressure" },

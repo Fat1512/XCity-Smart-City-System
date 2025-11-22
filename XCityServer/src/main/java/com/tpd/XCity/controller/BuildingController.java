@@ -25,7 +25,7 @@ public class BuildingController {
 
     @GetMapping("/buildings")
     public ResponseEntity<JsonLdWrapperResponse> getBuildings() {
-        JsonLdWrapperResponse response = orionService.getEntitiesByType(BUILDING_TYPE);
+        JsonLdWrapperResponse response = orionService.getEntitiesByType(BUILDING_TYPE, BUILDING_CONTEXT);
         return ResponseEntity.ok(response);
     }
 

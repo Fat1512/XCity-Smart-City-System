@@ -2,7 +2,7 @@
   {
     "stream_id": "cam02",
     "video_path": "video2.mp4",
-    "limit_fps": 2,
+    "limit_fps": 5,
     "image_pts": [
       [6, 80],
       [308, 4],

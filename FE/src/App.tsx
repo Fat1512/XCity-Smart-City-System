@@ -17,6 +17,9 @@ import { AirQualityProvider } from "./context/AirQualityContext";
 import SensorWrapper from "./feature/map/SensorMapWrapper";
 import FeatureSelection from "./ui/MapSelection";
 import ReportSelection from "./ui/ReportSelection";
+import VehicleSpeedMonitor from "./feature/traffic-monitor/VehicleSpeedMonitor";
+import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
+import CameraList from "./feature/traffic-monitor/CameraList";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -37,6 +40,7 @@ const App = () => {
               <Route path="map" element={<FeatureSelection />} />
               <Route path="/map/infrastructure" element={<BuildingList />} />
               <Route path="/map/air" element={<SensorWrapper />} />
+              <Route path="/map/traffic" element={<VehicleSpeedMonitor />} />
 
               <Route path="report" element={<ReportSelection />} />
               <Route path="/report/air" element={<AirQualityRealtime />} />
@@ -56,6 +60,10 @@ const App = () => {
                 element={<AirQualityAdminWrapper />}
               />
               <Route path="device" element={<AirQualityAdminWrapper />} />
+
+              <Route path="traffic" element={<CameraList />} />
+              <Route path="camera" element={<CameraWrapper />} />
+              <Route path="camera/:cameraId" element={<CameraWrapper />} />
             </Route>
           </Routes>
         </BrowserRouter>

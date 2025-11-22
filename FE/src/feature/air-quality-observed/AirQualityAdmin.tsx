@@ -138,7 +138,6 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="space-y-6">
-        {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">
             <div className="flex items-center justify-between">
@@ -195,7 +194,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                   onClick={handleSubmit(onSubmit)}
                   className="flex cursor-pointer items-center gap-2 bg-white hover:bg-indigo-50 text-indigo-600 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
-                  {isPending ? (
+                  {isPending || isUpdating ? (
                     <MiniSpinner />
                   ) : (
                     <>

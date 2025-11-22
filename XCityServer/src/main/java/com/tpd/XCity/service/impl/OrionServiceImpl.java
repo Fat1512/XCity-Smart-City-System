@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+import static com.tpd.XCity.utils.AppConstant.DEFAULT_CONTEXT;
+
 
 @Service
 @RequiredArgsConstructor
@@ -25,16 +27,16 @@ public class OrionServiceImpl implements OrionService {
     @Value("${app.orion-url}")
     private String ORION_URL;
 
-    private HttpHeaders createJsonLdHeaders() {
+    private HttpHeaders createJsonLdHeaders(String context) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Link",
-                "<https://smart-data-models.github.io/dataModel.Building/context.jsonld>; " +
+                context +
                         "rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\"");
         return headers;
     }
 
-    public void patchAttributes(String entityId, Map<String, Object> attrs) {
+    public void patchAttributes(String entityId, Map<String, Object> attrs, String context) {
         if (attrs == null || attrs.isEmpty()) return;
 
         Map<String, Object> body = attrs.entrySet().stream().collect(
@@ -47,7 +49,7 @@ public class OrionServiceImpl implements OrionService {
         String url = String.format("%s/%s/attrs", ORION_URL, entityId);
 
 
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, createJsonLdHeaders());
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, createJsonLdHeaders((context)));
         ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, Void.class);
 
 
@@ -57,14 +59,14 @@ public class OrionServiceImpl implements OrionService {
     }
 
     @Override
-    public JsonLdWrapperResponse getEntitiesByType(String type) {
+    public JsonLdWrapperResponse getEntitiesByType(String type, String context) {
         try {
             String url = String.format("%s?type=%s", ORION_URL, type);
-            HttpEntity<String> req = new HttpEntity<>(createJsonLdHeaders());
+            HttpEntity<String> req = new HttpEntity<>(createJsonLdHeaders(context));
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, req, String.class);
 
             JsonLdWrapperResponse jsonLdWrapperResponse = JsonLdWrapperResponse.builder()
-                    .context(List.of(AppConstant.DEFAULT_CONTEXT))
+                    .context(List.of(DEFAULT_CONTEXT))
                     .data(objectMapper.readTree(response.getBody()))
                     .build();
             log.info("Get entities: {}", type);
@@ -76,9 +78,9 @@ public class OrionServiceImpl implements OrionService {
     }
 
     @Override
-    public void createEntity(ObjectNode entity) {
+    public void createEntity(ObjectNode entity, String context) {
         try {
-            HttpEntity<String> req = new HttpEntity<>(objectMapper.writeValueAsString(entity), createJsonLdHeaders());
+            HttpEntity<String> req = new HttpEntity<>(objectMapper.writeValueAsString(entity), createJsonLdHeaders(context));
             ResponseEntity<String> response = restTemplate.exchange(ORION_URL, HttpMethod.POST, req, String.class);
             log.info("Created building: {}", entity.get("id"));
         } catch (Exception ex) {
@@ -87,12 +89,12 @@ public class OrionServiceImpl implements OrionService {
     }
 
     @Override
-    public void createEntities(List<ObjectNode> entities) {
+    public void createEntities(List<ObjectNode> entities, String context) {
         if (entities == null || entities.isEmpty()) {
             log.info("No entities to send to Orion-LD.");
             return;
         }
-        HttpHeaders headers = createJsonLdHeaders();
+        HttpHeaders headers = createJsonLdHeaders(context);
 
         try {
             String batchUrl = ORION_URL.replace("/entities", "/entityOperations/create");

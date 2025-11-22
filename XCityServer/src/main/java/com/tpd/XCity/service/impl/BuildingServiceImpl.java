@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static com.tpd.XCity.utils.APIResponseMessage.SUCCESSFULLY_CREATED;
 import static com.tpd.XCity.utils.APIResponseMessage.SUCCESSFULLY_UPDATED;
+import static com.tpd.XCity.utils.AppConstant.BUILDING_CONTEXT;
 
 @RequiredArgsConstructor
 @Service
@@ -68,7 +69,7 @@ public class BuildingServiceImpl implements BuildingService {
 
         Map<String, Object> diff = Helper.getChangedFields(oldBuilding, building);
 
-        orionService.patchAttributes(id, diff);
+        orionService.patchAttributes(id, diff, BUILDING_CONTEXT);
         return MessageResponse.builder()
                 .message(SUCCESSFULLY_UPDATED.name())
                 .status(HttpStatus.OK)
@@ -80,7 +81,7 @@ public class BuildingServiceImpl implements BuildingService {
         Building building = buildingMapper.convertToEntity(request);
         building.setId(Helper.getURNId(building.getType()));
 
-        orionService.createEntity(buildingMapper.toOrion(building));
+        orionService.createEntity(buildingMapper.toOrion(building), BUILDING_CONTEXT);
 
         buildingRepository.save(building);
         return MessageResponse.builder()
@@ -186,7 +187,7 @@ public class BuildingServiceImpl implements BuildingService {
                 buildings.add(buildingMapper.toOrion(b));
             }
 
-            orionService.createEntities(buildings);
+            orionService.createEntities(buildings, BUILDING_CONTEXT);
             buildingRepository.saveAll(buildingEntities);
             System.out.println("Done: Uploaded " + buildings.size() + " buildings to Orion-LD.");
         } catch (Exception e) {
