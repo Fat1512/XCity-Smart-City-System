@@ -211,12 +211,12 @@ public class DeviceServiceImpl implements DeviceService {
 
 
     private Map<String, Object> getStringObjectMap(String deviceId, String entityName) {
-        Map<String, Object> pm25 = Map.of("object_id", "pm25", "name", "https://smartdatamodels.org/pm25", "type", "Number");
-        Map<String, Object> pm1 = Map.of("object_id", "pm1", "name", "https://smartdatamodels.org/pm1", "type", "Number");
-        Map<String, Object> o3 = Map.of("object_id", "o3", "name", "https://smartdatamodels.org/o3", "type", "Number");
-        Map<String, Object> co2 = Map.of("object_id", "co2", "name", "https://smartdatamodels.org/co2", "type", "Number");
-        Map<String, Object> temperature = Map.of("object_id", "temperature", "name", "https://smartdatamodels.org/temperature", "type", "Number");
-        Map<String, Object> refDevice = Map.of("object_id", "ref_device", "name", "https://smartdatamodels.org/ref_device", "type", "Number");
+        Map<String, Object> pm25 = Map.of("object_id", "pm25", "name", "https://smartdatamodels.org/dataModel.Environment/pm25", "type", "Number");
+        Map<String, Object> pm1 = Map.of("object_id", "pm1", "name", "https://smartdatamodels.org/dataModel.Environment/pm1", "type", "Number");
+        Map<String, Object> o3 = Map.of("object_id", "o3", "name", "https://smartdatamodels.org/dataModel.Environment/o3", "type", "Number");
+        Map<String, Object> co2 = Map.of("object_id", "co2", "name", "https://smartdatamodels.org/dataModel.Environment/co2", "type", "Number");
+        Map<String, Object> temperature = Map.of("object_id", "temperature", "name", "https://smartdatamodels.org/dataModel.Environment/temperature", "type", "Number");
+        Map<String, Object> refDevice = Map.of("object_id", "ref_device", "name", "https://smartdatamodels.org/dataModel.Environment/ref_device", "type", "Number");
         // Device Map
         Map<String, Object> device = Map.of(
                 "device_id", deviceId,
