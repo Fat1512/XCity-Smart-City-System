@@ -1,29 +1,21 @@
 [
-
   {
     "stream_id": "cam02",
     "video_path": "video2.mp4",
     "limit_fps": 2,
-    "image_pts": [[6, 80], [308, 4], [635, 236], [206, 353]],
-    "world_pts": [[0,0],[15,0],[15,15],[0,15]],
-    "classes": [2,3,5,6],
-    "conf": 0.35,
-    "tracker_cfg": "bytetrack.yaml",
-    "yolo_weights": "yolo11n.pt",
-
-    "address": {
-      "addressLocality": "Ho Chi Minh City",
-      "addressCountry": "VN",
-      "streetAddress": "Vo Van Kiet"
-    }
-  },
-  {
-    "stream_id": "cam03",
-    "video_path": "video3.mp4",
-    "limit_fps": 2,
-    "image_pts": [[83, 428], [752, 358], [1084, 400], [793, 704]],
-    "world_pts": [[0,0],[50,0],[15,50],[0,15]],
-    "classes": [2,3,5,6],
+    "image_pts": [
+      [6, 80],
+      [308, 4],
+      [635, 236],
+      [206, 353]
+    ],
+    "world_pts": [
+      [0, 0],
+      [15, 0],
+      [15, 15],
+      [0, 15]
+    ],
+    "classes": [2, 3, 5, 6],
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
     "yolo_weights": "yolo11n.pt",
