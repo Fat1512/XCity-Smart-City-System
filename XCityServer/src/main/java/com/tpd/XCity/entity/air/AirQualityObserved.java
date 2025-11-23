@@ -31,6 +31,8 @@ public class AirQualityObserved {
     private Double co2;
     private Double o3;
     private Double pm1;
+    private Double pm10;
+    private Double relativeHumidity;
     private Double pm25;
     private Double temperature;
 

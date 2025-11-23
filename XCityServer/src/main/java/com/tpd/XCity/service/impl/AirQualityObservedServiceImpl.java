@@ -41,11 +41,13 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
 
         AirQualityObserved airQualityObserved = AirQualityObserved.builder()
                 .refDevice(sensorId)
-                .pm25(extractDouble(data, "https://smartdatamodels.org/pm25"))
-                .pm1(extractDouble(data, "https://smartdatamodels.org/pm1"))
-                .co2(extractDouble(data, "https://smartdatamodels.org/co2"))
-                .o3(extractDouble(data, "https://smartdatamodels.org/o3"))
-                .temperature(extractDouble(data, "https://smartdatamodels.org/temperature"))
+                .pm25(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm25"))
+                .pm1(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm1"))
+                .pm10(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm10"))
+                .co2(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/co2"))
+                .o3(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/o3"))
+                .relativeHumidity(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/relativeHumidity"))
+                .temperature(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/temperature"))
                 .dateObserved(dateObserved)
                 .build();
         airQualityObservedRepository.save(airQualityObserved);

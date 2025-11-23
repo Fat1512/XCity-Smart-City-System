@@ -3,8 +3,10 @@ import { Line } from "react-chartjs-2";
 const METRIC_DETAILS = {
   pm25: { title: "Nồng độ PM2.5", unit: "µg/m³" },
   pm1: { title: "Nồng độ PM1", unit: "µg/m³" },
+  pm10: { title: "Nồng độ PM10", unit: "µg/m³" },
   o3: { title: "Nồng độ Ozone (O3)", unit: "ppb" },
   co2: { title: "Nồng độ CO2", unit: "ppm" },
+  temperature: { title: "Nhiệt độ", unit: "C" },
 } as const;
 const getBaseChartOptions = (
   unit: string,
@@ -61,6 +63,8 @@ const CHART_GRADIENTS = [
   "from-blue-500 to-cyan-500",
   "from-amber-500 to-orange-500",
   "from-green-500 to-emerald-500",
+  "from-purple-500 to-violet-500",
+  "from-indigo-500 to-blue-600",
 ];
 
 const TIME_FORMATS = {
@@ -81,7 +85,6 @@ const AirQualityStaticChart = ({
   timeUnit: "hour" | "day";
 }) => {
   const details = METRIC_DETAILS[type];
-  console.log(chartData);
   const chartOptions = useMemo(
     () => getBaseChartOptions(details.unit, timeUnit),
     [details.unit, timeUnit]

@@ -42,7 +42,7 @@ interface AirQualityProviderProps {
 
 export const AirQualityProvider = ({
   children,
-  wsUrl = "http://localhost:8080/xcity-service/api/v1/ws",
+  wsUrl = "http://localhost:8081/xcity-service/api/v1/ws",
   maxDataPoints = 5,
   inactiveTimeout = 10000,
 }: AirQualityProviderProps) => {
