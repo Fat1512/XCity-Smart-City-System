@@ -27,10 +27,12 @@ public class AirQualityDailyStatics {
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime hour;
-        private double avgPm1;
-        private double avgPm25;
-        private double avgCo2;
-        private double avgO3;
-        private double avgTemperature;
+        private Double avgPm1;
+        private Double avgPm10;
+        private Double avgPm25;
+        private Double avgCo2;
+        private Double avgO3;
+        private Double avgTemperature;
+        private Double avgRelativeHumidity;
     }
 }

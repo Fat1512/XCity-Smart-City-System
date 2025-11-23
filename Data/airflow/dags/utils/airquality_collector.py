@@ -95,18 +95,30 @@ def transform_json_format():
 def push_data_to_orion_server():
     
     final_data = {
-        "id": f"urn:ngsi-ld:AirQualityObserved:openaq",
+        "id": f"urn:ngsi-ld:Device:6eedc3ce-7d97-49de-9d8e-ff7a9ae6b38d",
         "type": "https://smartdatamodels.org/dataModel.Environment/AirQualityObserved",
-        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.7.jsonld"
+        "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.7.jsonld",
     }
 
     with open(sensor_file_path, 'r', encoding='utf-8') as file:
         sensor_data = json.load(file)
     
-    print(sensor_data)
+    smart_model_mapping = {
+        "pm1": "https://smartdatamodels.org/dataModel.Environment/pm1",
+        "pm10": "https://smartdatamodels.org/dataModel.Environment/pm10",
+        "pm25": "https://smartdatamodels.org/dataModel.Environment/pm25",
+        "relativehumidity": "https://smartdatamodels.org/dataModel.Environment/relativeHumidity", 
+        "temperature": "https://smartdatamodels.org/dataModel.Environment/temperature"
+    }
+    
     for item in sensor_data:
+
         name = item['parameter']['name']
-        key = f"https://smartdatamodels.org/{name}"
+
+        if name not in smart_model_mapping:
+            continue
+
+        key = smart_model_mapping[name]
 
         final_data[key] = {
             "type": "Property",

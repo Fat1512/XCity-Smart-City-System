@@ -21,18 +21,20 @@ public interface AirQualityObservedRepository extends MongoRepository<AirQuality
 
             "{ $project: { " +
                     "day: { $dateTrunc: { date: '$dateObserved', unit: 'day' } }, " +
-                    "pm1: 1, pm25: 1, co2: 1, o3: 1, temperature: 1 " +
+                    "pm1: 1, pm10: 1, pm25: 1, co2: 1, o3: 1, temperature: 1, relativeHumidity: 1 " +
                     "} }",
 
             "{ $group: { _id: '$day', " +
                     "avgPm1: { $avg: '$pm1' }, " +
+                    "avgPm10: { $avg: '$pm10' }, " +
                     "avgPm25: { $avg: '$pm25' }, " +
                     "avgCo2: { $avg: '$co2' }, " +
                     "avgO3: { $avg: '$o3' }, " +
-                    "avgTemperature: { $avg: '$temperature' } " +
+                    "avgTemperature: { $avg: '$temperature' }, " +
+                    "avgRelativeHumidity: { $avg: 'relativeHumidity' } " +
                     "} }",
 
-            "{ $project: { _id: 0, day: '$_id', avgPm1: 1, avgPm25: 1, avgCo2: 1, avgO3: 1, avgTemperature: 1 } }",
+            "{ $project: { _id: 0, day: '$_id', avgPm1: 1, avgPm10: 1, avgPm25: 1, avgCo2: 1, avgO3: 1, avgTemperature: 1, avgRelativeHumidity: 1 } }",
 
             "{ $sort: { day: 1 } }"
     })
@@ -45,16 +47,18 @@ public interface AirQualityObservedRepository extends MongoRepository<AirQuality
                     "} }",
             "{ $project: { " +
                     "hour: { $dateTrunc: { date: '$dateObserved', unit: 'hour' } }, " +
-                    "pm1: 1, pm25: 1, co2: 1, o3: 1, temperature: 1 " +
+                    "pm1: 1, pm10: 1, pm25: 1, co2: 1, o3: 1, temperature: 1, relativeHumidity: 1 " +
                     "} }",
             "{ $group: { _id: '$hour', " +
                     "avgPm1: { $avg: '$pm1' }, " +
+                    "avgPm10: { $avg: '$pm10' }, " +
                     "avgPm25: { $avg: '$pm25' }, " +
                     "avgCo2: { $avg: '$co2' }, " +
                     "avgO3: { $avg: '$o3' }, " +
-                    "avgTemperature: { $avg: '$temperature' } " +
+                    "avgTemperature: { $avg: '$temperature' }, " +
+                    "avgRelativeHumidity: { $avg: 'relativeHumidity' } " +
                     "} }",
-            "{ $project: { _id: 0, hour: '$_id', avgPm1: 1, avgPm25: 1, avgCo2: 1, avgO3: 1, avgTemperature: 1 } }",
+            "{ $project: { _id: 0, hour: '$_id', avgPm1: 1, avgPm10: 1, avgPm25: 1, avgCo2: 1, avgO3: 1, avgTemperature: 1, avgRelativeHumidity: 1} }",
             "{ $sort: { hour: 1 } }"
     })
     List<AirQualityDailyStatics.AirQualityDailyValue> getAirQualityByHourRange(

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import "chartjs-adapter-date-fns";
-import { Line } from "react-chartjs-2";
 import CreatableSelect from "react-select/creatable";
 import useGetSensorMap from "../../map/useGetSensorMap";
 import type { SensorLocation } from "../../map/SensorMap";
@@ -101,7 +100,10 @@ const AirQualityDashboard4Charts = () => {
     [devices]
   );
 
-  const chartTypes = useMemo(() => ["pm25", "pm1", "o3", "co2"] as const, []);
+  const chartTypes = useMemo(
+    () => ["pm25", "pm1", "pm10", "o3", "co2", "temperature"] as const,
+    []
+  );
 
   const handleViewModeChange = (mode: "day" | "month") => {
     setViewMode(mode);
@@ -110,34 +112,41 @@ const AirQualityDashboard4Charts = () => {
 
   const handleSensorChange = (vals: any) => {
     setSelectedSensors((prev) => {
+      if (!vals || vals.length === 0) {
+        return [];
+      }
+
       const newSelected = vals.map((v: any) => {
+        const existInPrev = prev.find((p: Sensor) => p.id === v.value);
+        if (existInPrev) {
+          return existInPrev;
+        }
+
         const exist = devices?.find((s: SensorLocation) => s.id === v.value);
-        return exist || { id: v.value, name: v.label, dataPoints: [] };
+        return exist
+          ? { ...exist, dataPoints: [] }
+          : { id: v.value, name: v.label, dataPoints: [] };
       });
 
-      const toAdd = newSelected.filter(
-        (s: any) => !prev.some((p) => p.id === s.id)
-      );
-
-      return [...prev, ...toAdd];
+      return newSelected;
     });
   };
 
   useEffect(() => {
     if (!statics || selectedSensors.length === 0) return;
-
     setSelectedSensors((prev) =>
       prev.map((sensor) =>
         sensor.id === statics.sensorId
           ? {
               ...sensor,
-              dataPoints: statics.dataPoints.map((s) => ({
+              dataPoints: statics.dataPoints.map((s: any) => ({
                 dateObserved: timeUnit === "hour" ? s.hour : s.day,
-                pm25: s.avgPm25,
-                pm1: s.avgPm1,
-                co2: s.avgCo2,
-                o3: s.avgO3,
-                temperature: s.avgTemperature,
+                pm25: s.avgPm25 ?? 0,
+                pm1: s.avgPm1 ?? 0,
+                pm10: s.avgPm10 ?? 0,
+                co2: s.avgCo2 ?? 0,
+                o3: s.avgO3 ?? 0,
+                temperature: s.avgTemperature ?? 0,
               })),
             }
           : sensor
@@ -178,7 +187,7 @@ const AirQualityDashboard4Charts = () => {
       return acc;
     }, {} as Record<keyof SensorValues, { datasets: any[] }>);
   }, [selectedSensors, chartTypes]);
-
+  console.log(allChartsData);
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
       <div className="space-y-6">
@@ -287,7 +296,14 @@ const AirQualityDashboard4Charts = () => {
               </div>
             </div>
 
-            {selectedSensors.length > 0 && <DownloadSection />}
+            {selectedSensors.length > 0 && (
+              <DownloadSection
+                selectedSensors={selectedSensors}
+                viewMode={viewMode}
+                selectedDate={selectedDate}
+                selectedMonth={selectedMonth}
+              />
+            )}
           </div>
         </div>
         {isStaticsting ? (
