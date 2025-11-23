@@ -31,5 +31,6 @@ public class TrafficFlowObserved {
     private LocalDateTime dateObserved;
     private Double intensity;
     private Double occupancy;
+    private String refDevice;
 
 }

@@ -37,6 +37,7 @@ public class AirQualityObserved {
     private Double temperature;
 
     private String refDevice;
+    private String type = "AirQualityObserved";
     private String source;
 
 }
