@@ -6,38 +6,35 @@ import os
 import numpy as np
 import requests
 
+
 def resize_image(image_path, max_size=(1024, 1024), quality=85):
     try:
         img = Image.open(image_path)
         img_format = img.format
         if img.mode in ("RGBA", "P"):
-             img = img.convert("RGB")
-             img_format = "JPEG"
+            img = img.convert("RGB")
+            img_format = "JPEG"
 
         img.thumbnail(max_size, Image.Resampling.LANCZOS)
-        
+
         save_suffix = ".jpg" if img_format == "JPEG" else os.path.splitext(image_path)[1]
-        
+
         img.save(image_path, format="JPEG", quality=quality, optimize=True)
-        
+
         print(f"Resized and compressed image saved to: {image_path}")
         return image_path
-    
+
     except Exception as e:
         print(f"Error resizing image {image_path}: {e}")
         return image_path
 
 
 ORION_URL = "http://localhost:1026"
-FIWARE_SERVICE = "openiot"
 
-def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] = None) -> bool:
+
+def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
     import logging
     logger = logging.getLogger("ws.orion.upsert")
-
-    if not address or not isinstance(address, dict):
-        logger.error(f"[ORION UPSERT] Missing required address for stream_id={sensor_id}")
-        return False
 
     def to_native(o):
         if isinstance(o, np.generic):
@@ -65,42 +62,42 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] =
         cur_count = float(metrics.get("current_count", 0) or 0)
         cur_avg_speed = float(metrics.get("current_avg_speed", 0) or 0)
 
-        capacity = float(metrics.get("capacity", 20))            # default capacity for occupancy calc
-        threshold_speed = float(metrics.get("threshold_speed", 30))  # speed threshold for congested
+        capacity = float(metrics.get("capacity", 20))
+        threshold_speed = float(metrics.get("threshold_speed", 30))
 
         occupancy = min(cur_count / capacity, 1.0) if capacity > 0 else 0.0
         congested = bool(cur_avg_speed < threshold_speed)
 
         attrs = {
-            "https://smartdatamodels.org/address": {
-                "type": "Property",
-                "value": to_native(address),
-                "observedAt": observed_at
-            },
-            "https://smartdatamodels.org/averageVehicleSpeed": {
+            "averageVehicleSpeed": {
                 "type": "Property",
                 "value": to_native(cur_avg_speed),
                 "observedAt": observed_at
             },
-            "https://smartdatamodels.org/intensity": {
+            "intensity": {
                 "type": "Property",
                 "value": to_native(cur_count),
                 "observedAt": observed_at
             },
-            "https://smartdatamodels.org/occupancy": {
+            "occupancy": {
                 "type": "Property",
                 "value": to_native(occupancy),
                 "observedAt": observed_at
             },
-            "https://smartdatamodels.org/congested": {
+            "congested": {
                 "type": "Property",
                 "value": to_native(congested),
                 "observedAt": observed_at
             },
-            "https://smartdatamodels.org/dateObserved": {
+            "dateObserved": {
                 "type": "Property",
                 "value": observed_at
-            }
+            },
+            "refDevice": {
+                "type": "Relationship",
+                "value": "urn:ngsi-ld:Camera:70027910-094d-4567-82bf-341ad3156f8e",
+                "observedAt": observed_at
+            },
         }
 
         entity_body = {
@@ -117,8 +114,6 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict, address: Optional[dict] =
         upsert_url = ORION_URL.rstrip("/") + "/ngsi-ld/v1/entityOperations/upsert"
         headers = {
             "Content-Type": "application/ld+json",
-            "Fiware-Service": FIWARE_SERVICE,
-            "Fiware-ServicePath": "/"
         }
 
         logger.info(f"[ORION UPSERT] sending entity {entity_id} with occupancy={occupancy:.3f} congested={congested}")

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.tpd.XCity.utils.AppConstant.DEVICE_CONTEXT;
 import static com.tpd.XCity.utils.Helper.*;
 
 @Service
@@ -54,7 +55,7 @@ public class DeviceServiceImpl implements DeviceService {
         Device device = deviceMapper.convertToEntity(request);
         device.setId(getURNId(device.getType()));
         device.setDeviceState(DeviceStatus.INACTIVE);
-        orionService.createEntity(deviceMapper.toOrion(device));
+        orionService.createEntity(deviceMapper.toOrion(device), DEVICE_CONTEXT);
 
         sendDevice(getIdFromURN(device.getId()), device.getId());
         deviceRepository.save(device);
@@ -82,7 +83,7 @@ public class DeviceServiceImpl implements DeviceService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
             device.setDeviceState(DeviceStatus.ACTIVE);
-            orionService.patchAttributes(device.getId(), Map.of("deviceState", DeviceStatus.ACTIVE));
+            orionService.patchAttributes(device.getId(), Map.of("deviceState", DeviceStatus.ACTIVE), DEVICE_CONTEXT);
 
             deviceRepository.save(device);
             return MessageResponse.builder()
@@ -109,7 +110,7 @@ public class DeviceServiceImpl implements DeviceService {
 
             ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
             device.setDeviceState(DeviceStatus.INACTIVE);
-            orionService.patchAttributes(device.getId(), Map.of("deviceState", DeviceStatus.INACTIVE));
+            orionService.patchAttributes(device.getId(), Map.of("deviceState", DeviceStatus.INACTIVE), DEVICE_CONTEXT);
 
             deviceRepository.save(device);
             return MessageResponse.builder()
@@ -131,7 +132,7 @@ public class DeviceServiceImpl implements DeviceService {
             deviceMapper.updateDevice(request, device);
 
             Map<String, Object> diff = Helper.getChangedFields(oldDevice, device);
-            orionService.patchAttributes(deviceId, diff);
+            orionService.patchAttributes(deviceId, diff, DEVICE_CONTEXT);
 
             deviceRepository.save(device);
             return MessageResponse.builder()
