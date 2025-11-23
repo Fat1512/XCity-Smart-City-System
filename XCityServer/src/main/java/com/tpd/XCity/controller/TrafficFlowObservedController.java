@@ -14,7 +14,7 @@ import java.util.Map;
 public class TrafficFlowObservedController {
     private final TrafficFlowObservedService trafficFlowObservedService;
 
-//    @PostMapping("/traffic/notify")
+    @PostMapping("/traffic/notify")
     public ResponseEntity<String> receiveNotification(@RequestBody Map<String, Object> payload) {
         trafficFlowObservedService.saveMeasurementSensor(payload);
         return ResponseEntity.ok("Received");

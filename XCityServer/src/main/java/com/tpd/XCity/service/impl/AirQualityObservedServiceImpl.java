@@ -1,10 +1,12 @@
 package com.tpd.XCity.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.source.tree.Tree;
 import com.tpd.XCity.dto.response.AirQualityDailyStatics;
 import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
 import com.tpd.XCity.entity.air.AirQualityObserved;
 import com.tpd.XCity.entity.device.Device;
+import com.tpd.XCity.entity.device.TrafficFlowObserved;
 import com.tpd.XCity.mapper.AirQualityObservedMapper;
 import com.tpd.XCity.repository.AirQualityObservedRepository;
 import com.tpd.XCity.repository.DeviceRepository;
@@ -26,6 +28,7 @@ import static com.tpd.XCity.utils.OrionExtractHelper.*;
 public class AirQualityObservedServiceImpl implements AirQualityObservedService {
     private final AirQualityObservedRepository airQualityObservedRepository;
     private final AirQualityObservedMapper airQualityObservedMapper;
+    private final ObjectMapper objectMapper;
     private final DeviceRepository deviceRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -33,23 +36,15 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
     public void saveMeasurementSensor(Map<String, Object> measurement) {
         Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
 
-        String sensorId = (String) data.get("id");
+        String id = (String) data.get("id");
         String notifiedAtStr = (String) measurement.get("notifiedAt");
         OffsetDateTime odt = OffsetDateTime.parse(notifiedAtStr);
 
         LocalDateTime dateObserved = odt.toLocalDateTime();
 
-        AirQualityObserved airQualityObserved = AirQualityObserved.builder()
-                .refDevice(sensorId)
-                .pm25(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm25"))
-                .pm1(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm1"))
-                .pm10(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/pm10"))
-                .co2(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/co2"))
-                .o3(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/o3"))
-                .relativeHumidity(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/relativeHumidity"))
-                .temperature(extractDouble(data, "https://smartdatamodels.org/dataModel.Environment/temperature"))
-                .dateObserved(dateObserved)
-                .build();
+        AirQualityObserved airQualityObserved = objectMapper.convertValue(data, AirQualityObserved.class);
+        airQualityObserved.setRefDevice(id);
+        airQualityObserved.setDateObserved(dateObserved);
         airQualityObservedRepository.save(airQualityObserved);
 
         messagingTemplate.convertAndSend("/topic/air-quality",
@@ -115,7 +110,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         for (int h = 0; h < 24; h++) {
             LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
 
-            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(h);
+            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(hourLocalDateTime);
             if (value == null) {
                 value = AirQualityDailyStatics.AirQualityDailyValue.builder()
                         .hour(hourLocalDateTime)

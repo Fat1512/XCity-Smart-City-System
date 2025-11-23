@@ -32,7 +32,6 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
         Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
 
         String urnId = (String) data.get("id");
-        String id = Helper.getIdFromURN(urnId);
         String notifiedAtStr = (String) measurement.get("notifiedAt");
 
         OffsetDateTime odt = OffsetDateTime.parse(notifiedAtStr);
@@ -42,6 +41,8 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
         trafficFlowObserved.setId(urnId);
         trafficFlowObserved.setDateObserved(dateObserved);
 
-        trafficFlowObservedRepository.save(trafficFlowObservedRepository);
+        trafficFlowObservedRepository.save(trafficFlowObserved);
+        log.info("Saved TrafficFlowObserved entity | cameraId: {} | dateObserved: {}",
+                trafficFlowObserved.getRefDevice(), trafficFlowObserved.getDateObserved());
     }
 }

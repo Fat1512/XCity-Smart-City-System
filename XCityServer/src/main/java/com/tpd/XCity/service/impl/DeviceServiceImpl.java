@@ -216,7 +216,7 @@ public class DeviceServiceImpl implements DeviceService {
         Map<String, Object> o3 = Map.of("object_id", "o3", "name", "https://smartdatamodels.org/dataModel.Environment/o3", "type", "Number");
         Map<String, Object> co2 = Map.of("object_id", "co2", "name", "https://smartdatamodels.org/dataModel.Environment/co2", "type", "Number");
         Map<String, Object> temperature = Map.of("object_id", "temperature", "name", "https://smartdatamodels.org/dataModel.Environment/temperature", "type", "Number");
-        Map<String, Object> refDevice = Map.of("object_id", "ref_device", "name", "https://smartdatamodels.org/dataModel.Environment/ref_device", "type", "Number");
+        Map<String, Object> refDevice = Map.of("object_id", "refDevice", "name", "https://smartdatamodels.org/dataModel.Environment/refDevice", "type", "Object");
         // Device Map
         Map<String, Object> device = Map.of(
                 "device_id", deviceId,
