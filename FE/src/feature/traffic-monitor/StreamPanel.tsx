@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef } from "react";
 import {
   Play,
   Pause,
@@ -10,7 +10,6 @@ import {
   Gauge,
   TrendingUp,
 } from "lucide-react";
-import { CAMERA_AI_URL } from "../../utils/Url";
 import type { CameraResponse } from "./useGetCamera";
 
 interface Metrics {
@@ -21,119 +20,22 @@ interface Metrics {
 
 interface Props {
   camera: CameraResponse;
+  connected?: boolean;
+  metrics?: Metrics;
+  fps?: number;
+  latency?: number;
+  canvasRef?: React.Ref<HTMLCanvasElement>;
 }
 
-export default function StreamPanel({ camera }: Props) {
+export default function StreamPanel({
+  camera,
+  connected = true,
+  metrics = { current: 0, avg: 0, total: 0 },
+  fps = 0,
+  canvasRef,
+  latency = 0,
+}: Props) {
   const { id, cameraName, address } = camera;
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-
-  const [connected, setConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fps, setFps] = useState(0);
-  const [latency, setLatency] = useState(0);
-  const [fit, setFit] = useState(true);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-
-  const [metrics, setMetrics] = useState<Metrics>({
-    current: 0,
-    avg: 0,
-    total: 0,
-  });
-
-  const frameCount = useRef(0);
-  const lastFrame = useRef(performance.now());
-  const lastFpsUpdate = useRef(performance.now());
-
-  const drawBlob = useCallback(
-    (blob: Blob) => {
-      const url = URL.createObjectURL(blob);
-      const img = new Image();
-      img.onload = () => {
-        const canvas = canvasRef.current!;
-        const ctx = canvas.getContext("2d")!;
-        if (fit || isFullScreen) {
-          const maxWidth = isFullScreen
-            ? window.innerWidth
-            : Math.min(window.innerWidth * 0.45, img.width);
-          const maxHeight = isFullScreen ? window.innerHeight : img.height;
-          const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-        } else {
-          canvas.width = img.width;
-          canvas.height = img.height;
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-
-        setIsLoading(false);
-
-        const now = performance.now();
-        const dt = now - lastFrame.current;
-        lastFrame.current = now;
-
-        frameCount.current++;
-        if (now - lastFpsUpdate.current >= 1000) {
-          setFps(frameCount.current);
-          frameCount.current = 0;
-          lastFpsUpdate.current = now;
-        }
-
-        setLatency(Math.round(dt));
-      };
-      img.src = url;
-    },
-    [fit, isFullScreen]
-  );
-
-  const snapshot = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const url = canvas.toDataURL("image/jpeg", 0.9);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `snapshot_${id || "ALL"}_${Date.now()}.jpg`;
-    a.click();
-  };
-
-  useEffect(() => {
-    setIsLoading(true);
-    const ws = new WebSocket(`${CAMERA_AI_URL}`);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnected(true);
-      setIsLoading(false);
-    };
-
-    ws.onmessage = (event) => {
-      const blob = event.data instanceof Blob ? event.data : null;
-      if (blob) drawBlob(blob);
-      try {
-        const data = JSON.parse(event.data);
-        const { metrics } = data;
-        if (metrics)
-          setMetrics({
-            avg: metrics.current_avg_speed,
-            current: metrics.current_count,
-            total: 0,
-          });
-      } catch {}
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-    };
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [id, drawBlob]);
 
   return (
     <div
@@ -143,6 +45,7 @@ export default function StreamPanel({ camera }: Props) {
       <div className="absolute inset-0 backdrop-blur-3xl bg-white/[0.02]" />
 
       <div className="relative p-6">
+        {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-start gap-4">
             <div className="relative">
@@ -180,9 +83,9 @@ export default function StreamPanel({ camera }: Props) {
             </div>
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-2">
             <button
-              onClick={snapshot}
               className="group p-2.5 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-slate-300 hover:text-white transition-all duration-300 hover:scale-105 border border-slate-600/50 hover:border-cyan-500/50"
               title="Download Snapshot"
             >
@@ -192,48 +95,20 @@ export default function StreamPanel({ camera }: Props) {
               />
             </button>
 
-            <button
-              onClick={() => setIsFullScreen(!isFullScreen)}
-              className="group p-2.5 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-slate-300 hover:text-white transition-all duration-300 hover:scale-105 border border-slate-600/50 hover:border-cyan-500/50"
-              title={isFullScreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
-              {isFullScreen ? (
-                <Minimize2
-                  size={16}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              ) : (
-                <Maximize2
-                  size={16}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              )}
+            <button className="group p-2.5 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-slate-300 hover:text-white transition-all duration-300 hover:scale-105 border border-slate-600/50 hover:border-cyan-500/50">
+              <Maximize2
+                size={16}
+                className="group-hover:scale-110 transition-transform"
+              />
             </button>
           </div>
         </div>
 
+        {/* Video Canvas */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-cyan-400/20 bg-black">
           <canvas ref={canvasRef} className="w-full h-auto block" />
 
-          {isLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-md">
-              <Loader2 className="animate-spin text-cyan-400 mb-4" size={48} />
-              <p className="text-cyan-200 text-base font-semibold animate-pulse">
-                Establishing Connection...
-              </p>
-              <div className="mt-4 flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {connected && !isLoading && (
+          {connected && (
             <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-rose-500/90 backdrop-blur-sm rounded-full shadow-lg">
               <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
               <span className="text-xs font-bold text-white uppercase tracking-wider">
@@ -243,9 +118,9 @@ export default function StreamPanel({ camera }: Props) {
           )}
         </div>
 
+        {/* FPS & Latency */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           <div className="group relative bg-linear-to-br from-slate-800/80 to-slate-900/80 p-4 rounded-2xl border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:scale-105">
-            <div className="absolute inset-0 bg-linear-to-br from-cyan-500/0 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
             <div className="relative flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-400 font-medium mb-1 flex items-center gap-1">
@@ -264,7 +139,6 @@ export default function StreamPanel({ camera }: Props) {
           </div>
 
           <div className="group relative bg-linear-to-br from-slate-800/80 to-slate-900/80 p-4 rounded-2xl border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
-            <div className="absolute inset-0 bg-linear-to-br from-purple-500/0 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
             <div className="relative flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-400 font-medium mb-1 flex items-center gap-1">
@@ -283,7 +157,7 @@ export default function StreamPanel({ camera }: Props) {
           </div>
         </div>
 
-        {/* Metrics */}
+        {/* Metrics: Current, Avg, Total */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           {[
             {

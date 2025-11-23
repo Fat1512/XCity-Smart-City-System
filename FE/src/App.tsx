@@ -20,6 +20,8 @@ import ReportSelection from "./ui/ReportSelection";
 import VehicleSpeedMonitor from "./feature/traffic-monitor/VehicleSpeedMonitor";
 import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
 import CameraList from "./feature/traffic-monitor/CameraList";
+import TrafficDashboard from "./feature/traffic-monitor/TrafficDashboard";
+import { TrafficMonitorContextProvider } from "./context/TrafficMonitorContext";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -32,41 +34,48 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AirQualityProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/map" replace />} />
+        <TrafficMonitorContextProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<AppLayout />}>
+                <Route index element={<Navigate to="/map" replace />} />
 
-              <Route path="map" element={<FeatureSelection />} />
-              <Route path="/map/infrastructure" element={<BuildingList />} />
-              <Route path="/map/air" element={<SensorWrapper />} />
-              <Route path="/map/traffic" element={<VehicleSpeedMonitor />} />
+                <Route path="map" element={<FeatureSelection />} />
+                <Route path="/map/infrastructure" element={<BuildingList />} />
+                <Route path="/map/air" element={<SensorWrapper />} />
 
-              <Route path="report" element={<ReportSelection />} />
-              <Route path="/report/air" element={<AirQualityRealtime />} />
-            </Route>
+                <Route path="report" element={<ReportSelection />} />
+                <Route path="/report/air" element={<AirQualityRealtime />} />
 
-            <Route path="/home" element={<Home />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="infrastructures" element={<AdminBuildingList />} />
-              <Route path="infrastructure" element={<AdminBuildingWrapper />} />
-              <Route
-                path="infrastructure/:buildingId"
-                element={<AdminBuildingWrapper />}
-              />
-              <Route path="devices" element={<AirQualityList />} />
-              <Route
-                path="device/:deviceId"
-                element={<AirQualityAdminWrapper />}
-              />
-              <Route path="device" element={<AirQualityAdminWrapper />} />
+                <Route path="/map/traffic" element={<VehicleSpeedMonitor />} />
+                <Route path="/report/traffic" element={<TrafficDashboard />} />
+              </Route>
 
-              <Route path="traffic" element={<CameraList />} />
-              <Route path="camera" element={<CameraWrapper />} />
-              <Route path="camera/:cameraId" element={<CameraWrapper />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+              <Route path="/home" element={<Home />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="infrastructures" element={<AdminBuildingList />} />
+                <Route
+                  path="infrastructure"
+                  element={<AdminBuildingWrapper />}
+                />
+                <Route
+                  path="infrastructure/:buildingId"
+                  element={<AdminBuildingWrapper />}
+                />
+                <Route path="devices" element={<AirQualityList />} />
+                <Route
+                  path="device/:deviceId"
+                  element={<AirQualityAdminWrapper />}
+                />
+                <Route path="device" element={<AirQualityAdminWrapper />} />
+
+                <Route path="traffic" element={<CameraList />} />
+                <Route path="camera" element={<CameraWrapper />} />
+                <Route path="camera/:cameraId" element={<CameraWrapper />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TrafficMonitorContextProvider>
       </AirQualityProvider>
       <ToastContainer />
     </QueryClientProvider>

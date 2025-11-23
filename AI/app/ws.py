@@ -21,7 +21,6 @@ _global_frontend_clients: Set[WebSocket] = set()
 _services_lock = asyncio.Lock()
 _clients_lock = asyncio.Lock()
 
-_address_by_stream: Dict[str, Dict[str, Any]] = {}
 
 
 
@@ -111,8 +110,6 @@ async def process_ws(websocket: WebSocket):
         stream_id = cfg.get("stream_id", "default")
         svc = await get_or_create_service(stream_id)
 
-        if cfg.get("address"):
-            _address_by_stream[stream_id] = cfg.get("address")
 
         try:
             svc.init_stream(
@@ -135,6 +132,14 @@ async def process_ws(websocket: WebSocket):
         frame_count = 0
         publish_interval = 10
 
+        async def _send_bytes_to_client(client: WebSocket, data: bytes):
+            try:
+                await client.send_bytes(data)
+            except Exception:
+                async with _clients_lock:
+                    _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), client)
+                    _safe_discard(_global_frontend_clients, client)
+
         while True:
             msg = await websocket.receive()
             msg_type = msg.get("type")
@@ -150,12 +155,12 @@ async def process_ws(websocket: WebSocket):
                         try:
                             b64text = payload.decode("utf-8")
                             jpg_bytes = base64.b64decode(b64text)
-                        except:
+                        except Exception:
                             jpg_bytes = payload
 
                         arr = np.frombuffer(jpg_bytes, dtype=np.uint8)
                         frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-                    except:
+                    except Exception:
                         frame = None
 
                     if frame is None:
@@ -163,7 +168,7 @@ async def process_ws(websocket: WebSocket):
 
                     try:
                         annotated_frame, metrics = svc.process_frame(frame)
-                    except:
+                    except Exception:
                         continue
 
                     ok, encoded = cv2.imencode(".jpg", annotated_frame)
@@ -181,38 +186,31 @@ async def process_ws(websocket: WebSocket):
                             }
                         }))
                     except:
-                        pass
+                        print("OK")
+
+                    meta = {
+                        "type": "frame",
+                        "stream_id": stream_id,
+                        "ts": int(time.time() * 1000),
+                        "metrics": metrics,
+                    }
+                    meta_bytes = json.dumps(meta).encode("utf-8")
+                    import struct
+                    header = struct.pack(">I", len(meta_bytes))
+                    combined_payload = header + meta_bytes + jpg_out
 
                     async with _clients_lock:
                         recipients = list(_frontend_clients_by_stream.get(stream_id, set())) + list(_global_frontend_clients)
 
                     for client in recipients:
-                        try:
-                            await client.send_bytes(jpg_out)
-                        except:
-                            async with _clients_lock:
-                                _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), client)
-                                _safe_discard(_global_frontend_clients, client)
-
-                    metrics_payload = {
-                        "type": "metrics",
-                        "stream_id": stream_id,
-                        "ts": int(time.time() * 1000),
-                        "metrics": metrics
-                    }
-
-                    for client in recipients:
-                        try:
-                            await client.send_text(json.dumps(metrics_payload))
-                        except:
-                            async with _clients_lock:
-                                _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), client)
-                                _safe_discard(_global_frontend_clients, client)
+                        asyncio.create_task(_send_bytes_to_client(client, combined_payload))
 
                     frame_count += 1
                     if frame_count % publish_interval == 0:
-                        addr = _address_by_stream.get(stream_id)
-                        publish_to_orion_ld(stream_id, metrics, address=addr)
+                        try:
+                            publish_to_orion_ld(stream_id, metrics)
+                        except Exception:
+                            pass
 
                 elif "text" in msg:
                     try:
