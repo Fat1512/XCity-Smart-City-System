@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Flood Detection Monitor - Multi Stream</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0b0b0b 0%, #1a1a2e 100%);
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      color: #4fc3f7;
+      margin-bottom: 5px;
+    }
+
+    .controls-top {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"] {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(79, 195, 247, 0.2);
+      background: rgba(10, 10, 10, 0.6);
+      color: #eee;
+    }
+
+    button {
+      background: linear-gradient(135deg, #1f6feb 0%, #0066cc 100%);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #444 0%, #333 100%);
+    }
+
+    .streams-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+
+    .panel {
+      background: rgba(17, 17, 17, 0.9);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(79, 195, 247, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .panel .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .panel canvas {
+      width: 100%;
+      height: auto;
+      background: #000;
+      border-radius: 8px;
+      border: 2px solid rgba(79, 195, 247, 0.15);
+      display: block;
+    }
+
+    .panel .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .small {
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff7b7b;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-dot.connected {
+      background: #4fc3f7;
+    }
+
+    .metrics-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .metric {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(79, 195, 247, 0.1);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .metric .label {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 2px;
+    }
+
+    .metric .val {
+      color: #4fc3f7;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .metric.flood-yes .val {
+      color: #ff5252;
+    }
+
+    .metric.flood-no .val {
+      color: #69f0ae;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌊 Flood Detection Monitor – Multi Stream</h1>
+      <div class="small">Thêm stream vào bên dưới để mở nhiều camera cùng lúc</div>
+    </div>
+
+    <div class="controls-top">
+      <input id="streamIdInput" type="text" placeholder="Nhập Stream ID (ví dụ: flood01). Để trống để subscribe ALL"
+        style="min-width:260px;">
+      <button id="btnAdd">Add stream</button>
+      <div style="margin-left:auto; color:#9be;" class="small">WS endpoint: <code
+          id="wsUrl">ws://localhost:8000/ws/flood/frontend</code></div>
+    </div>
+
+    <div id="streams" class="streams-grid">
+      <!-- panels will be inserted here -->
+    </div>
+
+    <div style="height:28px"></div>
+  </div>
+
+  <script>
+    (() => {
+      const WS_ENDPOINT_EL = document.getElementById('wsUrl');
+      const streamsContainer = document.getElementById('streams');
+      const streamInput = document.getElementById('streamIdInput');
+      const btnAdd = document.getElementById('btnAdd');
+
+      // Change this if your backend WS url is different
+      const WS_BASE = WS_ENDPOINT_EL.textContent || "ws://localhost:8000/ws/flood/frontend";
+
+      // Keep track of panels by unique id
+      const panels = new Map();
+
+      function createPanel(streamId) {
+        // Create DOM
+        const panelId = `panel_${Math.random().toString(36).slice(2, 9)}`;
+        const root = document.createElement('div');
+        root.className = 'panel';
+        root.id = panelId;
+
+        root.innerHTML = `
+      <div class="panel-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="status-dot" id="${panelId}_dot"></div>
+          <div>
+            <div style="font-weight:600">${streamId || 'ALL STREAMS'}</div>
+            <div class="small">stream id: <code id="${panelId}_id">${streamId || ''}</code></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button id="${panelId}_connect">Connect</button>
+          <button id="${panelId}_disconnect" class="secondary">Disconnect</button>
+          <button id="${panelId}_snap" class="secondary">Snapshot</button>
+          <button id="${panelId}_fit" class="secondary">Fit: ON</button>
+          <button id="${panelId}_close" class="secondary">Close</button>
+        </div>
+      </div>
+      <canvas id="${panelId}_canvas"></canvas>
+      <div class="meta">
+        <div class="small">FPS: <span id="${panelId}_fps">0</span></div>
+        <div class="small">Latency: <span id="${panelId}_lat">0</span>ms</div>
+      </div>
+      <div class="metrics-row" id="${panelId}_metrics">
+        <div class="metric" id="${panelId}_flood_status">
+          <div class="label">Flood Status</div>
+          <div class="val">N/A</div>
+        </div>
+        <div class="metric">
+          <div class="label">Confidence</div>
+          <div class="val" id="${panelId}_score">0.00</div>
+        </div>
+        <div class="metric">
+          <div class="label">Frames</div>
+          <div class="val" id="${panelId}_frames">0</div>
+        </div>
+      </div>
+    `;
+
+        streamsContainer.prepend(root);
+
+        // Panel state
+        const ctx = root.querySelector('canvas').getContext('2d');
+        const canvas = root.querySelector('canvas');
+        let fit = true;
+        let ws = null;
+        let connected = false;
+        let lastFrameTime = performance.now();
+        let frames = 0;
+        let lastFpsUpdate = performance.now();
+        let fps = 0;
+
+        const dot = document.getElementById(`${panelId}_dot`);
+        const floodStatusEl = document.getElementById(`${panelId}_flood_status`);
+        const scoreEl = document.getElementById(`${panelId}_score`);
+        const framesEl = document.getElementById(`${panelId}_frames`);
+        const fpsEl = document.getElementById(`${panelId}_fps`);
+        const latEl = document.getElementById(`${panelId}_lat`);
+
+        function setStatus(isConnected) {
+          if (isConnected) dot.classList.add('connected'); 
+          else dot.classList.remove('connected');
+        }
+
+        function measureFrame() {
+          const now = performance.now();
+          const dt = now - lastFrameTime;
+          lastFrameTime = now;
+          frames++;
+          if (now - lastFpsUpdate >= 1000) {
+            fps = Math.round((frames / ((now - lastFpsUpdate) / 1000)) * 10) / 10;
+            frames = 0;
+            lastFpsUpdate = now;
+          }
+          fpsEl.textContent = fps;
+          latEl.textContent = Math.round(dt);
+        }
+
+        function drawBlob(blob) {
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.onload = () => {
+            if (fit) {
+              const maxW = Math.min(window.innerWidth * 0.45, img.width);
+              const scale = maxW / img.width;
+              canvas.width = Math.round(img.width * scale);
+              canvas.height = Math.round(img.height * scale);
+            } else {
+              canvas.width = img.width;
+              canvas.height = img.height;
+            }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            measureFrame();
+          };
+          img.src = url;
+        }
+
+        function updateMetrics(metrics) {
+          if (!metrics) return;
+
+          // Extract values from NGSI-LD format
+          const isFlood = metrics.is_flood?.value ?? false;
+          const score = metrics.score?.value ?? 0;
+          const framesProcessed = metrics.frames_processed?.value ?? 0;
+
+          // Update flood status
+          const statusVal = floodStatusEl.querySelector('.val');
+          statusVal.textContent = isFlood ? 'FLOOD' : 'NORMAL';
+          floodStatusEl.className = 'metric';
+          if (isFlood) {
+            floodStatusEl.classList.add('flood-yes');
+          } else {
+            floodStatusEl.classList.add('flood-no');
+          }
+
+          // Update other metrics
+          scoreEl.textContent = score.toFixed(2);
+          framesEl.textContent = framesProcessed;
+        }
+
+        async function connect() {
+          if (connected) return;
+          try {
+            ws = new WebSocket(WS_BASE);
+            ws.binaryType = "arraybuffer";
+            
+            ws.onopen = () => {
+              // Send subscribe immediately
+              ws.send(JSON.stringify({ action: "subscribe", stream_id: (streamId || null) }));
+              connected = true;
+              setStatus(true);
+              console.log(`Connected to flood stream: ${streamId || 'ALL'}`);
+            };
+
+            ws.onmessage = async (ev) => {
+              try {
+                // Convert Blob -> ArrayBuffer if needed
+                const arrBuf = ev.data instanceof ArrayBuffer ? ev.data : await ev.data.arrayBuffer();
+                const view = new DataView(arrBuf);
+
+                // First 4 bytes: JSON length (big endian)
+                const jsonLen = view.getUint32(0, false);
+
+                // Extract JSON meta
+                const jsonBytes = new Uint8Array(arrBuf, 4, jsonLen);
+                const jsonText = new TextDecoder().decode(jsonBytes);
+
+                // Parse JSON
+                let meta = null;
+                try {
+                  meta = JSON.parse(jsonText);
+                  console.log("META:", meta);
+                } catch (e) {
+                  console.error("Failed to parse meta:", e, jsonText);
+                  return;
+                }
+
+                // JPEG bytes start after JSON
+                const jpegStart = 4 + jsonLen;
+                const jpegBuf = arrBuf.slice(jpegStart);
+
+                // Create blob and display
+                const jpegBlob = new Blob([jpegBuf], { type: "image/jpeg" });
+                drawBlob(jpegBlob);
+
+                // Update metrics
+                if (meta && meta.metrics) {
+                  updateMetrics(meta.metrics);
+                }
+              } catch (e) {
+                console.error("Error processing message:", e);
+              }
+            };
+
+            ws.onclose = () => {
+              connected = false;
+              setStatus(false);
+              console.log(`Disconnected from flood stream: ${streamId || 'ALL'}`);
+            };
+
+            ws.onerror = (err) => {
+              console.warn("WebSocket error:", err);
+            };
+          } catch (e) {
+            console.error("Connection error:", e);
+          }
+        }
+
+        function disconnect() {
+          if (ws) {
+            try { ws.close(); } catch (e) { }
+            ws = null;
+          }
+          connected = false;
+          setStatus(false);
+        }
+
+        function snapshot() {
+          if (canvas.width === 0) return;
+          const url = canvas.toDataURL("image/jpeg", 0.9);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flood_snapshot_${streamId || 'ALL'}_${Date.now()}.jpg`;
+          a.click();
+        }
+
+        // Hook buttons
+        document.getElementById(`${panelId}_connect`).addEventListener('click', connect);
+        document.getElementById(`${panelId}_disconnect`).addEventListener('click', disconnect);
+        document.getElementById(`${panelId}_snap`).addEventListener('click', snapshot);
+        document.getElementById(`${panelId}_fit`).addEventListener('click', () => {
+          fit = !fit;
+          document.getElementById(`${panelId}_fit`).textContent = `Fit: ${fit ? 'ON' : 'OFF'}`;
+        });
+        document.getElementById(`${panelId}_close`).addEventListener('click', () => {
+          disconnect();
+          root.remove();
+          panels.delete(panelId);
+        });
+
+        // Return object to manage panel externally
+        const obj = {
+          id: panelId,
+          streamId,
+          root,
+          connect,
+          disconnect
+        };
+
+        panels.set(panelId, obj);
+        return obj;
+      }
+
+      btnAdd.addEventListener('click', () => {
+        const sid = streamInput.value.trim();
+        createPanel(sid);
+        streamInput.value = '';
+      });
+
+      // Add a default panel for convenience
+      createPanel('default');
+
+    })();
+  </script>
+</body>
+
+</html>

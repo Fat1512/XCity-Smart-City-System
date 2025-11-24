@@ -17,12 +17,24 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import router as api_router
-from app.ws import router as ws_router
+from app.ws_traffic import router as ws_traffic_router
+from app.ws_flood import router as ws_flood_router
 
 from service.mini_rag_service import MiniRagService
 from components.watcher.local_watcher import LocalFolderWatcher
 from components.watcher.rss_watcher import RSSWatcher
 
+# Import and initialize ToolManager to register tools
+from components.manager import ToolManager
+
+# ===============================
+# INITIALIZE TOOLS
+# ===============================
+def initialize_tools():
+    """Initialize and register all tools including FloodDetector"""
+    tool_manager = ToolManager()
+    tool_manager.auto_register_from_package()
+    print(f"Registered tools: {[t['name'] for t in tool_manager.list_tools()]}")
 
 # ===============================
 # START WATCHERS (background)
@@ -67,6 +79,9 @@ def run_watcher_thread():
 # FASTAPI APP
 # ===============================
 def create_app():
+    # Initialize tools first
+    initialize_tools()
+    
     app = FastAPI(title="AI API + WS Stream")
 
     app.add_middleware(
@@ -77,8 +92,26 @@ def create_app():
     )
 
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(ws_traffic_router)
+    app.include_router(ws_flood_router)
 
-    app.include_router(ws_router)
+    @app.get("/")
+    async def root():
+        return {
+            "message": "AI API + WebSocket Stream Server",
+            "endpoints": {
+                "traffic": {
+                    "frontend": "/ws/frontend",
+                    "process": "/ws/process",
+                    "active_streams": "/ws/active_streams"
+                },
+                "flood": {
+                    "frontend": "/ws/flood/frontend",
+                    "process": "/ws/process/flood",
+                    "active_streams": "/ws/flood/active_streams"
+                }
+            }
+        }
 
     return app
 
