@@ -1,17 +1,22 @@
-from typing import Tuple, Dict, Any, Optional, List
+from typing import Tuple, Dict, Optional, List
 import logging
 import osmnx as ox
 import networkx as nx
 from osmnx.projection import project_geometry
-from osmnx.distance import add_edge_lengths, nearest_edges, nearest_nodes
+from osmnx.distance import add_edge_lengths
 from shapely.geometry import Point
-from .sensors import get_sensors_from_orion, project_lonlat_to_xy
 
 logger = logging.getLogger("route_tool")
 
 _graph = None
 _graph_p = None
 _graph_loaded = False
+
+def project_lonlat_to_xy(Gp_local, lon: float, lat: float) -> Tuple[float, float]:
+    """Chuyển đổi tọa độ Lat/Lon sang hệ tọa độ XY của đồ thị đã project."""
+    g = Point(lon, lat)
+    gproj, _ = project_geometry(g, to_crs=Gp_local.graph.get("crs"))
+    return gproj.x, gproj.y
 
 def _nearest_node_fallback(Gp_local, x: float, y: float) -> Optional[int]:
     best = None
@@ -56,7 +61,6 @@ def _find_reachable_node(G_local, Gp_local, x: float, y: float, other_node: Opti
                 wcc_map[n] = comp_id
         other_comp = wcc_map.get(other_node)
     except Exception:
-        logger.debug("Failed building WCC map, returning first candidate")
         return candidates[0]
 
     for n in candidates:
@@ -78,105 +82,44 @@ def _find_reachable_node(G_local, Gp_local, x: float, y: float, other_node: Opti
 def _load_graph_cache(center_point: Tuple[float, float] = (10.7769, 106.7009), dist: int = 2000, cache_path: str = "cache/hcm.graphml"):
     global _graph, _graph_p, _graph_loaded
     if _graph is not None and _graph_p is not None and _graph_loaded:
-        logger.debug("Using cached graph")
         return _graph, _graph_p
 
     try:
         logger.info("Loading graph from cache: %s", cache_path)
         _graph = ox.load_graphml(cache_path)
     except Exception:
-        logger.info("Cache not found or failed to load, downloading graph around %s (dist=%s)", center_point, dist)
+        logger.info("Cache not found, downloading graph around %s", center_point)
         _graph = ox.graph_from_point(center_point, dist=dist, network_type="drive")
         try:
             ox.save_graphml(_graph, cache_path)
-            logger.debug("Saved graph to cache")
         except Exception:
-            logger.debug("Failed to save graph cache (ignored)")
+            pass
 
     _graph = add_edge_lengths(_graph)
     _graph_p = ox.project_graph(_graph)
     _graph_loaded = True
     return _graph, _graph_p
 
-def _compute_edge_travel_times(G_local, Gp_local, default_speed_kmh: float = 50.0, use_sensors: bool = False, ngsi_url: str = "http://localhost:1026/ngsi-ld/v1", sensor_type: str = "TrafficSensor", simulated_scale: float = 1.0, simulated_edge_delay: Dict = None) -> Dict[Tuple[int, int, int], float]:
-    simulated_edge_delay = simulated_edge_delay or {}
+def _compute_edge_travel_times(G_local, default_speed_kmh: float = 50.0) -> Dict[Tuple[int, int, int], float]:
     edge_tt: Dict[Tuple[int, int, int], float] = {}
 
     for u, v, k, data in G_local.edges(keys=True, data=True):
         length_m = data.get("length", 1.0)
         maxspeed = data.get("maxspeed")
+        
         if isinstance(maxspeed, list):
             try:
                 maxspeed = float(maxspeed[0])
             except Exception:
                 maxspeed = None
+        
         try:
             speed_kmh = float(maxspeed) if maxspeed else default_speed_kmh
         except Exception:
             speed_kmh = default_speed_kmh
+            
+        # Tính thời gian = quãng đường / vận tốc (đổi km/h sang m/s)
         tt = length_m / (speed_kmh * 1000.0 / 3600.0)
         edge_tt[(u, v, k)] = tt
-
-    if use_sensors:
-        sensors = get_sensors_from_orion(ngsi_url, sensor_type)
-        for s in sensors:
-            loc = s.get("location") or s.get("Location") or s.get("geo")
-            if not loc:
-                continue
-            coords = None
-            if isinstance(loc, dict):
-                val = loc.get("value")
-                if isinstance(val, dict) and "coordinates" in val:
-                    coords = val["coordinates"]
-                elif "coordinates" in loc:
-                    coords = loc["coordinates"]
-            if not coords or len(coords) < 2:
-                continue
-            lon = float(coords[0]); lat = float(coords[1])
-            try:
-                x, y = project_lonlat_to_xy(Gp_local, lon, lat)
-            except Exception:
-                continue
-            try:
-                u, v, k = nearest_edges(Gp_local, x, y)
-            except Exception:
-                continue
-
-            avg = s.get("avgSpeed", {}).get("value")
-            vc = s.get("vehicleCount", {}).get("value")
-            try:
-                avg_v = float(avg) if avg is not None else None
-            except Exception:
-                avg_v = None
-            try:
-                vc_v = float(vc) if vc is not None else None
-            except Exception:
-                vc_v = None
-
-            if (u, v, k) in G_local.edges(keys=True):
-                length_m = G_local[u][v][k].get("length", 1.0)
-            else:
-                data_dict = G_local.get_edge_data(u, v)
-                if data_dict:
-                    first_k = list(data_dict.keys())[0]
-                    length_m = G_local[u][v][first_k].get("length", 1.0)
-                    k = first_k
-                else:
-                    length_m = 100.0
-
-            if avg_v and avg_v > 0:
-                tt = length_m / (avg_v * 1000.0 / 3600.0)
-                if vc_v:
-                    capacity = 30.0
-                    alpha = 0.5
-                    factor = 1 + alpha * min(3.0, vc_v / capacity)
-                    tt = tt * factor
-                edge_tt[(u, v, k)] = tt
-
-    for key in list(edge_tt.keys()):
-        tt = float(edge_tt[key]) * simulated_scale
-        if key in simulated_edge_delay:
-            tt += float(simulated_edge_delay[key])
-        edge_tt[key] = tt
 
     return edge_tt

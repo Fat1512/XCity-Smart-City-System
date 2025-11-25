@@ -18,10 +18,8 @@ class FloodDetector(Tool):
     category = "vision"
     enabled = True
 
-    def __init__(self, model_name: Optional[str] = None, use_real_model: bool = False):
-        # self.model_name = model_name or "prithivMLmods/Flood-Image-Detection"
-        self.model_name = "ai4ca/flood_detection"
-        self.use_real_model = use_real_model and (pipeline is not None)
+    def __init__(self, model_name: Optional[str] = None):
+        self.model_name = model_name or "prithivMLmods/Flood-Image-Detection"
         self.pipe: Optional[Pipeline] = None
         self._loaded = False
 
@@ -32,8 +30,7 @@ class FloodDetector(Tool):
     def _ensure_loaded(self):
         if self._loaded:
             return
-        if self.use_real_model:
-            self.pipe = pipeline("image-classification", model=self.model_name)
+        self.pipe = pipeline("image-classification", model=self.model_name)
         self._loaded = True
 
     def _load_image_from_input(self, image: Any) -> Image.Image:
@@ -70,7 +67,7 @@ class FloodDetector(Tool):
         return {"predictions": predictions, "is_flood": is_flood, "metrics": metrics}
 
     def init_stream_mode(self, **kwargs) -> bool:
-        if kwargs.get("preload", False) and self.use_real_model:
+        if kwargs.get("preload", False):
             self._ensure_loaded()
         self._metrics = {}
         self._frames_processed = 0
@@ -93,21 +90,16 @@ class FloodDetector(Tool):
         score = 0.0
 
         try:
-            if self.use_real_model:
-                self._ensure_loaded()
-                pil = Image.fromarray(rgb)
-                preds = self.pipe(pil, top_k=3)
-                best = preds[0] if preds else {"label": "", "score": 0.0}
-                label = best.get("label", "").lower()
-                score = float(best.get("score", 0.0))
-                is_flood = "flood" in label or "flooded" in label
-            else:
-                h, w = rgb.shape[:2]
-                lower = rgb[h // 2:, :, :]
-                blue = lower[:, :, 2].astype(float)
-                mean_blue = blue.mean()
-                score = min(1.0, mean_blue / 255.0)
-                is_flood = score > 0.45
+            self._ensure_loaded()
+            pil = Image.fromarray(rgb)
+            
+            preds = self.pipe(pil, top_k=3)
+            best = preds[0] if preds else {"label": "", "score": 0.0}
+            label = best.get("label", "").lower()
+            
+            score = float(best.get("score", 0.0))
+            is_flood = "flood" in label or "flooded" in label
+            
         except Exception:
             is_flood = False
             score = 0.0
