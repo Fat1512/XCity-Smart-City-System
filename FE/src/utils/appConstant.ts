@@ -151,3 +151,27 @@ export const CONTROLLED_PROPERTIES = [
   { label: "Weather Conditions", value: "weatherConditions" },
   { label: "Weight", value: "weight" },
 ];
+
+export const FORMAT = [
+  {
+    label: "CSV",
+    color: "blue",
+    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  },
+  {
+    label: "JSON",
+    color: "purple",
+    icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
+  },
+  {
+    label: "HTML",
+    color: "orange",
+    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  },
+  {
+    label: "XML",
+    color: "green",
+    icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
+  },
+  { label: "RDF", color: "indigo", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+];

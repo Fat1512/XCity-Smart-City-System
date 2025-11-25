@@ -3,10 +3,7 @@ package com.tpd.XCity.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpd.XCity.dto.request.CameraCreateRequest;
-import com.tpd.XCity.dto.response.CameraResponse;
-import com.tpd.XCity.dto.response.DeviceResponse;
-import com.tpd.XCity.dto.response.MessageResponse;
-import com.tpd.XCity.dto.response.PageResponse;
+import com.tpd.XCity.dto.response.*;
 import com.tpd.XCity.entity.device.Camera;
 import com.tpd.XCity.entity.device.Device;
 import com.tpd.XCity.entity.device.DeviceStatus;
@@ -52,6 +49,15 @@ public class CameraServiceImpl implements CameraService {
                 .orElseThrow(() -> new ResourceNotFoundExeption("Not found camera"));
 
         return cameraMapper.convertToResponse(camera);
+    }
+
+    @Override
+    public List<CameraOverviewResponse> getAllCamera() {
+        List<CameraOverviewResponse> cameraOverviewResponses = cameraRepository.findAll().stream()
+                .map(c -> cameraMapper.convertToOverviewResponse(c))
+                .collect(Collectors.toList());
+
+        return cameraOverviewResponses;
     }
 
     @Override

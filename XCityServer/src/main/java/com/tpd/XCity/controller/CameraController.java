@@ -2,6 +2,7 @@ package com.tpd.XCity.controller;
 
 import com.tpd.XCity.dto.request.CameraCreateRequest;
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
+import com.tpd.XCity.dto.response.CameraOverviewResponse;
 import com.tpd.XCity.dto.response.CameraResponse;
 import com.tpd.XCity.dto.response.MessageResponse;
 import com.tpd.XCity.dto.response.PageResponse;
@@ -9,6 +10,8 @@ import com.tpd.XCity.service.CameraService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.tpd.XCity.utils.AppConstant.PAGE_DEFAULT;
 import static com.tpd.XCity.utils.AppConstant.PAGE_SIZE;
@@ -36,6 +39,12 @@ public class CameraController {
     public ResponseEntity<MessageResponse> updateCamera(@PathVariable String id, @RequestBody CameraCreateRequest request) {
         MessageResponse response = cameraService.updateCamera(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/all-camera")
+    public ResponseEntity<List<CameraOverviewResponse>> getCameras() {
+        List<CameraOverviewResponse> cameraOverviewResponses = cameraService.getAllCamera();
+        return ResponseEntity.ok(cameraOverviewResponses);
     }
 
     @GetMapping("/cameras")

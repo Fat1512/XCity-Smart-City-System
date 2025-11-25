@@ -56,7 +56,7 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
 
     try:
         observed_at = datetime.now(timezone.utc).isoformat()
-        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id}"
+        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id.split(":")[-1]}"
         entity_type = "TrafficFlowObserved"
 
         cur_count = float(metrics.get("current_count", 0) or 0)
@@ -95,9 +95,9 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
             },
             "refDevice": {
                 "type": "Relationship",
-                "value": "urn:ngsi-ld:Camera:70027910-094d-4567-82bf-341ad3156f8e",
+                "object": sensor_id,
                 "observedAt": observed_at
-            },
+            }
         }
 
         entity_body = {

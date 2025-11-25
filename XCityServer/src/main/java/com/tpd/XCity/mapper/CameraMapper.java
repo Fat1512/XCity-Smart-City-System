@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tpd.XCity.dto.request.CameraCreateRequest;
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
+import com.tpd.XCity.dto.response.CameraOverviewResponse;
 import com.tpd.XCity.dto.response.CameraResponse;
 import com.tpd.XCity.entity.device.Camera;
 import com.tpd.XCity.entity.device.Device;
@@ -18,6 +19,8 @@ public interface CameraMapper {
     Camera convertToEntity(CameraCreateRequest request);
 
     CameraResponse convertToResponse(Camera camera);
+
+    CameraOverviewResponse convertToOverviewResponse(Camera camera);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateCamera(CameraCreateRequest request, @MappingTarget Camera camera);

@@ -102,9 +102,4 @@ async def run_stream():
         cap.release()
 
 if __name__ == "__main__":
-    import torch
-
-    print(torch.version.cuda)  # 11.7
-    print(torch.cuda.is_available())  # True
-    print(torch.cuda.get_device_name(0))
-    # asyncio.run(run_stream())
+    asyncio.run(run_stream())
