@@ -2,6 +2,10 @@ import redis
 import json
 import os
 
+from components.logging.logger import setup_logger
+
+logger = setup_logger("history_service")
+
 class RedisHistoryService:
     def __init__(self):
         self.ttl = int(os.getenv("CHAT_HISTORY_TTL", 3600))
@@ -19,10 +23,10 @@ class RedisHistoryService:
             )
             self.client.ping()
             self.is_available = True
-            print(f"Successfully connected to Redis at {os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}")
+            logger.info(f"Successfully connected to Redis at {os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}")
         except Exception as e:
-            print(f"ERROR: Cannot connect to Redis: {e}")
-            print("Chat history service will be DISABLED.")
+            logger.info(f"ERROR: Cannot connect to Redis: {e}")
+            logger.info("Chat history service will be DISABLED.")
             
     def load_history(self, conversation_id: str) -> list:
         if not self.is_available:
@@ -37,7 +41,7 @@ class RedisHistoryService:
             else:
                 return []
         except Exception as e:
-            print(f"Error loading history {conversation_id} from Redis: {e}")
+            logger.info(f"Error loading history {conversation_id} from Redis: {e}")
             return []
 
     def save_history(self, conversation_id: str, history_list: list):
@@ -54,4 +58,4 @@ class RedisHistoryService:
                 self.client.expire(redis_key, self.ttl)
                 
         except Exception as e:
-            print(f"Error saving history {conversation_id} to Redis: {e}")
+            logger.info(f"Error saving history {conversation_id} to Redis: {e}")

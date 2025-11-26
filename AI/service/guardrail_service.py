@@ -1,12 +1,14 @@
 from components.manager import GenerationManager, PromptManager
+from components.logging.logger import setup_logger
 from typing import List, Dict, Any, Tuple
 
+logger = setup_logger("guardrail_service")
 
 class RAGGuardrailService:
     def __init__(self):
         self.llm = GenerationManager()
         self.prompts = PromptManager()
-        print("RAGGuardrailService initialized.")
+        logger.info("RAGGuardrailService initialized.")
 
     def route_intent(self, query: str) -> Tuple[str, Dict[str, Any]]:
         try:
@@ -25,7 +27,7 @@ class RAGGuardrailService:
             if "META_QUERY" in intent:
                 return "META_QUERY", router_tokens
             if "OUT_OF_DOMAIN" in intent:
-                print(f"Guardrail triggered: Out-of-domain query detected. Query: '{query}'")
+                logger.info(f"Guardrail triggered: Out-of-domain query detected. Query: '{query}'")
                 return "OUT_OF_DOMAIN", router_tokens
             if "ROUTE" in intent:
                 return "ROUTE", router_tokens
@@ -33,7 +35,7 @@ class RAGGuardrailService:
             return "RAG_QUERY", router_tokens
             
         except Exception as e:
-            print(f"Error in intent routing: {e}. Defaulting to RAG_QUERY.")
+            logger.info(f"Error in intent routing: {e}. Defaulting to RAG_QUERY.")
             return "RAG_QUERY", {}
 
     def check_retrieval(self, context_chunks: List[str]) -> Tuple[bool, str]:

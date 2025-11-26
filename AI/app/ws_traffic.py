@@ -110,7 +110,6 @@ async def process_ws(websocket: WebSocket):
         stream_id = cfg.get("stream_id", "default")
         svc = await get_or_create_service(stream_id)
 
-
         try:
             svc.init_stream(
                 image_pts=cfg.get("image_pts"),
@@ -131,6 +130,9 @@ async def process_ws(websocket: WebSocket):
 
         frame_count = 0
         publish_interval = 1
+
+        send_interval = 5.0
+        last_send_ts = 0.0
 
         async def _send_bytes_to_client(client: WebSocket, data: bytes):
             try:
@@ -166,6 +168,12 @@ async def process_ws(websocket: WebSocket):
                     if frame is None:
                         continue
 
+                    now = time.monotonic()
+                    if now - last_send_ts < send_interval:
+                        continue
+                    last_send_ts = now
+
+                    # process frame
                     try:
                         annotated_frame, metrics = svc.process_frame(frame)
                     except Exception:
@@ -200,9 +208,10 @@ async def process_ws(websocket: WebSocket):
                     combined_payload = header + meta_bytes + jpg_out
 
                     async with _clients_lock:
-                        recipients = list(_frontend_clients_by_stream.get(stream_id, set())) + list(_global_frontend_clients)
-
-                    await asyncio.sleep(5)
+                        recipients = (
+                            list(_frontend_clients_by_stream.get(stream_id, set()))
+                            + list(_global_frontend_clients)
+                        )
 
                     for client in recipients:
                         asyncio.create_task(_send_bytes_to_client(client, combined_payload))
@@ -226,6 +235,7 @@ async def process_ws(websocket: WebSocket):
     finally:
         async with _clients_lock:
             _safe_discard(_process_clients_by_stream.get(stream_id, set()), websocket)
+
 
 
 @router.get("/ws/active_streams")

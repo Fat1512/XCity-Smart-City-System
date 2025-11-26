@@ -20,18 +20,9 @@ from service.history_service import RedisHistoryService
 import re
 COORD_PAIR_RE = re.compile(
     r"(-?\d+(?:\.\d+)?)\s*[,;]\s*(-?\d+(?:\.\d+)?)"
-)  # matches lat,lon or lon,lat pairs
+)
 
 def parse_two_coord_pairs(text: str):
-    """
-    Try to find two coordinate pairs in text.
-    Returns ((lat1, lon1), (lat2, lon2)) or None.
-    Accepts patterns like:
-      - "10.7769,106.7009 to 10.78,106.71"
-      - "from 10.7769,106.7009 -> 10.78,106.71"
-      - "10.7769, 106.7009 10.78, 106.71"
-    NOTE: No disambiguation lat/lon — we assume format is [lat, lon].
-    """
     matches = COORD_PAIR_RE.findall(text)
     if len(matches) < 2:
         return None
@@ -83,17 +74,12 @@ class MiniRagService:
 
         coord_pairs = parse_two_coord_pairs(query)
 
-        # If either classifier says ROUTE or text contains two coords -> treat as ROUTE
         if intent == "ROUTE" or coord_pairs:
-            # normalize start/end
             if coord_pairs:
                 start, end = coord_pairs
             else:
-                # if intent says ROUTE but no coords, you might want to ask follow-up or try NER/geocoding.
-                # here we ask user to provide coordinates (simple safe fallback)
                 return {"answer": "Bạn muốn tính đường — vui lòng cung cấp hai tọa độ theo định dạng: lat,lon ví dụ 10.7769,106.7009 -> 10.78,106.71."}
 
-            # call tool via ToolManager
             tm = ToolManager()
             try:
                 tm.auto_register_from_package()
@@ -104,13 +90,10 @@ class MiniRagService:
                 return {"answer": "Chức năng tính đường chưa được bật trên hệ thống."}
 
             try:
-                # execute will validate inputs via Tool.validate_input
                 geojson = tm.execute("route_tool", start, end)
             except Exception as e:
-                # friendly error and fallback
                 return {"answer": f"Không thể tính đường: {e}"}
 
-            # summarize result via LLM to keep tone + language consistent
             prompt = (
                 f"Người dùng: {query}\n\n"
                 "Bạn là trợ lý bằng tiếng Việt. Dưới đây là kết quả route (GeoJSON FeatureCollection):\n"
