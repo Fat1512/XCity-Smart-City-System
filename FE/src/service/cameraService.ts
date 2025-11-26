@@ -14,6 +14,16 @@ export async function getCamera(id: string) {
     );
   }
 }
+export async function getAlCamera() {
+  try {
+    const res = await API.get(`/all-camera`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
 
 export async function getCameras({ page, size, kw }: CameraParams) {
   try {

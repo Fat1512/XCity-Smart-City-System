@@ -45,7 +45,6 @@ export default function StreamPanel({
       <div className="absolute inset-0 backdrop-blur-3xl bg-white/[0.02]" />
 
       <div className="relative p-6">
-        {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-start gap-4">
             <div className="relative">
@@ -83,7 +82,6 @@ export default function StreamPanel({
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-2">
             <button
               className="group p-2.5 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-slate-300 hover:text-white transition-all duration-300 hover:scale-105 border border-slate-600/50 hover:border-cyan-500/50"
@@ -104,7 +102,6 @@ export default function StreamPanel({
           </div>
         </div>
 
-        {/* Video Canvas */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-cyan-400/20 bg-black">
           <canvas ref={canvasRef} className="w-full h-auto block" />
 
@@ -157,8 +154,7 @@ export default function StreamPanel({
           </div>
         </div>
 
-        {/* Metrics: Current, Avg, Total */}
-        <div className="grid grid-cols-3 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-2 mt-4">
           {[
             {
               label: "Current",
@@ -171,12 +167,6 @@ export default function StreamPanel({
               value: metrics.avg,
               color: "cyan",
               icon: Gauge,
-            },
-            {
-              label: "Total",
-              value: metrics.total,
-              color: "cyan",
-              icon: TrendingUp,
             },
           ].map((m) => (
             <div

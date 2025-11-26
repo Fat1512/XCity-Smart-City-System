@@ -2,7 +2,7 @@
   {
     "stream_id": "urn:ngsi-ld:Camera:70027910-094d-4567-82bf-341ad3156f8e",
     "video_path": "video2.mp4",
-    "limit_fps": 3,
+    "limit_fps": 5,
     "image_pts": [
       [6, 80],
       [308, 4],
@@ -19,6 +19,26 @@
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
     "yolo_weights": "yolo11n.pt"
+  },
+  {
+    "stream_id": "urn:ngsi-ld:Camera:b1a74c9e-b3b1-4192-b350-e9927e091440",
+    "video_path": "video3.mp4",
+    "limit_fps": 5,
+    "image_pts": [
+      [10, 121],
+      [243, 347],
+      [628, 199],
+      [362, 96]
+    ],
+    "world_pts": [
+      [0, 0],
+      [15, 0],
+      [15, 15],
+      [0, 15]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "yolo_weights": "yolo11n.pt"
   }
-
 ]

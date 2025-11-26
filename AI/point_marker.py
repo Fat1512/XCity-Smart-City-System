@@ -5,7 +5,7 @@ from typing import Any
 import supervision as sv
 from matplotlib.pyplot import imshow
 
-SOURCE_VIDEO = "video2.mp4"
+SOURCE_VIDEO = "video3.mp4"
 
 
 class PointMarker:

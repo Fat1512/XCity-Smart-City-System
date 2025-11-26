@@ -1,3 +1,5 @@
+import { FORMAT } from "../../../utils/appConstant";
+
 interface SensorValues {
   pm25: number | null;
   pm1: number | null;
@@ -20,30 +22,6 @@ interface DownloadSectionProps {
   selectedMonth: string;
 }
 
-const FORMAT = [
-  {
-    label: "CSV",
-    color: "blue",
-    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-  },
-  {
-    label: "JSON",
-    color: "purple",
-    icon: "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4",
-  },
-  {
-    label: "HTML",
-    color: "orange",
-    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-  },
-  {
-    label: "XML",
-    color: "green",
-    icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
-  },
-  { label: "RDF", color: "indigo", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-];
-
 const DownloadSection: React.FC<DownloadSectionProps> = ({
   selectedSensors,
   viewMode,
@@ -56,19 +34,17 @@ const DownloadSection: React.FC<DownloadSectionProps> = ({
 
   const formatDateObserved = (dateObserved: number | string) => {
     if (typeof dateObserved === "number") {
-      // Assume it's a Unix timestamp
       return new Date(dateObserved * 1000).toISOString();
     }
-    // Assume it's already a date string like "2025-11-22"
+
     return dateObserved;
   };
 
   const formatDateObservedForDisplay = (dateObserved: number | string) => {
     if (typeof dateObserved === "number") {
-      // Assume it's a Unix timestamp
       return new Date(dateObserved * 1000).toLocaleString();
     }
-    // Convert date string to display format
+
     return new Date(dateObserved).toLocaleString();
   };
 
