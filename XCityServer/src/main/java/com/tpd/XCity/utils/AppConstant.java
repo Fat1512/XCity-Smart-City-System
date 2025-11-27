@@ -3,7 +3,7 @@ package com.tpd.XCity.utils;
 public class AppConstant {
     public static final String DEFAULT_CONTEXT = "<https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context.jsonld>";
     public static final String BUILDING_CONTEXT = "<https://smart-data-models.github.io/dataModel.Building/context.jsonld>";
-    public static final String ENVIRONMENT_CONTEXT = "<https://smart-data-models.github.io/dataModel.Building/context.jsonld>";
+    public static final String ALERT_CONTEXT = "<https://smart-data-models.github.io/dataModel.Alert/context.jsonld>";
     public static final String DEVICE_CONTEXT = "<https://smart-data-models.github.io/dataModel.Device/context.jsonld>";
     public static final String PAGE_SIZE = "10";
     public static final String ORDER_FIELD_DEFAULT = "createdAt";

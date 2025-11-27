@@ -9,4 +9,6 @@ public interface TrafficFlowObservedService {
     void saveMeasurementSensor(Map<String, Object> measurement);
 
     TrafficStaticsResponse getDailyStatics(String refDevice, String date);
+
+    List<TrafficStaticsResponse> downloadTrafficStatics(Map<String, Object> payload);
 }

@@ -168,10 +168,38 @@ export const FORMAT = [
     color: "orange",
     icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   },
-  {
-    label: "XML",
-    color: "green",
-    icon: "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
-  },
   { label: "RDF", color: "indigo", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+];
+
+export const ALERT_CATEGORIES = [
+  { value: "traffic", label: "Giao thông" },
+  { value: "naturalDisaster", label: "Thiên tai" },
+  { value: "weather", label: "Thời tiết" },
+  { value: "environment", label: "Môi trường" },
+  { value: "health", label: "Sức khỏe" },
+  { value: "security", label: "An ninh" },
+  { value: "agriculture", label: "Nông nghiệp" },
+];
+
+export const ALERT_SUB_CATEGORIES = [
+  { value: "airPollution", label: "Ô nhiễm không khí" },
+  { value: "buildingFire", label: "Cháy tòa nhà" },
+  { value: "carAccident", label: "Tai nạn xe hơi" },
+  { value: "earthquake", label: "Động đất" },
+  { value: "flood", label: "Lũ lụt" },
+  { value: "floodRisk", label: "Nguy cơ lũ" },
+  { value: "forestFire", label: "Cháy rừng" },
+  { value: "highTemperature", label: "Nhiệt độ cao" },
+  { value: "hurricane", label: "Bão" },
+  { value: "injuredBiker", label: "Tai nạn xe máy" },
+  { value: "lowTemperature", label: "Nhiệt độ thấp" },
+  { value: "nematodes", label: "Tuyến trùng" },
+  { value: "noxiousWeed", label: "Cỏ độc hại" },
+  { value: "roadClosed", label: "Đường đóng" },
+  { value: "roadWorks", label: "Công trình đường" },
+  { value: "thunderstorms", label: "Dông sét" },
+  { value: "tornado", label: "Lốc xoáy" },
+  { value: "trafficJam", label: "Kẹt xe" },
+  { value: "tropicalCyclone", label: "Bão nhiệt đới" },
+  { value: "tsunami", label: "Sóng thần" },
 ];

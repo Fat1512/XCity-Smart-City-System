@@ -174,56 +174,6 @@ ${Object.entries(chartData)
     );
   };
 
-  const downloadAsXML = () => {
-    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-    <trafficData>
-        <date>${viewDate}</date>
-        <cameras>
-            ${Object.entries(chartData)
-              .map(([id, data]) => {
-                const cam = cameras.find((c) => c.id === id);
-                const dataProvider = cam
-                  ? [
-                      cam.address.streetNr,
-                      cam.address.streetAddress,
-                      cam.address.district,
-                      cam.address.addressLocality,
-                      cam.address.addressRegion,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")
-                  : id;
-
-                return `
-            <camera id="${id}" dataProvider="${dataProvider}">
-            ${data.avgSpeed
-              .map((speed, hour) => {
-                const paddedHour = hour.toString().padStart(2, "0");
-                const dateObserved = new Date(
-                  `${viewDate}T${paddedHour}:00:00`
-                ).toISOString();
-                return `
-            <TrafficFlowObserved id="${id}_${paddedHour}">
-                <refDevice>${id}</refDevice>
-                <averageVehicleSpeed>${speed ?? ""}</averageVehicleSpeed>
-                <intensity>${data.intensity[hour] ?? ""}</intensity>
-                <dateObserved>${dateObserved}</dateObserved>
-                <type>TrafficFlowObserved</type>
-            </TrafficFlowObserved>`;
-              })
-              .join("")}
-            </camera>`;
-              })
-              .join("")}
-        </cameras>
-        </trafficData>`;
-
-    downloadFile(
-      xmlContent,
-      `traffic_${viewDate}.xml`,
-      "application/xml;charset=utf-8"
-    );
-  };
   const handleDownload = (format: string) => {
     switch (format) {
       case "CSV":
@@ -235,12 +185,10 @@ ${Object.entries(chartData)
       case "HTML":
         downloadAsHTML();
         break;
-      case "XML":
-        downloadAsXML();
-        break;
-        //   case "RDF":
-        //     downloadAsRDF();
-        break;
+
+      //   case "RDF":
+      //     downloadAsRDF();
+      // break;
       default:
         console.warn("Unsupported format:", format);
     }
@@ -268,7 +216,7 @@ ${Object.entries(chartData)
           Tải xuống dữ liệu mở
         </label>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {FORMAT.map(({ label, color, icon }) => (
           <button
             key={label}

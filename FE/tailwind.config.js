@@ -22,6 +22,7 @@ export default {
     ],
     theme: {
         extend: {
+
             colors: {
                 primary: '#f43f5e',
                 dark: '#1f2937',

@@ -14,6 +14,7 @@ export async function getCamera(id: string) {
     );
   }
 }
+
 export async function getAlCamera() {
   try {
     const res = await API.get(`/all-camera`);

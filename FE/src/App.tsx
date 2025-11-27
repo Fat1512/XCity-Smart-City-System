@@ -22,6 +22,7 @@ import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
 import CameraList from "./feature/traffic-monitor/CameraList";
 import TrafficDashboard from "./feature/traffic-monitor/TrafficDashboard";
 import { TrafficMonitorContextProvider } from "./context/TrafficMonitorContext";
+import AlertMap from "./feature/alert/AlertMap";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -43,7 +44,7 @@ const App = () => {
                 <Route path="map" element={<FeatureSelection />} />
                 <Route path="/map/infrastructure" element={<BuildingList />} />
                 <Route path="/map/air" element={<SensorWrapper />} />
-
+                <Route path="/map/alert" element={<AlertMap />} />
                 <Route path="report" element={<ReportSelection />} />
                 <Route path="/report/air" element={<AirQualityRealtime />} />
 

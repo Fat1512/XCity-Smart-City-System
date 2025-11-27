@@ -23,6 +23,12 @@ public class TrafficFlowObservedController {
         return ResponseEntity.ok("Received");
     }
 
+    @PostMapping("/traffic/download-statics/")
+    public ResponseEntity<List<TrafficStaticsResponse>> downloadTraffic(@RequestBody Map<String, Object> payload) {
+        List<TrafficStaticsResponse> responses = trafficFlowObservedService.downloadTrafficStatics(payload);
+        return ResponseEntity.ok(responses);
+    }
+
     @GetMapping("/traffic/daily-statics/{cameraId}")
     public ResponseEntity<TrafficStaticsResponse> getMonthlyStatics(
             @PathVariable(value = "cameraId") String cameraId,
