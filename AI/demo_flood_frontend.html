@@ -176,7 +176,7 @@
         style="min-width:260px;">
       <button id="btnAdd">Add stream</button>
       <div style="margin-left:auto; color:#9be;" class="small">WS endpoint: <code
-          id="wsUrl">ws://localhost:8000/ws/flood/frontend</code></div>
+          id="wsUrl">ws://localhost:5000/ws/flood/frontend</code></div>
     </div>
 
     <div id="streams" class="streams-grid">
@@ -194,7 +194,7 @@
       const btnAdd = document.getElementById('btnAdd');
 
       // Change this if your backend WS url is different
-      const WS_BASE = WS_ENDPOINT_EL.textContent || "ws://localhost:8000/ws/flood/frontend";
+      const WS_BASE = WS_ENDPOINT_EL.textContent || "ws://localhost:5000/ws/flood/frontend";
 
       // Keep track of panels by unique id
       const panels = new Map();

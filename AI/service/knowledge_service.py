@@ -1,10 +1,6 @@
 import threading
 import os
 
-from components.logging.logger import setup_logger
-
-logger = setup_logger("knowledge_service")
-
 class KnowledgeService:
     _instance = None
     _lock = threading.Lock()
@@ -26,7 +22,7 @@ class KnowledgeService:
                 'rss': bool(os.getenv("WATCHER_RSS_URLS"))
             }
             self._initialized = True
-            logger.info(f"WatcherStateService initialized with states: {self._state}")
+            print(f"WatcherStateService initialized with states: {self._state}")
 
     def is_enabled(self, watcher_name: str) -> bool:
         with self._lock:
@@ -36,9 +32,9 @@ class KnowledgeService:
         with self._lock:
             if watcher_name in self._state:
                 self._state[watcher_name] = is_enabled
-                logger.info(f"Watcher state '{watcher_name}' set to {is_enabled}")
+                print(f"Watcher state '{watcher_name}' set to {is_enabled}")
             else:
-                logger.info(f"Warning: Tried to set state for unknown watcher '{watcher_name}'")
+                print(f"Warning: Tried to set state for unknown watcher '{watcher_name}'")
 
     def get_all_states(self) -> dict:
         with self._lock:

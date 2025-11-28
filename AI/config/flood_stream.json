@@ -1,8 +1,8 @@
 [
   {
-    "video_path": "flood2.mp4",
+    "video_path": "flood1.mp4",
     "stream_id": "cam01",
     "fps": 5,
-    "ws_url": "ws://localhost:8000/ws/process/flood"
+    "ws_url": "ws://localhost:5000/ws/process/flood"
   }
 ]

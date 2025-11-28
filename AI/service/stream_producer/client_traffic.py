@@ -10,7 +10,7 @@ import cv2
 import websockets
 
 DEFAULT_CONFIG_PATH = "config/streams_config.json"
-DEFAULT_WS = f"ws://{os.getenv('HOST')}/ws/process"
+DEFAULT_WS = f"ws://{os.getenv('AI_HOST')}/ws/process"
 
 logger = setup_logger("client_traffic")
 

@@ -128,11 +128,9 @@ async def process_ws(websocket: WebSocket):
         async with _clients_lock:
             _process_clients_by_stream.setdefault(stream_id, set()).add(websocket)
 
-        frame_count = 0
-        publish_interval = 1
-
-        send_interval = 5.0
-        last_send_ts = 0.0
+        metrics_interval = 5.0
+        last_metrics_time = 0.0
+        last_metrics_data: Optional[Dict[str, Any]] = None
 
         async def _send_bytes_to_client(client: WebSocket, data: bytes):
             try:
@@ -168,12 +166,6 @@ async def process_ws(websocket: WebSocket):
                     if frame is None:
                         continue
 
-                    now = time.monotonic()
-                    if now - last_send_ts < send_interval:
-                        continue
-                    last_send_ts = now
-
-                    # process frame
                     try:
                         annotated_frame, metrics = svc.process_frame(frame)
                     except Exception:
@@ -196,32 +188,38 @@ async def process_ws(websocket: WebSocket):
                     except:
                         print("OK")
 
+                    now = time.time()
+
+                    send_new_metrics = (now - last_metrics_time) >= metrics_interval
+
+                    if send_new_metrics:
+                        last_metrics_time = now
+                        last_metrics_data = metrics
+                        # publish lên Orion cũng 5s/lần
+                        try:
+                            publish_to_orion_ld(stream_id, metrics)
+                        except Exception:
+                            pass
+
+                    metrics_for_frontend = last_metrics_data if last_metrics_data is not None else metrics
+
                     meta = {
                         "type": "frame",
                         "stream_id": stream_id,
                         "ts": int(time.time() * 1000),
-                        "metrics": metrics,
+                        "metrics": metrics_for_frontend,
                     }
+
                     meta_bytes = json.dumps(meta).encode("utf-8")
                     import struct
                     header = struct.pack(">I", len(meta_bytes))
                     combined_payload = header + meta_bytes + jpg_out
 
                     async with _clients_lock:
-                        recipients = (
-                            list(_frontend_clients_by_stream.get(stream_id, set()))
-                            + list(_global_frontend_clients)
-                        )
+                        recipients = list(_frontend_clients_by_stream.get(stream_id, set())) + list(_global_frontend_clients)
 
                     for client in recipients:
                         asyncio.create_task(_send_bytes_to_client(client, combined_payload))
-
-                    frame_count += 1
-                    if frame_count % publish_interval == 0:
-                        try:
-                            publish_to_orion_ld(stream_id, metrics)
-                        except Exception:
-                            pass
 
                 elif "text" in msg:
                     try:
