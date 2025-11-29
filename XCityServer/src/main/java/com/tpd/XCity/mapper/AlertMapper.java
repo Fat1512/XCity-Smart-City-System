@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tpd.XCity.dto.request.AlertCreateRequest;
+import com.tpd.XCity.dto.response.AlertOverviewResponse;
 import com.tpd.XCity.dto.response.AlertResponse;
 import com.tpd.XCity.entity.alert.Alert;
 import com.tpd.XCity.entity.device.Camera;
@@ -21,8 +22,8 @@ public interface AlertMapper {
 
     @Mapping(target = "type", constant = "Alert")
     Alert convertToEntity(AlertCreateRequest alertCreateRequest);
-
     AlertResponse convertToResponse(Alert alert);
+    AlertOverviewResponse convertToOverviewResponse(Alert alert);
 
     default ObjectNode toOrion(Alert dto) {
         ObjectMapper mapper = new ObjectMapper();

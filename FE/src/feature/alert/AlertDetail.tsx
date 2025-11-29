@@ -10,15 +10,17 @@ interface Location {
   coordinates: [number, number];
 }
 
-interface Alert {
+export interface Alert {
   id: string;
   name: string;
   description: string;
   category: string;
+  dateCreated: number;
   subCategory: string;
   address: Address;
   location: Location;
   dateIssued: number | number[];
+  solved: boolean;
 }
 
 interface AlertDetailProps {

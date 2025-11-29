@@ -23,6 +23,21 @@ import CameraList from "./feature/traffic-monitor/CameraList";
 import TrafficDashboard from "./feature/traffic-monitor/TrafficDashboard";
 import { TrafficMonitorContextProvider } from "./context/TrafficMonitorContext";
 import AlertMap from "./feature/alert/AlertMap";
+import AlertAdmin from "./feature/alert/AlertAdmin";
+import NotificationList from "./ui/NotificationList";
+import AlertReportDashboard from "./feature/alert/AlertReportDashboard";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -30,6 +45,17 @@ const queryClient = new QueryClient({
     },
   },
 });
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const App = () => {
   return (
@@ -45,8 +71,13 @@ const App = () => {
                 <Route path="/map/infrastructure" element={<BuildingList />} />
                 <Route path="/map/air" element={<SensorWrapper />} />
                 <Route path="/map/alert" element={<AlertMap />} />
+
                 <Route path="report" element={<ReportSelection />} />
                 <Route path="/report/air" element={<AirQualityRealtime />} />
+                <Route
+                  path="/report/alert"
+                  element={<AlertReportDashboard />}
+                />
 
                 <Route path="/map/traffic" element={<VehicleSpeedMonitor />} />
                 <Route path="/report/traffic" element={<TrafficDashboard />} />
@@ -54,6 +85,7 @@ const App = () => {
 
               <Route path="/home" element={<Home />} />
               <Route path="/admin" element={<AdminLayout />}>
+                <Route path="notifications" element={<NotificationList />} />
                 <Route path="infrastructures" element={<AdminBuildingList />} />
                 <Route
                   path="infrastructure"
@@ -63,6 +95,7 @@ const App = () => {
                   path="infrastructure/:buildingId"
                   element={<AdminBuildingWrapper />}
                 />
+                <Route path="alert" element={<AlertAdmin />} />
                 <Route path="devices" element={<AirQualityList />} />
                 <Route
                   path="device/:deviceId"

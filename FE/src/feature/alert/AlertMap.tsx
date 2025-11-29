@@ -218,8 +218,8 @@ const AlertMap: React.FC = () => {
   }, [isLoading, alerts]);
 
   return (
-    <>
-      <div className="absolute top-20 right-6 z-20">
+    <div className="relative w-full h-screen">
+      <div className="absolute top-5 right-6 z-20">
         <Button
           variant="contained"
           color="error"
@@ -233,7 +233,7 @@ const AlertMap: React.FC = () => {
       </div>
 
       {selectedAlert && (
-        <div className="absolute top-24 left-6 z-30 max-w-md">
+        <div className="absolute top-8 left-3 z-30 max-w-md">
           <AlertDetail
             onClose={() => setSelectedAlert(null)}
             selectedAlert={selectedAlert}
@@ -244,9 +244,9 @@ const AlertMap: React.FC = () => {
       <AlertModal open={open} setOpen={setOpen} />
       <div
         ref={mapContainerRef}
-        className="w-full h-screen rounded-lg overflow-hidden"
+        className="w-full absolute z-10 h-screen rounded-lg overflow-hidden"
       />
-    </>
+    </div>
   );
 };
 

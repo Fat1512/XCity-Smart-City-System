@@ -203,3 +203,5 @@ export const ALERT_SUB_CATEGORIES = [
   { value: "tropicalCyclone", label: "Bão nhiệt đới" },
   { value: "tsunami", label: "Sóng thần" },
 ];
+
+export const DEFAULT_CITY = "Hồ Chí Minh";

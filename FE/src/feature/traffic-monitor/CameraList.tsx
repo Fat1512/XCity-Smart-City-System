@@ -37,7 +37,7 @@ const CameraList = () => {
           </div>
 
           <button
-            onClick={() => navigate("/admin/device")}
+            onClick={() => navigate("/admin/camera")}
             className="flex cursor-pointer items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 
                        text-white font-semibold rounded-xl shadow-lg 
                        transition-all duration-200 active:scale-95"

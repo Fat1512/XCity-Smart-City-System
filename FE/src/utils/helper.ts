@@ -63,3 +63,33 @@ export function formatVietnamTime(timeString: string) {
 
   return `${hh}:${mm}`;
 }
+
+export function formatTimeAgo(timestamp: number): string {
+  // Chuyển timestamp sang mili giây (nếu timestamp đang là giây)
+  const time = new Date(timestamp * 1000);
+  const now = new Date();
+  const diff = now.getTime() - time.getTime(); // difference in ms
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} ngày trước`;
+  if (hours > 0) return `${hours} giờ trước`;
+  if (minutes > 0) return `${minutes} phút trước`;
+  return `${seconds} giây trước`;
+}
+export const mapToLabels = (dataMap, sourceList) => {
+  if (!dataMap) return {};
+
+  const result = {};
+
+  Object.entries(dataMap).forEach(([key, value]) => {
+    const found = sourceList.find((item) => item.value === key);
+    const label = found ? found.label : key;
+    result[label] = value;
+  });
+
+  return result;
+};

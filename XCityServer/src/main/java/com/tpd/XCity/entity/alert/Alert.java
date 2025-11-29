@@ -39,6 +39,7 @@ public class Alert {
     private String name;
     private String source;
     private AlertSubCategory subCategory;
+    private boolean solved;
     private String type = "Alert";
 
 }

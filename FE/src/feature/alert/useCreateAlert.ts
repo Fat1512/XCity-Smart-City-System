@@ -11,7 +11,7 @@ export interface AlertCreateRequest {
   description?: string;
   address?: Address;
   category?: string;
-  location?: Location;
+  location: Location;
   subCategory?: string;
 }
 

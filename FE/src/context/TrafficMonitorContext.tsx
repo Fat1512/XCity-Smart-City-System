@@ -24,18 +24,15 @@ export function TrafficMonitorContextProvider({ children }: Props) {
 
   const connect = () => {
     try {
-      console.log("Attempting to connect to WebSocket...");
       const ws = new WebSocket(CAMERA_AI_URL);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connected");
         setConnected(true);
         reconnectAttemptsRef.current = 0;
       };
 
       ws.onclose = (event) => {
-        console.log("❌ WebSocket closed:", event.code, event.reason);
         setConnected(false);
 
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
@@ -44,9 +41,6 @@ export function TrafficMonitorContextProvider({ children }: Props) {
             1000 * Math.pow(2, reconnectAttemptsRef.current),
             30000
           );
-          console.log(
-            `🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`
-          );
 
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
@@ -54,12 +48,6 @@ export function TrafficMonitorContextProvider({ children }: Props) {
         } else {
           console.error("❌ Max reconnection attempts reached");
         }
-      };
-
-      ws.onerror = (err) => {
-        console.error("⚠️ WebSocket error:", err);
-        console.error("URL:", CAMERA_AI_URL);
-        console.error("ReadyState:", ws.readyState);
       };
     } catch (error) {
       console.error("Failed to create WebSocket:", error);

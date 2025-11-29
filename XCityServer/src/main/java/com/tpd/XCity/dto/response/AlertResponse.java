@@ -26,12 +26,16 @@ public class AlertResponse {
     private String alertSource;
     private AlertCategory category;
     private String dataProvider;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateCreated;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateIssued;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime dateModified;
     private String description;
     private Location location;
     private String name;
     private String source;
     private AlertSubCategory subCategory;
+    private boolean solved;
 }

@@ -80,7 +80,7 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="p-6 bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">

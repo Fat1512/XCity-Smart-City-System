@@ -21,10 +21,12 @@ import SendIcon from "@mui/icons-material/Send";
 import {
   ALERT_CATEGORIES,
   ALERT_SUB_CATEGORIES,
+  DEFAULT_CITY,
 } from "../../utils/appConstant";
 
 import useCreateAlert, { type AlertCreateRequest } from "./useCreateAlert";
 import { toast } from "react-toastify";
+import { geocodeAddress } from "../../service/externalAPI";
 
 const modalStyle = {
   position: "absolute" as const,
@@ -71,8 +73,40 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
     );
   };
 
-  const onSubmit = (data: AlertCreateRequest) => {
-    console.log("📌 Submit alert:", data);
+  const handleClearLocation = () => {
+    setValue("location.coordinates", []);
+  };
+
+  const onSubmit = async (data: AlertCreateRequest) => {
+    if (!data.location?.coordinates?.length) {
+      if (!data.address?.addressLocality) {
+        toast.error("Vui lòng cung cấp vị trí hoặc địa chỉ.");
+        return;
+      }
+
+      if (!data.location) {
+        data.location = { type: "Point", coordinates: [] };
+      }
+
+      const sAddress = [
+        data.address?.streetAddress,
+        data.address?.addressLocality,
+        data.address?.addressRegion,
+      ]
+        .filter(Boolean)
+        .map((s) => s.trim())
+        .join(", ");
+
+      const geoCoords = await geocodeAddress(sAddress + ", Vietnam");
+
+      if (!geoCoords) {
+        toast.error("Không tìm thấy tọa độ phù hợp với địa chỉ.");
+        return;
+      }
+
+      data.location.coordinates = geoCoords;
+    }
+
     createAlert(data, {
       onSuccess: () => {
         toast.success("Yêu cầu của bạn đã được gửi đi");
@@ -159,7 +193,6 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                 )}
               />
 
-              {/* Category */}
               <Box>
                 <Typography
                   variant="body2"
@@ -255,7 +288,6 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                 />
               </Box>
 
-              {/* Description */}
               <Controller
                 name="description"
                 control={control}
@@ -277,7 +309,6 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                 )}
               />
 
-              {/* Address Section */}
               <Box>
                 <Typography
                   variant="body2"
@@ -309,12 +340,12 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                   />
                   <Stack direction="row" spacing={2}>
                     <Controller
-                      name="address.district"
+                      name="address.addressLocality"
                       control={control}
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          placeholder="Quận/Huyện"
+                          placeholder="Phường/xã"
                           fullWidth
                           variant="outlined"
                           size="small"
@@ -327,15 +358,20 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                       )}
                     />
                     <Controller
-                      name="address.addressLocality"
+                      name="address.addressRegion"
                       control={control}
+                      defaultValue={DEFAULT_CITY}
                       render={({ field }) => (
                         <TextField
                           {...field}
                           placeholder="Tỉnh/Thành phố"
                           fullWidth
+                          disabled={true}
                           variant="outlined"
                           size="small"
+                          InputProps={{
+                            className: "cursor-not-allowed",
+                          }}
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               borderRadius: 2,
@@ -347,8 +383,6 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                   </Stack>
                 </Stack>
               </Box>
-
-              {/* Location */}
               <Paper
                 elevation={0}
                 sx={{
@@ -373,6 +407,7 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                   >
                     <LocationOnIcon sx={{ color: "white", fontSize: 20 }} />
                   </Box>
+
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="body2" fontWeight={600} gutterBottom>
                       Tọa độ GPS
@@ -385,6 +420,7 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                         : "Chưa có tọa độ"}
                     </Typography>
                   </Box>
+
                   <Button
                     variant="contained"
                     startIcon={<MyLocationIcon />}
@@ -399,6 +435,21 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                     }}
                   >
                     Lấy vị trí
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleClearLocation}
+                    sx={{
+                      borderRadius: 2,
+                      textTransform: "none",
+                      "&:hover": {
+                        backgroundColor: "rgba(255,0,0,0.08)",
+                      },
+                    }}
+                  >
+                    Xóa
                   </Button>
                 </Stack>
               </Paper>
