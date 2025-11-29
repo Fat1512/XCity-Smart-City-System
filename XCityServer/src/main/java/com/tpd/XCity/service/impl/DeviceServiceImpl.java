@@ -217,6 +217,7 @@ public class DeviceServiceImpl implements DeviceService {
         Map<String, Object> co2 = Map.of("object_id", "co2", "name", "https://smartdatamodels.org/dataModel.Environment/co2", "type", "Number");
         Map<String, Object> temperature = Map.of("object_id", "temperature", "name", "https://smartdatamodels.org/dataModel.Environment/temperature", "type", "Number");
         Map<String, Object> refDevice = Map.of("object_id", "refDevice", "name", "https://smartdatamodels.org/dataModel.Environment/refDevice", "type", "Object");
+        Map<String, Object> dateObserved = Map.of("object_id", "dateObserved", "name", "https://smartdatamodels.org/dateObserved", "type", "Object");
         // Device Map
         Map<String, Object> device = Map.of(
                 "device_id", deviceId,
@@ -224,9 +225,8 @@ public class DeviceServiceImpl implements DeviceService {
                 "entity_type", "https://smartdatamodels.org/dataModel.Environment/AirQualityObserved",
                 "transport", "MQTT",
                 "apikey", "air",
-                "attributes", List.of(pm25, pm1, o3, co2, temperature, refDevice)
+                "attributes", List.of(pm25, pm1, o3, co2, temperature, refDevice, dateObserved)
         );
         return device;
     }
 }
-
