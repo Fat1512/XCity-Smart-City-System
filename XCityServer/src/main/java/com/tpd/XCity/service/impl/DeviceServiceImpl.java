@@ -229,4 +229,3 @@ public class DeviceServiceImpl implements DeviceService {
         return device;
     }
 }
-

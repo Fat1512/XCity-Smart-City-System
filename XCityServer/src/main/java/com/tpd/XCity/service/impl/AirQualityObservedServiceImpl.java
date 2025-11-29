@@ -43,6 +43,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         LocalDateTime dateObserved = odt.toLocalDateTime();
 
         AirQualityObserved airQualityObserved = objectMapper.convertValue(data, AirQualityObserved.class);
+        airQualityObserved.setId(UUID.randomUUID().toString());
         airQualityObserved.setRefDevice(id);
         airQualityObserved.setDateObserved(dateObserved);
         airQualityObservedRepository.save(airQualityObserved);

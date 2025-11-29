@@ -108,7 +108,8 @@ def push_data_to_orion_server():
         "pm10": "https://smartdatamodels.org/dataModel.Environment/pm10",
         "pm25": "https://smartdatamodels.org/dataModel.Environment/pm25",
         "relativehumidity": "https://smartdatamodels.org/dataModel.Environment/relativeHumidity", 
-        "temperature": "https://smartdatamodels.org/dataModel.Environment/temperature"
+        "temperature": "https://smartdatamodels.org/dataModel.Environment/temperature",
+        "dateObserved": "https://smartdatamodels.org/dataModel.Environment/dateObserved"
     }
     
     for item in sensor_data:

@@ -20,6 +20,7 @@ export async function getMonthlyStatics({
     );
   }
 }
+
 export async function getDailyStatics({
   sensorId,
   date,
