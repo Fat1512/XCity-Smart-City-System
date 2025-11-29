@@ -1,12 +1,15 @@
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 import os
 
+from app.schemas import *
+
 from service.mini_rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
+from service.route_service import RouteService
 
 from service.stream_producer.client_traffic import (
     main as traffic_stream_main,
@@ -19,6 +22,7 @@ router = APIRouter()
 
 rag_service = MiniRagService()
 watcher_state_service = KnowledgeService()
+route_service = RouteService()
 
 traffic_stream_task: Optional[asyncio.Task] = None
 flood_stream_task: Optional[asyncio.Task] = None
@@ -186,3 +190,18 @@ async def flood_stream_status():
             return {"status": "error", "error": str(e)}
 
     return {"status": "running"}
+
+
+@router.post("/route")
+async def compute_route(payload: RouteRequest):
+    try:
+        geojson = route_service.compute_route(payload.start, payload.end)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to compute route: {e}")
+
+    if isinstance(geojson, dict) and geojson.get("error"):
+        raise HTTPException(status_code=400, detail=geojson["error"])
+
+    return geojson

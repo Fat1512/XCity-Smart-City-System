@@ -18,7 +18,8 @@
     "classes": [2, 3, 5, 6],
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
-    "yolo_weights": "yolo11n.pt"
+    "yolo_weights": "yolo11n.pt",
+    "segment_ids": ["edge_101", "edge_102"]
   }
 
 ]

@@ -36,12 +36,12 @@ async def run_stream(
         sem_ctx = semaphore
 
     async with sem_ctx:
-        logger.info(f"[{stream_id}] ▶ connecting to {ws_url}  (video={video_path})")
+        logger.info(f"[{stream_id}] connecting to {ws_url}  (video={video_path})")
         try:
             async with websockets.connect(ws_url, ping_interval=None, max_size=None) as ws:
                 cap = cv2.VideoCapture(video_path)
                 if not cap.isOpened():
-                    logger.info(f"[{stream_id}] ❌ Cannot open video {video_path}")
+                    logger.info(f"[{stream_id}] Cannot open video {video_path}")
                     return
 
                 video_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
@@ -61,10 +61,11 @@ async def run_stream(
                     "yolo_weights": config.get("yolo_weights"),
                     "fps": send_fps,
                     "address": config.get("address"),
+                    "segment_ids": config.get("segment_ids"),
                 }
 
                 await ws.send(json.dumps(init_cfg))
-                logger.info(f"[{stream_id}] ✔ video_fps={video_fps}, send_fps={send_fps}")
+                logger.info(f"[{stream_id}] video_fps={video_fps}, send_fps={send_fps}")
 
                 frame_interval = 1.0 / video_fps
                 sample_step = video_fps / float(send_fps) if send_fps < video_fps else 1.0
@@ -74,7 +75,7 @@ async def run_stream(
                 while True:
                     ret, frame = cap.read()
                     if not ret:
-                        logger.info(f"[{stream_id}] ℹ End of video reached.")
+                        logger.info(f"[{stream_id}] End of video reached.")
                         break
 
                     acc += 1.0
@@ -89,7 +90,7 @@ async def run_stream(
                         try:
                             await ws.send(jpg_bytes)
                         except Exception as e:
-                            logger.info(f"[{stream_id}] ❌ send error: {e}")
+                            logger.info(f"[{stream_id}] send error: {e}")
                             break
 
                         try:
