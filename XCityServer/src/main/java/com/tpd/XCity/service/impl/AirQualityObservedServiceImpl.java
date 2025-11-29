@@ -37,10 +37,13 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
 
         String id = (String) data.get("id");
-        String notifiedAtStr = (String) measurement.get("notifiedAt");
-        OffsetDateTime odt = OffsetDateTime.parse(notifiedAtStr);
+        String notifiedAtStr = (String) data.get("dateObserved");
 
-        LocalDateTime dateObserved = odt.toLocalDateTime();
+        if(notifiedAtStr.isEmpty() || id.isEmpty()) {
+            notifiedAtStr = (String) measurement.get("notifiedAt");
+        }
+
+        LocalDateTime dateObserved = LocalDateTime.parse(notifiedAtStr);
 
         AirQualityObserved airQualityObserved = objectMapper.convertValue(data, AirQualityObserved.class);
         airQualityObserved.setId(UUID.randomUUID().toString());

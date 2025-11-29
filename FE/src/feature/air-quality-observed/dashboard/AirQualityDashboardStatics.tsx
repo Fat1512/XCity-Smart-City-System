@@ -133,6 +133,10 @@ const AirQualityDashboard4Charts = () => {
   };
 
   useEffect(() => {
+    setSelectedSensors([]);
+  }, [selectedMonth]);
+
+  useEffect(() => {
     if (!statics || selectedSensors.length === 0) return;
     setSelectedSensors((prev) =>
       prev.map((sensor) =>
@@ -216,6 +220,10 @@ const AirQualityDashboard4Charts = () => {
               </div>
               <CreatableSelect
                 isMulti
+                value={selectedSensors.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                }))}
                 options={sensorOptions}
                 onChange={handleSensorChange}
                 placeholder="🔍 Gõ hoặc chọn sensor..."

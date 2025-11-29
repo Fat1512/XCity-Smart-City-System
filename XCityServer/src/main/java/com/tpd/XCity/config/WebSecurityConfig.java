@@ -38,10 +38,12 @@ public class WebSecurityConfig {
                         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register").permitAll()
-                        .anyRequest().authenticated()
+                                .anyRequest().permitAll()
+//                        .requestMatchers(HttpMethod.POST,
+//                                "/api/v1/auth/login",
+//                                "/api/v1/air/notify",
+//                                "/api/v1/auth/register").permitAll()
+//                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(CORSFilter, ChannelProcessingFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -57,5 +59,4 @@ public class WebSecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
         return auth.getAuthenticationManager();
     }
-
 }

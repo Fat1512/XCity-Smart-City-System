@@ -1,12 +1,11 @@
 import json
-import requests
-import random
-import time
+
 import threading
 import csv
+import os
 from datetime import datetime
-from flask import Flask, request, jsonify
 import paho.mqtt.client as mqtt
+from flask import Flask, request, jsonify
 
 BROKER = "localhost"
 PORT = 1883
@@ -17,203 +16,106 @@ mqtt_client.connect(BROKER, PORT, 60)
 app = Flask(__name__)
 
 running_sensors = {}
-
-# Load CSV data and organize by station
 station_data = {}
-available_stations = set()
+sensor_to_station_mapping = {}
+sensor_data_index = {} 
 
-def load_csv_data():
-    """Load air quality data from CSV and organize by station"""
-    global station_data, available_stations
-    
-    with open('air_quality.csv', 'r') as file:
-        reader = csv.DictReader(file)
+def load_station_data():
+    stations = [1, 2, 3, 4]  
+    for station_id in stations:
+        csv_file = f"separated_stations/station_{station_id}.csv"
+        if os.path.exists(csv_file):
+            with open(csv_file, 'r') as file:
+                reader = csv.DictReader(file)
+                station_data[station_id] = list(reader)
+        else:
+            print(f"CSV file not found: {csv_file}")
+
+def assign_sensor_to_station(sensor_id):
+    """Assign an unpredictable sensor ID to one of the available stations (1, 2, 3)"""
+    if sensor_id not in sensor_to_station_mapping:
+        assigned_stations = list(sensor_to_station_mapping.values())
+        for station_num in [1, 2, 3]:
+            if assigned_stations.count(station_num) < len([s for s in sensor_to_station_mapping.keys()]) // 3 + 1:
+                sensor_to_station_mapping[sensor_id] = station_num
+                break
+        else:
+            sensor_to_station_mapping[sensor_id] = (hash(sensor_id) % 3) + 1
         
-        for row in reader:
-            station_no = int(row['Station_No'])
-            if station_no not in station_data:
-                station_data[station_no] = []
-            station_data[station_no].append(row)
-            available_stations.add(station_no)
+        print(f"Mapped sensor '{sensor_id}' to station_{sensor_to_station_mapping[sensor_id]}")
+    
+    return sensor_to_station_mapping[sensor_id]
 
-    print(f"✅ Loaded data for {len(available_stations)} stations: {sorted(available_stations)}")
-    print(f"📊 Total records: {sum(len(records) for records in station_data.values())}")
+load_station_data()
 
-# Load data on startup
-load_csv_data()
-
-# Configuration: Stations 1-3 for sensors, 4-6 for auto-publish
-SENSOR_STATIONS = {1, 2, 3, 4, 5}  # Controlled by sensor API
-
-# Track which stations are assigned to which sensors
-station_assignments = {}  # sensor_id -> station_no
-used_stations = set()
-auto_publish_workers = {}  # station_no -> running flag
-
-def safe_float(value, default=0.0):
-    """Safely convert string to float, handling empty strings and None"""
-    try:
-        if value is None or value == '' or value.strip() == '':
-            return default
-        return float(value)
-    except (ValueError, AttributeError):
-        return default
-
-def generate_air_quality_data(sensor_id):
-    """Generate air quality data from CSV for assigned station"""
-    if sensor_id not in station_assignments:
+def get_station_data(station_num, data_index):
+    """Get real data from CSV for the specified station number"""
+    if station_num not in station_data or not station_data[station_num]:
         return None
     
-    station_no = station_assignments[sensor_id]
-    station_records = station_data[station_no]
+    data_list = station_data[station_num]
+    row = data_list[data_index % len(data_list)]
     
-    # Get a random record from this station's data
-    record = random.choice(station_records)
-    
-    return {
-        "pm25": safe_float(record['PM2.5']),
-        "pm1": safe_float(record['TSP']),  # Using TSP as PM1 equivalent
-        "o3": safe_float(record['O3']),
-        "co2": safe_float(record['CO']),   # Using CO as CO2 equivalent
-        "so2": safe_float(record['SO2']),
-        "temperature": safe_float(record['Temperature'], 25.0),  # Default temp
-        "humidity": safe_float(record['Humidity'], 50.0),        # Default humidity
-        "no2": safe_float(record['NO2']),
-        "station_no": station_no,
-    }
-
-def generate_station_data(station_no):
-    """Generate air quality data directly from station number (for auto-publish)"""
-    if station_no not in station_data:
-        return None
-    
-    station_records = station_data[station_no]
-    
-    # Get a random record from this station's data
-    record = random.choice(station_records)
+    date_str = row['date']
+    dt = datetime.strptime(date_str, "%d/%m/%Y %H:%M")
+    formatted_date = dt.strftime("%Y-%m-%dT%H:%M:%S")
     
     return {
-        "pm25": safe_float(record['PM2.5']),
-        "pm1": safe_float(record['TSP']),  # Using TSP as PM1 equivalent
-        "o3": safe_float(record['O3']),
-        "co2": safe_float(record['CO']),   # Using CO as CO2 equivalent
-        "so2": safe_float(record['SO2']),
-        "temperature": safe_float(record['Temperature'], 25.0),  # Default temp
-        "humidity": safe_float(record['Humidity'], 50.0),        # Default humidity
-        "no2": safe_float(record['NO2']),
-        "station_no": station_no,
-        "refDevice": f"station_{station_no}"
+        "pm25": float(row.get('PM2.5', 0)) if row.get('PM2.5') else 0,
+        "o3": float(row.get('O3', 0)) if row.get('O3') else 0,
+        "so2": float(row.get('SO2', 0)) if row.get('SO2') else 0,
+        "no2": float(row.get('NO2', 0)) if row.get('NO2') else 0,
+        "temperature": float(row.get('Temperature', 0)) if row.get('Temperature') else 0,
+        "relativeHumidity": float(row.get('humidity', 0)) if row.get('humidity') else 0,
+        "dateObserved": formatted_date
     }
 
 def sensor_worker(sensor_id):
     topic = f"/air/{sensor_id}/attrs"
+    
+    data_index = sensor_data_index.get(sensor_id, 0)
 
-    print(f"🚀 Sensor thread started: {sensor_id} (Station {station_assignments[sensor_id]})")
+    station_num = assign_sensor_to_station(sensor_id)
 
     while running_sensors.get(sensor_id, False):
-        data = generate_air_quality_data(sensor_id)
-        if data is None:
-            print(f"❌ [{sensor_id}] No station assigned!")
-            break
-            
-        data["refDevice"] = sensor_id
+        data = get_station_data(station_num, data_index)
+        data_index += 1
+        
+        # Update the stored index for this sensor
+        sensor_data_index[sensor_id] = data_index
+        
+        if data:
+            data["refDevice"] = sensor_id
+            payload = json.dumps(data)
+            mqtt_client.publish(topic, payload)
+            print(f"[{sensor_id}] (station_{station_num}, index {data_index-1}) Sent → {payload}")
+        else:
+            print(f"[{sensor_id}] No data available for station_{station_num}")
 
-        payload = json.dumps(data)
-
-        mqtt_client.publish(topic, payload)
-        print(f"📤 [{sensor_id}] Station {data['station_no']} → {payload}")
         time.sleep(5)
-    print(f"🛑 Sensor thread stopped: {sensor_id}")
+    print(f"Sensor thread stopped: {sensor_id} (at index {data_index})")
 
-def auto_publish_worker(station_no, device_id, max_records=1000):
-    topic = f"/air/{device_id}/attrs"
-
-    print(f"🚀 Auto-publish worker started for Station {station_no} → Device: {device_id} (will send {max_records} records)")
-
-    records_sent = 0
-    
-    while auto_publish_workers.get(station_no, False) and records_sent < max_records:
-        data = generate_station_data(station_no)
-        if data is None:
-            print(f"❌ [Station {station_no}] No data available!")
-            break
-
-        payload = json.dumps(data)
-
-        mqtt_client.publish(topic, payload)
-        records_sent += 1
-        
-        if records_sent % 100 == 0:  # Progress update every 100 records
-            print(f"� [Station {station_no}] Progress: {records_sent}/{max_records} records sent")
-        
-    # Mark as stopped
-    auto_publish_workers[station_no] = False
-    print(f"✅ [Station {station_no}] Completed! Sent {records_sent}/{max_records} records")
-    print(f"🛑 Auto-publish worker stopped for Station {station_no}")
-
-
-@app.post("/sensor/dump_data")
-def dumping_data():
-    body = request.json
-    device_id = body.get("deviceId")
-    
-    if not device_id:
-        return jsonify({"error": "deviceId is required"}), 400
-    
-    # Only start auto-publish worker for station 6
-    station_no = 6
-    if station_no in station_data:
-        auto_publish_workers[station_no] = True
-        threading.Thread(target=auto_publish_worker, args=(station_no, device_id), daemon=True).start()
-        print(f"✅ Station {station_no} auto-publish worker started with device ID: {device_id}")
-        
-        return jsonify({
-            "message": f"Auto-publish worker started for Station {station_no}",
-            "device_id": device_id,
-            "station_no": station_no
-        })
-    else:
-        return jsonify({"error": f"Station {station_no} has no data in CSV"}), 400
 
 
 @app.post("/sensor/start")
 def start_sensor():
     body = request.json
     sensor_id = body.get("sensorId")
-    print(f"sensor id: {sensor_id}")
+    
+    if not sensor_id:
+        return jsonify({"error": "sensorId is required"}), 400
+
     if sensor_id in running_sensors and running_sensors[sensor_id]:
         return jsonify({"message": f"{sensor_id} is already running!"})
-    
-    # Check if we have available sensor-controlled stations (1-3 only)
-    available_sensor_stations = SENSOR_STATIONS - used_stations
-    
-    if len(used_stations) >= len(SENSOR_STATIONS):
-        return jsonify({
-            "error": f"Cannot start sensor. Maximum {len(SENSOR_STATIONS)} sensors allowed (stations 1-3).",
-            "sensor_stations": list(SENSOR_STATIONS),
-            "used_stations": len(used_stations)
-        }), 400
-    
-    # Assign an available station to this sensor (only from stations 1-3)
-    if sensor_id not in station_assignments:
-        if not available_sensor_stations:
-            return jsonify({
-                "error": "No available sensor stations remaining (1-3)",
-                "sensor_stations": list(SENSOR_STATIONS)
-            }), 400
-            
-        assigned_station = min(available_sensor_stations)  # Assign lowest available station number
-        station_assignments[sensor_id] = assigned_station
-        used_stations.add(assigned_station)
-    
+
+    station_num = assign_sensor_to_station(sensor_id)
     running_sensors[sensor_id] = True
     threading.Thread(target=sensor_worker, args=(sensor_id,), daemon=True).start()
 
     return jsonify({
         "message": f"{sensor_id} started", 
-        "station_no": station_assignments[sensor_id],
-        "used_stations": len(used_stations),
-        "available_sensor_stations": list(available_sensor_stations - {station_assignments[sensor_id]})
+        "assignedStation": station_num,
+        "info": "Sensor will stream data from real air quality measurements"
     })
 
 @app.post("/sensor/stop")
@@ -225,38 +127,100 @@ def stop_sensor():
         return jsonify({"message": f"{sensor_id} is not running!"})
 
     running_sensors[sensor_id] = False
-    
-    # Release the station when sensor stops
-    if sensor_id in station_assignments:
-        station_no = station_assignments[sensor_id]
-        used_stations.discard(station_no)
-        del station_assignments[sensor_id]
-        
-        return jsonify({
-            "message": f"{sensor_id} stopped", 
-            "released_station": station_no,
-            "used_stations": len(used_stations),
-            "available_stations": len(available_stations)
-        })
-    
     return jsonify({"message": f"{sensor_id} stopped"})
+
 
 @app.get("/sensor/status")
 def status():
+    return jsonify(running_sensors)
+
+
+@app.get("/sensor/available")
+def available_stations():
+    """List available stations with their data counts"""
+    available = {}
+    for station_num, data_list in station_data.items():
+        available[f"station_{station_num}"] = {
+            "records": len(data_list),
+            "status": "loaded" if data_list else "no_data"
+        }
+    return jsonify(available)
+
+
+@app.get("/sensor/mappings")
+def sensor_mappings():
+    """Show current sensor to station mappings"""
     return jsonify({
-        "running_sensors": running_sensors,
-        "station_assignments": station_assignments,
-        "used_stations": list(used_stations),
-        "sensor_stations": list(SENSOR_STATIONS),
-        "total_stations": len(available_stations),
-        "remaining_sensor_capacity": len(SENSOR_STATIONS) - len(used_stations)
+        "mappings": sensor_to_station_mapping,
+        "info": "Shows which unpredictable sensor IDs are mapped to which stations (1-3)"
+    })
+
+@app.post("/sensor/reset")
+def reset_sensor_index():
+    """Reset a sensor's data index back to 0"""
+    body = request.json
+    sensor_id = body.get("sensorId")
+    
+    if not sensor_id:
+        return jsonify({"error": "sensorId is required"}), 400
+    
+    if sensor_id in sensor_data_index:
+        old_index = sensor_data_index[sensor_id]
+        sensor_data_index[sensor_id] = 0
+        return jsonify({
+            "message": f"Reset {sensor_id} index from {old_index} to 0",
+            "previousIndex": old_index
+        })
+    else:
+        return jsonify({"message": f"{sensor_id} has no stored index"})
+
+@app.get("/sensor/indices")
+def sensor_indices():
+    """Show current data indices for all sensors"""
+    return jsonify({
+        "indices": sensor_data_index,
+        "info": "Shows the current data index position for each sensor"
+    })
+
+@app.post("/sensor/push-station")
+def push_station4_data():
+    body = request.json
+    sensor_id = body.get("sensorId")
+    
+    if not sensor_id:
+        return jsonify({"error": "sensorId is required"}), 400
+    
+    # Check if station 4 data is loaded
+    if 4 not in station_data or not station_data[4]:
+        return jsonify({"error": "Station 4 data not loaded"}), 404
+    
+    # Push all data to MQTT
+    topic = f"/air/{sensor_id}/attrs"
+    pushed_count = 0
+    total_records = len(station_data[4])
+    
+    for index in range(total_records):
+        try:
+            data = get_station_data(4, index)
+            
+            if data:
+                data["refDevice"] = sensor_id
+                payload = json.dumps(data)
+                mqtt_client.publish(topic, payload)
+                pushed_count += 1
+            
+        except Exception as e:
+            print(f"Error processing row {index}: {e}")
+            continue
+    
+    return jsonify({
+        "message": f"Successfully pushed {pushed_count} records from station_4 to MQTT",
+        "sensorId": sensor_id,
+        "topic": topic,
+        "totalRecords": total_records,
+        "pushedRecords": pushed_count
     })
 
 
 if __name__ == "__main__":
-    print("🔥 Sensor Manager API is running on port 5000...")
-    print(f"📡 Sensor-controlled stations: {sorted(SENSOR_STATIONS)}")
-    
     app.run(host="0.0.0.0", port=5000)
-
-

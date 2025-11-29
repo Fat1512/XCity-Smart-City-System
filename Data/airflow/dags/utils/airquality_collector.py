@@ -95,7 +95,7 @@ def transform_json_format():
 def push_data_to_orion_server():
     
     final_data = {
-        "id": f"urn:ngsi-ld:Device:6eedc3ce-7d97-49de-9d8e-ff7a9ae6b38d",
+        "id": "urn:ngsi-ld:Device:e4b65e26-68fe-47ee-b157-7a74871c8f19",
         "type": "https://smartdatamodels.org/dataModel.Environment/AirQualityObserved",
         "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.7.jsonld",
     }
