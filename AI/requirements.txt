@@ -15,3 +15,6 @@ trafilatura
 lxml_html_clean
 redis
 aiohttp
+osmnx
+opencv-python
+supervision
