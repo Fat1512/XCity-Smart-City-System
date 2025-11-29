@@ -19,7 +19,6 @@ import static com.tpd.XCity.utils.AppConstant.PAGE_SIZE;
 @RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class CameraController {
     private final CameraService cameraService;
 

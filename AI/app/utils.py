@@ -1,11 +1,26 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, Optional
 from PIL import Image
 import os
 
 import numpy as np
 import requests
 
+
+class TrafficState:
+    def __init__(self):
+        self._segment_speed: Dict[str, float] = {}
+
+    def update_segment_speed(self, segment_id: str, speed_kmh: float):
+        if speed_kmh <= 0:
+            return
+        self._segment_speed[str(segment_id)] = float(speed_kmh)
+
+    def get_segment_speed(self, segment_id: str, default_speed_kmh: float) -> float:
+        return float(self._segment_speed.get(str(segment_id), default_speed_kmh))
+
+
+traffic_state = TrafficState()
 
 def resize_image(image_path, max_size=(1024, 1024), quality=85):
     try:

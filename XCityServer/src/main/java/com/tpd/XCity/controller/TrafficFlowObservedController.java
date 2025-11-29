@@ -13,7 +13,6 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class TrafficFlowObservedController {
     private final TrafficFlowObservedService trafficFlowObservedService;
 

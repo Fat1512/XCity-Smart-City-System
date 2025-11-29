@@ -2,53 +2,45 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import base64
 import json
-import traceback
-from typing import Dict, Set, Optional, Any
+import time
+import struct
 import numpy as np
 import cv2
-import time
+import traceback
 
-from service.vehicle_speed_stream_service import VehicleSpeedStreamService
-from .utils import publish_to_orion_ld
+from service.flood_stream_service import FloodStreamService
 
 router = APIRouter()
 
-_services_by_stream: Dict[str, VehicleSpeedStreamService] = {}
-_process_clients_by_stream: Dict[str, Set[WebSocket]] = {}
-_frontend_clients_by_stream: Dict[str, Set[WebSocket]] = {}
-_global_frontend_clients: Set[WebSocket] = set()
+_services_by_stream = {}
+_frontend_clients_by_stream = {}
+_global_frontend_clients = set()
 
 _services_lock = asyncio.Lock()
 _clients_lock = asyncio.Lock()
 
 
-
-
-
-async def get_or_create_service(stream_id: str) -> VehicleSpeedStreamService:
+async def get_or_create_flood_service(stream_id: str) -> FloodStreamService:
     async with _services_lock:
         svc = _services_by_stream.get(stream_id)
         if svc is None:
-            svc = VehicleSpeedStreamService()
+            svc = FloodStreamService()
             _services_by_stream[stream_id] = svc
         return svc
 
 
-def _safe_discard(ws_set: Set[WebSocket], ws: WebSocket):
+def _safe_discard(ws_set, ws):
     try:
         ws_set.discard(ws)
     except Exception:
         pass
 
 
-
-
-
-
-@router.websocket("/ws/frontend")
-async def frontend_ws(websocket: WebSocket):
+@router.websocket("/ws/flood/frontend")
+async def flood_frontend_ws(websocket: WebSocket):
     await websocket.accept()
-    stream_id: Optional[str] = None
+    stream_id = None
+
     try:
         try:
             raw = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
@@ -70,21 +62,25 @@ async def frontend_ws(websocket: WebSocket):
                 j = json.loads(msg)
                 if j.get("action") == "subscribe":
                     new_stream = j.get("stream_id")
+
                     async with _clients_lock:
                         if stream_id and websocket in _frontend_clients_by_stream.get(stream_id, set()):
                             _frontend_clients_by_stream[stream_id].discard(websocket)
                         if websocket in _global_frontend_clients:
                             _global_frontend_clients.discard(websocket)
+
                         stream_id = new_stream
                         if stream_id:
                             _frontend_clients_by_stream.setdefault(stream_id, set()).add(websocket)
                         else:
                             _global_frontend_clients.add(websocket)
+
             except:
                 await asyncio.sleep(0.1)
 
     except WebSocketDisconnect:
         pass
+
     finally:
         async with _clients_lock:
             if stream_id:
@@ -93,52 +89,36 @@ async def frontend_ws(websocket: WebSocket):
                 _safe_discard(_global_frontend_clients, websocket)
 
 
-@router.websocket("/ws/process")
-async def process_ws(websocket: WebSocket):
+@router.websocket("/ws/process/flood")
+async def flood_process_ws(websocket: WebSocket):
     await websocket.accept()
-    stream_id: str = "default"
-    svc: Optional[VehicleSpeedStreamService] = None
+    stream_id = "default"
+    svc = None
 
     try:
         try:
             init_msg = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
             cfg = json.loads(init_msg)
-        except:
+        except Exception as e:
+            print(f"Failed to receive init config: {e}")
             await websocket.close(code=1003)
             return
 
         stream_id = cfg.get("stream_id", "default")
-        svc = await get_or_create_service(stream_id)
-
+        svc = await get_or_create_flood_service(stream_id)
 
         try:
-            svc.init_stream(
-                image_pts=cfg.get("image_pts"),
-                world_pts=cfg.get("world_pts"),
-                classes=cfg.get("classes"),
-                conf=cfg.get("conf", 0.35),
-                tracker_cfg=cfg.get("tracker_cfg"),
-                yolo_weights=cfg.get("yolo_weights"),
-                fps=cfg.get("fps", 30),
-            )
-        except:
+            svc.init_stream(fps=cfg.get("fps", 1))
+        except Exception as e:
+            print(f"Failed to init stream: {e}")
             traceback.print_exc()
             await websocket.close(code=1011)
             return
 
         async with _clients_lock:
-            _process_clients_by_stream.setdefault(stream_id, set()).add(websocket)
+            _frontend_clients_by_stream.setdefault(stream_id, set())
 
-        frame_count = 0
-        publish_interval = 1
-
-        async def _send_bytes_to_client(client: WebSocket, data: bytes):
-            try:
-                await client.send_bytes(data)
-            except Exception:
-                async with _clients_lock:
-                    _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), client)
-                    _safe_discard(_global_frontend_clients, client)
+        print(f"Flood stream '{stream_id}' initialized and ready")
 
         while True:
             msg = await websocket.receive()
@@ -148,6 +128,7 @@ async def process_ws(websocket: WebSocket):
                 raise WebSocketDisconnect()
 
             if msg_type == "websocket.receive":
+
                 if "bytes" in msg:
                     payload = msg["bytes"]
 
@@ -160,7 +141,9 @@ async def process_ws(websocket: WebSocket):
 
                         arr = np.frombuffer(jpg_bytes, dtype=np.uint8)
                         frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
-                    except Exception:
+
+                    except Exception as e:
+                        print(f"Failed to decode frame: {e}")
                         frame = None
 
                     if frame is None:
@@ -168,12 +151,14 @@ async def process_ws(websocket: WebSocket):
 
                     try:
                         annotated_frame, metrics = svc.process_frame(frame)
-                    except Exception:
+                    except Exception as e:
+                        print(f"Failed to process frame: {e}")
                         continue
 
                     ok, encoded = cv2.imencode(".jpg", annotated_frame)
                     if not ok:
                         continue
+
                     jpg_out = encoded.tobytes()
 
                     try:
@@ -185,51 +170,56 @@ async def process_ws(websocket: WebSocket):
                                 "metrics": metrics
                             }
                         }))
-                    except:
-                        print("OK")
+                    except Exception as e:
+                        print(f"Failed to send ack: {e}")
 
                     meta = {
                         "type": "frame",
                         "stream_id": stream_id,
                         "ts": int(time.time() * 1000),
-                        "metrics": metrics,
+                        "metrics": metrics
                     }
                     meta_bytes = json.dumps(meta).encode("utf-8")
-                    import struct
                     header = struct.pack(">I", len(meta_bytes))
                     combined_payload = header + meta_bytes + jpg_out
 
                     async with _clients_lock:
-                        recipients = list(_frontend_clients_by_stream.get(stream_id, set())) + list(_global_frontend_clients)
-
-                    await asyncio.sleep(5)
+                        recipients = (
+                            list(_frontend_clients_by_stream.get(stream_id, set())) +
+                            list(_global_frontend_clients)
+                        )
 
                     for client in recipients:
-                        asyncio.create_task(_send_bytes_to_client(client, combined_payload))
-
-                    frame_count += 1
-                    if frame_count % publish_interval == 0:
                         try:
-                            publish_to_orion_ld(stream_id, metrics)
+                            await client.send_bytes(combined_payload)
                         except Exception:
-                            pass
+                            _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), client)
+                            _safe_discard(_global_frontend_clients, client)
 
                 elif "text" in msg:
                     try:
-                        if json.loads(msg["text"]).get("action") == "stop":
+                        cmd = json.loads(msg["text"])
+                        if cmd.get("action") == "stop":
+                            print(f"Stop command received for '{stream_id}'")
                             break
                     except:
                         pass
 
     except WebSocketDisconnect:
-        pass
+        print(f"Client disconnected from flood stream '{stream_id}'")
+    except Exception as e:
+        print(f"Error in flood process websocket: {e}")
+        traceback.print_exc()
+
     finally:
         async with _clients_lock:
-            _safe_discard(_process_clients_by_stream.get(stream_id, set()), websocket)
+            _safe_discard(_frontend_clients_by_stream.get(stream_id, set()), websocket)
+
+        print(f"Flood stream '{stream_id}' connection closed")
 
 
-@router.get("/ws/active_streams")
-async def list_active_streams():
+@router.get("/ws/flood/active_streams")
+async def list_active_flood_streams():
     async with _services_lock:
         keys = list(_services_by_stream.keys())
     return {"streams": keys}

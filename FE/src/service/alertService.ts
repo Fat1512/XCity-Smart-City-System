@@ -1,6 +1,6 @@
 import type { AlertCreateRequest } from "../feature/alert/useCreateAlert";
 import type { PaginationParams } from "../types/PaginationParams";
-import { API } from "../utils/axiosConfig";
+import { API, AUTH_REQUEST } from "../utils/axiosConfig";
 interface AlerOverviewParams extends PaginationParams {
   solved: string;
 }
@@ -85,7 +85,7 @@ export async function getAlertOverview({
 
 export async function markSolved(id: string) {
   try {
-    const res = await API.put(`alert/${id}/solved`);
+    const res = await AUTH_REQUEST.put(`alert/${id}/solved`);
     return res.data;
   } catch (error: any) {
     throw new Error(
