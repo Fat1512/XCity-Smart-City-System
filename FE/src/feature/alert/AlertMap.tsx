@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
@@ -79,7 +94,6 @@ const AlertMap: React.FC = () => {
           clusterRadius: 50,
         });
 
-        // Layer cho các điểm đơn lẻ
         map.addLayer({
           id: "alert-points",
           type: "circle",
@@ -94,7 +108,6 @@ const AlertMap: React.FC = () => {
           },
         });
 
-        // Layer cho clusters
         map.addLayer({
           id: "clusters",
           type: "circle",
@@ -129,7 +142,6 @@ const AlertMap: React.FC = () => {
           },
         });
 
-        // Layer cho số đếm trong cluster
         map.addLayer({
           id: "cluster-count",
           type: "symbol",
@@ -152,7 +164,6 @@ const AlertMap: React.FC = () => {
         );
       }
 
-      // Click vào cluster để zoom in
       map.on("click", "clusters", (e) => {
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["clusters"],
@@ -169,7 +180,6 @@ const AlertMap: React.FC = () => {
         });
       });
 
-      // Click vào điểm đơn lẻ để hiển thị detail
       map.on("click", "alert-points", (e) => {
         if (!e.features || e.features.length === 0) return;
 
@@ -177,7 +187,6 @@ const AlertMap: React.FC = () => {
         const alertData = JSON.parse(feature.properties!.alertData);
         setSelectedAlert(alertData);
 
-        // Fly to điểm được chọn
         map.flyTo({
           center: (feature.geometry as any).coordinates,
           zoom: 15,
@@ -185,7 +194,6 @@ const AlertMap: React.FC = () => {
         });
       });
 
-      // Cursor effects
       map.on("mouseenter", "clusters", () => {
         map.getCanvas().style.cursor = "pointer";
       });
@@ -206,7 +214,6 @@ const AlertMap: React.FC = () => {
       map.on("load", addAlertLayers);
     }
 
-    // Cleanup function
     return () => {
       if (map.getLayer("alert-points")) {
         map.off("click", "alert-points");

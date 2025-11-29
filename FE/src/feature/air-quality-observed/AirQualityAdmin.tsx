@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -241,7 +256,6 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-5 space-y-6">
-            {/* General Info */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
               <div className="bg-linear-to-r from-emerald-500 to-teal-500 px-6 py-4">
                 <div className="flex items-center gap-2">
