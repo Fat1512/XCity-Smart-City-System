@@ -47,25 +47,12 @@ class RouteTool(Tool):
         G_local, Gp_local = self._prepare_graph()
 
         try:
-            edge_tt = _compute_edge_travel_times(G_local, default_speed_kmh=self.DEFAULT_SPEED_KMH)
-            for (u, v, k), tt in edge_tt.items():
-                if (u, v, k) in G_local.edges(keys=True):
-                    G_local[u][v][k]["travel_time"] = tt
-                else:
-                    data = G_local.get_edge_data(u, v)
-                    if data:
-                        first_k = list(data.keys())[0]
-                        G_local[u][v][first_k]["travel_time"] = tt
-        except Exception as exc:
-            logger.warning("Failed computing edge travel times: %s", exc)
-
-        try:
             sx, sy = project_lonlat_to_xy(Gp_local, float(start[1]), float(start[0]))
             ex, ey = project_lonlat_to_xy(Gp_local, float(end[1]), float(end[0]))
 
-            start_node = _find_reachable_node(G_local, Gp_local, sx, sy, other_node=None, mode='either', k=30)
-            end_node = _find_reachable_node(G_local, Gp_local, ex, ey, other_node=start_node, mode='target', k=40)
-            
+            start_node = _find_reachable_node(G_local, Gp_local, sx, sy, other_node=None, mode="either", k=30)
+            end_node = _find_reachable_node(G_local, Gp_local, ex, ey, other_node=start_node, mode="target", k=40)
+
             if start_node is None:
                 start_node = _nearest_node_fallback(Gp_local, sx, sy)
             if end_node is None:
@@ -75,46 +62,107 @@ class RouteTool(Tool):
             return {"error": "Could not locate start/end points on map"}
 
         try:
-            route_nodes = nx.shortest_path(G_local, start_node, end_node, weight='travel_time')
-            edge_segments = []
-            for i in range(len(route_nodes) - 1):
-                u, v = route_nodes[i], route_nodes[i+1]
+            edge_tt_no = _compute_edge_travel_times(
+                G_local,
+                default_speed_kmh=self.DEFAULT_SPEED_KMH,
+                use_traffic=False,
+            )
+            for (u, v, k), tt in edge_tt_no.items():
+                if (u, v, k) in G_local.edges(keys=True):
+                    G_local[u][v][k]["travel_time"] = tt
+                else:
+                    data = G_local.get_edge_data(u, v)
+                    if data:
+                        first_k = list(data.keys())[0]
+                        G_local[u][v][first_k]["travel_time"] = tt
 
-                edge_data = G_local.get_edge_data(u, v)
-                if edge_data:
-                    data = edge_data[list(edge_data.keys())[0]]
-                    osmid = data.get("osmid") or data.get("id") 
-                    edge_segments.append(osmid)
+            no_traffic_nodes = nx.shortest_path(G_local, start_node, end_node, weight="travel_time")
 
-            logger.info("ROUTE SEGMENTS (road ids): %s", edge_segments)
+            no_traffic_coords, no_traffic_eta_s = _route_nodes_to_coords_and_eta(
+                G_local,
+                no_traffic_nodes,
+                default_speed_kmh=self.DEFAULT_SPEED_KMH,
+            )
+        except nx.NetworkXNoPath:
+            no_traffic_nodes = None
+            no_traffic_coords = None
+            no_traffic_eta_s = None
+        except Exception as exc:
+            logger.warning("Failed no-traffic route: %s", exc)
+            no_traffic_nodes = None
+            no_traffic_coords = None
+            no_traffic_eta_s = None
+
+        try:
+            edge_tt_cur = _compute_edge_travel_times(
+                G_local,
+                default_speed_kmh=self.DEFAULT_SPEED_KMH,
+                use_traffic=True,
+            )
+            for (u, v, k), tt in edge_tt_cur.items():
+                if (u, v, k) in G_local.edges(keys=True):
+                    G_local[u][v][k]["travel_time"] = tt
+                else:
+                    data = G_local.get_edge_data(u, v)
+                    if data:
+                        first_k = list(data.keys())[0]
+                        G_local[u][v][first_k]["travel_time"] = tt
+
+            current_nodes = nx.shortest_path(G_local, start_node, end_node, weight="travel_time")
         except nx.NetworkXNoPath:
             return {"error": "No path found between points"}
         except Exception as e:
             return {"error": f"Routing failed: {str(e)}"}
 
         try:
-            route_coords, eta_s = _route_nodes_to_coords_and_eta(G_local, route_nodes, default_speed_kmh=self.DEFAULT_SPEED_KMH)
+            current_coords, current_eta_s = _route_nodes_to_coords_and_eta(
+                G_local,
+                current_nodes,
+                default_speed_kmh=self.DEFAULT_SPEED_KMH,
+            )
         except Exception as exc:
             logger.error("Error building route geometry: %s", exc)
             return {"error": "Failed to build route geometry"}
 
-        feature = {
+        features = []
+
+        features.append({
             "type": "Feature",
             "geometry": {
                 "type": "LineString",
-                "coordinates": [[lon, lat] for lat, lon in route_coords]
+                "coordinates": [[lon, lat] for lat, lon in current_coords],
             },
-            "properties": {"eta_s": eta_s}
-        }
+            "properties": {
+                "eta_s": current_eta_s,
+                "role": "current",
+            },
+        })
+
+        if (
+            no_traffic_nodes is not None
+            and no_traffic_coords is not None
+            and no_traffic_nodes != current_nodes
+        ):
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [[lon, lat] for lat, lon in no_traffic_coords],
+                },
+                "properties": {
+                    "eta_s": no_traffic_eta_s,
+                    "role": "no_traffic",
+                },
+            })
 
         fc = {
-            "type": "FeatureCollection", 
-            "features": [feature], 
+            "type": "FeatureCollection",
+            "features": features,
             "properties": {
                 "start": {"lat": start[0], "lon": start[1]},
                 "end": {"lat": end[0], "lon": end[1]},
-                "compute_time_s": time.time() - t0
-            }
+                "compute_time_s": time.time() - t0,
+            },
         }
 
         if time.time() - t0 > self.REQUEST_TIMEOUT:

@@ -101,8 +101,13 @@ def _load_graph_cache(center_point: Tuple[float, float] = (10.7769, 106.7009), d
     return _graph, _graph_p
 
 
-def _compute_edge_travel_times(G_local, default_speed_kmh: float = 50.0) -> Dict[Tuple[int, int, int], float]:
-    edge_tt: Dict[Tuple[int, int, int], float] = {}
+def _compute_edge_travel_times(
+    G_local,
+    default_speed_kmh: float = 50.0,
+    use_traffic: bool = True,
+):
+    edge_tt = {}
+
     for u, v, k, data in G_local.edges(keys=True, data=True):
         length_m = data.get("length", 1.0)
         maxspeed = data.get("maxspeed")
@@ -124,12 +129,16 @@ def _compute_edge_travel_times(G_local, default_speed_kmh: float = 50.0) -> Dict
         else:
             segment_id = str(raw_osmid) if raw_osmid is not None else None
 
-        if segment_id is not None:
+        if use_traffic and segment_id is not None:
+            from app.utils import traffic_state
             speed_kmh = traffic_state.get_segment_speed(segment_id, base_speed_kmh)
         else:
             speed_kmh = base_speed_kmh
-        if segment_id is not None and speed_kmh != base_speed_kmh:
-            logger.info(f"[traffic] override speed for segment {segment_id}: {base_speed_kmh} -> {speed_kmh}")
+
+        if use_traffic and segment_id is not None and speed_kmh < base_speed_kmh:
+            data["is_congested"] = True
+        else:
+            data["is_congested"] = False
 
         travel_time_sec = length_m / (speed_kmh * 1000.0 / 3600.0)
         edge_tt[(u, v, k)] = travel_time_sec
