@@ -16,8 +16,8 @@ class RouteTool(Tool):
     category = "geo"
     enabled = True
 
-    GRAPH_CENTER = (10.7763, 106.6647)
-    GRAPH_DIST = 2000
+    GRAPH_CENTER = (10.7927, 106.6537)
+    GRAPH_DIST = 3000
     GRAPH_CACHE = "cache/hcm.graphml"
     DEFAULT_SPEED_KMH = DEFAULT_SPEED_KMH
     REQUEST_TIMEOUT = REQUEST_TIMEOUT
@@ -76,6 +76,17 @@ class RouteTool(Tool):
 
         try:
             route_nodes = nx.shortest_path(G_local, start_node, end_node, weight='travel_time')
+            edge_segments = []
+            for i in range(len(route_nodes) - 1):
+                u, v = route_nodes[i], route_nodes[i+1]
+
+                edge_data = G_local.get_edge_data(u, v)
+                if edge_data:
+                    data = edge_data[list(edge_data.keys())[0]]
+                    osmid = data.get("osmid") or data.get("id") 
+                    edge_segments.append(osmid)
+
+            logger.info("ROUTE SEGMENTS (road ids): %s", edge_segments)
         except nx.NetworkXNoPath:
             return {"error": "No path found between points"}
         except Exception as e:

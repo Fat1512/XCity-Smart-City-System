@@ -5,6 +5,7 @@ import networkx as nx
 from osmnx.projection import project_geometry
 from osmnx.distance import add_edge_lengths
 from shapely.geometry import Point
+from app.utils import traffic_state
 
 logger = logging.getLogger("route_tool")
 
@@ -13,7 +14,6 @@ _graph_p = None
 _graph_loaded = False
 
 def project_lonlat_to_xy(Gp_local, lon: float, lat: float) -> Tuple[float, float]:
-    """Chuyển đổi tọa độ Lat/Lon sang hệ tọa độ XY của đồ thị đã project."""
     g = Point(lon, lat)
     gproj, _ = project_geometry(g, to_crs=Gp_local.graph.get("crs"))
     return gproj.x, gproj.y
@@ -100,26 +100,38 @@ def _load_graph_cache(center_point: Tuple[float, float] = (10.7769, 106.7009), d
     _graph_loaded = True
     return _graph, _graph_p
 
+
 def _compute_edge_travel_times(G_local, default_speed_kmh: float = 50.0) -> Dict[Tuple[int, int, int], float]:
     edge_tt: Dict[Tuple[int, int, int], float] = {}
-
     for u, v, k, data in G_local.edges(keys=True, data=True):
         length_m = data.get("length", 1.0)
         maxspeed = data.get("maxspeed")
-        
+
         if isinstance(maxspeed, list):
             try:
                 maxspeed = float(maxspeed[0])
             except Exception:
                 maxspeed = None
-        
+
         try:
-            speed_kmh = float(maxspeed) if maxspeed else default_speed_kmh
+            base_speed_kmh = float(maxspeed) if maxspeed else default_speed_kmh
         except Exception:
-            speed_kmh = default_speed_kmh
-            
-        # Tính thời gian = quãng đường / vận tốc (đổi km/h sang m/s)
-        tt = length_m / (speed_kmh * 1000.0 / 3600.0)
-        edge_tt[(u, v, k)] = tt
+            base_speed_kmh = default_speed_kmh
+
+        raw_osmid = data.get("osmid") or data.get("id")
+        if isinstance(raw_osmid, list):
+            segment_id = str(raw_osmid[0])
+        else:
+            segment_id = str(raw_osmid) if raw_osmid is not None else None
+
+        if segment_id is not None:
+            speed_kmh = traffic_state.get_segment_speed(segment_id, base_speed_kmh)
+        else:
+            speed_kmh = base_speed_kmh
+        if segment_id is not None and speed_kmh != base_speed_kmh:
+            logger.info(f"[traffic] override speed for segment {segment_id}: {base_speed_kmh} -> {speed_kmh}")
+
+        travel_time_sec = length_m / (speed_kmh * 1000.0 / 3600.0)
+        edge_tt[(u, v, k)] = travel_time_sec
 
     return edge_tt

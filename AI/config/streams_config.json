@@ -19,7 +19,7 @@
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
     "yolo_weights": "yolo11n.pt",
-    "segment_ids": ["edge_101", "edge_102"]
+    "segment_ids": ["1328044064", "1265743180"]
   }
 
 ]

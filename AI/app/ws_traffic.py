@@ -9,7 +9,8 @@ import cv2
 import time
 
 from service.vehicle_speed_stream_service import VehicleSpeedStreamService
-from .utils import publish_to_orion_ld
+from app.utils import publish_to_orion_ld
+from app.utils import traffic_state
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ _services_by_stream: Dict[str, VehicleSpeedStreamService] = {}
 _process_clients_by_stream: Dict[str, Set[WebSocket]] = {}
 _frontend_clients_by_stream: Dict[str, Set[WebSocket]] = {}
 _global_frontend_clients: Set[WebSocket] = set()
+_segments_by_stream: Dict[str, list] = {}
 
 _services_lock = asyncio.Lock()
 _clients_lock = asyncio.Lock()
@@ -107,7 +109,13 @@ async def process_ws(websocket: WebSocket):
             await websocket.close(code=1003)
             return
 
-        stream_id = cfg.get("stream_id", "default")
+        stream_id = cfg.get("stream_id")
+        segment_ids = cfg.get("segment_ids") or cfg.get("segment_id") or []
+        if isinstance(segment_ids, str):
+            segment_ids = [segment_ids]
+        
+        _segments_by_stream[stream_id] = segment_ids
+
         svc = await get_or_create_service(stream_id)
 
         try:
@@ -170,6 +178,23 @@ async def process_ws(websocket: WebSocket):
                         annotated_frame, metrics = svc.process_frame(frame)
                     except Exception:
                         continue
+                    try:
+                        speed_kmh = None
+                        if isinstance(metrics, dict):
+                            if "avg_speed_kmh" in metrics:
+                                speed_kmh = float(metrics["avg_speed_kmh"])
+                            elif "avg_speed_mps" in metrics:
+                                speed_kmh = float(metrics["avg_speed_mps"]) * 3.6
+                            elif "current_avg_speed" in metrics:
+                                speed_kmh = float(metrics["current_avg_speed"])
+
+                        if speed_kmh is not None:
+                            seg_ids = _segments_by_stream.get(stream_id, [])
+                            # print(f"[traffic] stream={stream_id} seg_ids={seg_ids} speed_kmh={speed_kmh}")
+                            for seg_id in seg_ids:
+                                traffic_state.update_segment_speed(seg_id, speed_kmh)
+                    except Exception:
+                        pass
 
                     ok, encoded = cv2.imencode(".jpg", annotated_frame)
                     if not ok:
