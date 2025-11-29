@@ -22,6 +22,22 @@ import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
 import CameraList from "./feature/traffic-monitor/CameraList";
 import TrafficDashboard from "./feature/traffic-monitor/TrafficDashboard";
 import { TrafficMonitorContextProvider } from "./context/TrafficMonitorContext";
+import AlertMap from "./feature/alert/AlertMap";
+import AlertAdmin from "./feature/alert/AlertAdmin";
+import NotificationList from "./ui/NotificationList";
+import AlertReportDashboard from "./feature/alert/AlertReportDashboard";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import ProtectedRoute from "./ui/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 const queryClient = new QueryClient({
@@ -31,6 +47,17 @@ const queryClient = new QueryClient({
     },
   },
 });
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const App = () => {
   return (
@@ -42,24 +69,31 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<AppLayout />}>
                   <Route index element={<Navigate to="/map" replace />} />
-
                   <Route path="map" element={<FeatureSelection />} />
                   <Route
                     path="/map/infrastructure"
                     element={<BuildingList />}
                   />
                   <Route path="/map/air" element={<SensorWrapper />} />
-                  <Route path="report" element={<ReportSelection />} />
-                  <Route path="/report/air" element={<AirQualityRealtime />} />
                   <Route
                     path="/map/traffic"
                     element={<VehicleSpeedMonitor />}
+                  />
+                  <Route path="/map/alert" element={<AlertMap />} />
+
+                  <Route path="report" element={<ReportSelection />} />
+                  <Route path="/report/air" element={<AirQualityRealtime />} />
+                  <Route
+                    path="/report/alert"
+                    element={<AlertReportDashboard />}
                   />
                   <Route
                     path="/report/traffic"
                     element={<TrafficDashboard />}
                   />
                 </Route>
+
+                <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/home" element={<Home />} />
                 <Route
@@ -70,6 +104,8 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 >
+                  <Route path="alert" element={<AlertAdmin />} />
+                  <Route path="notifications" element={<NotificationList />} />
                   <Route
                     path="infrastructures"
                     element={<AdminBuildingList />}
@@ -82,13 +118,12 @@ const App = () => {
                     path="infrastructure/:buildingId"
                     element={<AdminBuildingWrapper />}
                   />
-                  <Route path="devices" element={<AirQualityList />} />
+                  <Route path="devices" element={<AirQualityList />} />\
                   <Route
                     path="device/:deviceId"
                     element={<AirQualityAdminWrapper />}
                   />
                   <Route path="device" element={<AirQualityAdminWrapper />} />
-
                   <Route path="traffic" element={<CameraList />} />
                   <Route path="camera" element={<CameraWrapper />} />
                   <Route path="camera/:cameraId" element={<CameraWrapper />} />

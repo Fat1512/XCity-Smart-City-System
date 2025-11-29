@@ -38,12 +38,35 @@ public class WebSecurityConfig {
                         -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .authorizeHttpRequests(auth -> auth
-                                .anyRequest().permitAll()
-//                        .requestMatchers(HttpMethod.POST,
-//                                "/api/v1/auth/login",
-//                                "/api/v1/air/notify",
-//                                "/api/v1/auth/register").permitAll()
-//                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/auth/login",
+                                "/api/v1/air/notify",
+                                "/api/v1/alert",
+                                "/api/v1/traffic/notify",
+                                "/api/v1/traffic/download-statics/",
+                                "/api/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/air/monthly-statics",
+                                "/api/v1/air/daily-statics",
+                                "/api/v1/alerts",
+                                "/api/v1/alert/solved",
+                                "/api/v1/alert/statics",
+                                "/api/v1/alert/download",
+                                "/api/v1/alert-notification",
+                                "/api/v1/buildings",
+                                "/api/v1/building/{id}",
+                                "/api/v1/s-buildings",
+                                "/api/v1/camera/{id}",
+                                "/api/v1/all-camera",
+                                "/api/v1/cameras",
+                                "/api/v1/device/{id}",
+                                "/api/v1/devices-map",
+                                "/api/v1/devices",
+                                "/api/v1/traffic/daily-statics/{cameraId}",
+                                "/api/v1/auth/register",
+                                "/api/v1/ws/**").permitAll()
+
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(CORSFilter, ChannelProcessingFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

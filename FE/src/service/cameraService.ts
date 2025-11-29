@@ -1,6 +1,6 @@
 import type { CameraCreate } from "../feature/traffic-monitor/CameraAdmin";
 import type { PaginationParams } from "../types/PaginationParams";
-import { API } from "../utils/axiosConfig";
+import { API, AUTH_REQUEST } from "../utils/axiosConfig";
 interface CameraParams extends PaginationParams {
   kw?: string;
 }
@@ -14,6 +14,7 @@ export async function getCamera(id: string) {
     );
   }
 }
+
 export async function getAlCamera() {
   try {
     const res = await API.get(`/all-camera`);
@@ -43,7 +44,7 @@ export async function getCameras({ page, size, kw }: CameraParams) {
 export async function createCamera(camera: CameraCreate) {
   try {
     const { id, dateCreated, dateModified, ...rest } = camera;
-    const res = await API.post(`/camera`, { ...rest });
+    const res = await AUTH_REQUEST.post(`/camera`, { ...rest });
     return res.data;
   } catch (error: any) {
     throw new Error(
@@ -54,7 +55,7 @@ export async function createCamera(camera: CameraCreate) {
 export async function updateCamera(camera: CameraCreate) {
   try {
     const { id, on, dateCreated, dateModified, type, ...rest } = camera;
-    const res = await API.put(`/camera/${id}`, { ...rest });
+    const res = await AUTH_REQUEST.put(`/camera/${id}`, { ...rest });
     return res.data;
   } catch (error: any) {
     throw new Error(

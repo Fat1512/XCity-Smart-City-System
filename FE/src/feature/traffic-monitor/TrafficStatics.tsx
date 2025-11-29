@@ -121,7 +121,7 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras }) => {
       })),
     [chartData, cameras]
   );
-  console.log(chartData);
+
   const intensityDatasets = useMemo(
     () =>
       Object.entries(chartData).map(([id, d], idx) => ({
@@ -206,47 +206,6 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras }) => {
                   title: {
                     display: true,
                     text: "Tốc độ (km/h)",
-                    font: { size: 14 },
-                  },
-                  grid: { color: "#e5e7eb" },
-                  min: 0,
-                },
-              },
-            }}
-          />
-        </div>
-
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">
-            Lưu lượng phương tiện
-          </h2>
-          <Bar
-            data={{ labels: HOURS, datasets: intensityDatasets }}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: { position: "top", labels: { font: { size: 14 } } },
-                tooltip: {
-                  backgroundColor: "#1f2937",
-                  titleColor: "#fff",
-                  bodyColor: "#fff",
-                  padding: 10,
-                  cornerRadius: 8,
-                },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Giờ trong ngày",
-                    font: { size: 14 },
-                  },
-                  grid: { display: false },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "Lưu lượng (xe/giờ)",
                     font: { size: 14 },
                   },
                   grid: { color: "#e5e7eb" },

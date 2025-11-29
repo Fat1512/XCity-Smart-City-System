@@ -5,6 +5,7 @@ import com.tpd.XCity.dto.response.AirQualityDailyStatics;
 import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
 import com.tpd.XCity.dto.response.TrafficStaticsResponse;
 import com.tpd.XCity.entity.device.TrafficFlowObserved;
+import com.tpd.XCity.exception.BadRequestException;
 import com.tpd.XCity.mapper.AirQualityObservedMapper;
 import com.tpd.XCity.repository.AirQualityObservedRepository;
 import com.tpd.XCity.repository.DeviceRepository;
@@ -80,11 +81,26 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
                         .build();
             }
             fullList.add(value);
-        } 
+        }
         return TrafficStaticsResponse.builder()
                 .refDevice(refDevice)
                 .dataPoints(fullList)
                 .build();
 
+    }
+
+    @Override
+    public List<TrafficStaticsResponse> downloadTrafficStatics(Map<String, Object> payload) {
+        if (payload == null || payload.get("refDevices") == null || payload.get("date") == null)
+            throw new BadRequestException("Missing payload");
+
+        List<String> refDevices = (List<String>) payload.get("refDevices");
+        String date = (String) payload.get("date");
+
+        List<TrafficStaticsResponse> staticsResponses = refDevices.stream()
+                .map(refDevice -> getDailyStatics(refDevice, date))
+                .collect(Collectors.toList());
+
+        return staticsResponses;
     }
 }

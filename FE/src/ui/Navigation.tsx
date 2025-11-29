@@ -20,7 +20,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-3 group cursor-pointer select-none">
             <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 via-teal-400 to-blue-600 
+              className="w-10 h-10 rounded-xl bg-linear-to-r from-blue-500 via-teal-400 to-blue-600 
                flex items-center justify-center text-white font-extrabold text-sm 
                shadow-lg transition-all duration-500 group-hover:scale-110 
                group-hover:shadow-blue-500/40 relative overflow-hidden"
@@ -31,7 +31,7 @@ export default function Navigation() {
             <span
               className="font-semibold text-lg text-slate-800 dark:text-slate-100 
                transition-all duration-300 group-hover:text-transparent 
-               group-hover:bg-clip-text group-hover:bg-gradient-to-r 
+               group-hover:bg-clip-text group-hover:bg-linear-to-r 
                group-hover:from-blue-400 group-hover:to-teal-400"
             >
               SmartCity
@@ -46,7 +46,7 @@ export default function Navigation() {
                 className="text-gray-700 font-medium hover:text-primary transition-colors duration-300 relative group"
               >
                 {link.label}
-                <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-primary transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </a>
             ))}
           </div>

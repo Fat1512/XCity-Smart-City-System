@@ -50,7 +50,7 @@ const AdminBuildingList = () => {
   const hasBuildings = buildings.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-xl font-semibold text-gray-700">
           Danh sách tòa nhà

@@ -5,6 +5,7 @@ import com.tpd.XCity.dto.common.UserAuthDTO;
 import com.tpd.XCity.dto.request.LoginRequest;
 import com.tpd.XCity.dto.request.RegisterRequest;
 import com.tpd.XCity.entity.User;
+import com.tpd.XCity.entity.enumeration.Role;
 import com.tpd.XCity.exception.BadRequestException;
 import com.tpd.XCity.repository.UserRepository;
 import com.tpd.XCity.service.AuthService;
@@ -66,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
     public void register(RegisterRequest loginRequest) {
         User user = User.builder()
                 .username(loginRequest.getUsername())
+                .role(Role.ADMIN)
                 .password(passwordEncoder.encode(loginRequest.getPassword()))
                 .build();
         userRepository.save(user);

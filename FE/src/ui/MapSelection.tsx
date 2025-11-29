@@ -1,5 +1,10 @@
 import React from "react";
-import { FaCar, FaSmog, FaBuilding, FaMapMarkedAlt } from "react-icons/fa";
+import {
+  FaCar,
+  FaSmog,
+  FaBuilding,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const features = [
@@ -25,6 +30,15 @@ const features = [
     path: "air",
   },
   {
+    id: "alert",
+    title: "Cảnh báo",
+    description: "Tạo các cảnh báo khẩn cấp",
+    icon: <FaExclamationTriangle size={40} />,
+    gradient: "from-red-500 via-rose-600 to-pink-700",
+    bgGlow: "group-hover:shadow-red-500/50",
+    path: "alert",
+  },
+  {
     id: "infrastructure",
     title: "Cơ sở hạ tầng",
     description: "Khám phá các công trình và tiện ích",
@@ -44,14 +58,14 @@ const FeatureSelection: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Header Section */}
-      <div className="max-w-7xl mx-auto mb-12 text-center">
-        <div className="flex justify-center mb-6">
-          <div className="bg-white p-4 rounded-2xl shadow-lg">
-            <FaMapMarkedAlt className="text-blue-600" size={50} />
-          </div>
-        </div>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 py-16 px-4 sm:px-6 lg:px-8">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-40 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto mb-16 text-center relative z-10">
         <h1 className="text-5xl font-extrabold mb-4 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Khám phá Bản đồ Thông minh
         </h1>
@@ -60,93 +74,94 @@ const FeatureSelection: React.FC = () => {
         </p>
       </div>
 
-      {/* Features Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {features.map((feature) => (
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+        {features.map((feature, index) => (
           <div
             key={feature.id}
             onClick={() => handleNavigate(feature.path)}
             className="group relative cursor-pointer"
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            {/* Card Container */}
-            <div className="relative h-full bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-2">
-              {/* Gradient Background with Map Pattern */}
+            <div
+              className={`absolute -inset-1 bg-linear-to-r ${feature.gradient} rounded-3xl blur opacity-0 group-hover:opacity-75 transition duration-500 ${feature.bgGlow}`}
+            ></div>
+
+            <div className="relative h-full bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:-translate-y-3">
               <div
                 className={`absolute inset-0 bg-linear-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
               />
 
-              {/* Map Pattern Background */}
-              <div className="absolute inset-0 opacity-5">
-                <svg
-                  className="w-full h-full"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                >
-                  <pattern
-                    id={`pattern-${feature.id}`}
-                    x="0"
-                    y="0"
-                    width="20"
-                    height="20"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <circle
-                      cx="10"
-                      cy="10"
-                      r="1.5"
-                      fill="currentColor"
-                      className={`text-${feature.color}-500`}
-                    />
-                    <path
-                      d="M10 5 L15 10 L10 15 L5 10 Z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className={`text-${feature.color}-400`}
-                    />
-                  </pattern>
-                  <rect
-                    width="100"
-                    height="100"
-                    fill={`url(#pattern-${feature.id})`}
-                  />
-                </svg>
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full animate-ping"></div>
+                <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-white rounded-full animate-ping animation-delay-200"></div>
+                <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white rounded-full animate-ping animation-delay-400"></div>
               </div>
 
-              {/* Content */}
               <div className="relative p-8 flex flex-col items-center text-center h-full">
-                {/* Icon Container */}
                 <div
-                  className={`mb-6 p-6 rounded-2xl bg-linear-to-br ${feature.gradient} shadow-xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}
+                  className={`mb-6 p-6 rounded-2xl bg-linear-to-br ${feature.gradient} shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
                 >
-                  <div className="text-white">{feature.icon}</div>
+                  <div className="text-white filter drop-shadow-lg">
+                    {feature.icon}
+                  </div>
                 </div>
 
-                {/* Title */}
-                <h2 className="text-2xl font-bold mb-3 text-gray-800 group-hover:text-white transition-colors duration-500">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800 group-hover:text-white transition-colors duration-500">
                   {feature.title}
                 </h2>
 
-                {/* Description */}
-                <p className="text-gray-600 group-hover:text-white/90 transition-colors duration-500 mb-6 flex-grow">
+                <p className="text-gray-600 group-hover:text-white/95 transition-colors duration-500 mb-6 flex-grow text-sm leading-relaxed">
                   {feature.description}
                 </p>
 
-                {/* Button */}
-                <button
-                  className={`px-6 py-3 rounded-xl font-semibold bg-linear-to-r ${feature.gradient} text-white opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 shadow-lg hover:shadow-xl`}
-                >
-                  Xem bản đồ
-                </button>
+                <div className="relative w-full">
+                  <button className="w-full px-6 py-3 rounded-xl font-semibold bg-gray-100 text-gray-800 group-hover:bg-white group-hover:text-gray-800 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 shadow-lg hover:shadow-xl">
+                    Xem chi tiết →
+                  </button>
+                </div>
               </div>
 
-              {/* Decorative Corner Elements */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-white/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-linear-to-tr from-white/20 to-transparent rounded-tr-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-white/30 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-linear-to-tr from-white/30 to-transparent rounded-tr-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div
+                className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${feature.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}
+              ></div>
             </div>
           </div>
         ))}
       </div>
+
+      <style>{`
+        @keyframes blob {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        .animation-delay-200 {
+          animation-delay: 200ms;
+        }
+        .animation-delay-400 {
+          animation-delay: 400ms;
+        }
+        @keyframes gradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 3s ease infinite;
+        }
+      `}</style>
     </div>
   );
 };

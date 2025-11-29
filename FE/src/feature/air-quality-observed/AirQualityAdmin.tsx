@@ -33,7 +33,7 @@ export interface Address {
 }
 
 export interface Location {
-  coordinates?: [number, number];
+  coordinates?: number[];
   type?: string;
 }
 
@@ -78,7 +78,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
   const device = watch();
   const deviceStatus = watch("deviceState") || "inactive";
 
-  function handleOnChangeLocation(coords: [number, number]) {
+  function handleOnChangeLocation(coords: []) {
     setValue("location.coordinates", coords, { shouldValidate: true });
   }
 
@@ -136,7 +136,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="p-6 bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">

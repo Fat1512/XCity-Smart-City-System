@@ -24,14 +24,14 @@ public class AuthenticationController {
         UserAuthDTO userAuthDTO = authService.login(loginRequest);
         MessageResponse apiResponse = MessageResponse.builder()
                 .status(HttpStatus.OK)
-                .message("da login")
+                .message(APIResponseMessage.SUCCESSFULLY_LOGIN.name())
                 .data(userAuthDTO)
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<MessageResponse> register(@RequestBody RegisterRequest registerRequest)  {
+    public ResponseEntity<MessageResponse> register(@RequestBody RegisterRequest registerRequest) {
         authService.register(registerRequest);
         MessageResponse apiResponse = MessageResponse.builder()
                 .status(HttpStatus.OK)

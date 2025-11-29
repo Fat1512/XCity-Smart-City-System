@@ -13,7 +13,6 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class TrafficFlowObservedController {
     private final TrafficFlowObservedService trafficFlowObservedService;
 
@@ -21,6 +20,12 @@ public class TrafficFlowObservedController {
     public ResponseEntity<String> receiveNotification(@RequestBody Map<String, Object> payload) {
         trafficFlowObservedService.saveMeasurementSensor(payload);
         return ResponseEntity.ok("Received");
+    }
+
+    @PostMapping("/traffic/download-statics/")
+    public ResponseEntity<List<TrafficStaticsResponse>> downloadTraffic(@RequestBody Map<String, Object> payload) {
+        List<TrafficStaticsResponse> responses = trafficFlowObservedService.downloadTrafficStatics(payload);
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/traffic/daily-statics/{cameraId}")

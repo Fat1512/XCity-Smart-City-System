@@ -18,7 +18,6 @@ import static com.tpd.XCity.utils.AppConstant.*;
 @RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class BuildingController {
     private final BuildingService buildingService;
     private final OrionService orionService;
