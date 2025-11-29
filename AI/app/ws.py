@@ -130,7 +130,7 @@ async def process_ws(websocket: WebSocket):
             _process_clients_by_stream.setdefault(stream_id, set()).add(websocket)
 
         frame_count = 0
-        publish_interval = 10
+        publish_interval = 1
 
         async def _send_bytes_to_client(client: WebSocket, data: bytes):
             try:
@@ -201,6 +201,8 @@ async def process_ws(websocket: WebSocket):
 
                     async with _clients_lock:
                         recipients = list(_frontend_clients_by_stream.get(stream_id, set())) + list(_global_frontend_clients)
+
+                    await asyncio.sleep(5)
 
                     for client in recipients:
                         asyncio.create_task(_send_bytes_to_client(client, combined_payload))

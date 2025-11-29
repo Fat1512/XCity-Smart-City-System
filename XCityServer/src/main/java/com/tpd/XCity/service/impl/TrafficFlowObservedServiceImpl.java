@@ -1,6 +1,9 @@
 package com.tpd.XCity.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpd.XCity.dto.response.AirQualityDailyStatics;
+import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
+import com.tpd.XCity.dto.response.TrafficStaticsResponse;
 import com.tpd.XCity.entity.device.TrafficFlowObserved;
 import com.tpd.XCity.mapper.AirQualityObservedMapper;
 import com.tpd.XCity.repository.AirQualityObservedRepository;
@@ -14,10 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +35,7 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
     @Override
     public void saveMeasurementSensor(Map<String, Object> measurement) {
         Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
+        data.remove("id");
 
         String urnId = (String) data.get("id");
         String notifiedAtStr = (String) measurement.get("notifiedAt");
@@ -38,11 +44,47 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
         LocalDateTime dateObserved = odt.toLocalDateTime();
 
         TrafficFlowObserved trafficFlowObserved = objectMapper.convertValue(data, TrafficFlowObserved.class);
-        trafficFlowObserved.setId(urnId);
         trafficFlowObserved.setDateObserved(dateObserved);
 
         trafficFlowObservedRepository.save(trafficFlowObserved);
         log.info("Saved TrafficFlowObserved entity | cameraId: {} | dateObserved: {}",
                 trafficFlowObserved.getRefDevice(), trafficFlowObserved.getDateObserved());
+    }
+
+    @Override
+    public TrafficStaticsResponse getDailyStatics(String refDevice, String date) {
+        LocalDate localDate = LocalDate.parse(date);
+
+
+        List<TrafficStaticsResponse.StaticsValue> results = trafficFlowObservedRepository.getHourlyStatics(
+                refDevice,
+                localDate.atStartOfDay(),
+                localDate.plusDays(1).atStartOfDay()
+        );
+
+        TreeMap<LocalDateTime, TrafficStaticsResponse.StaticsValue> valueMap = new TreeMap<>();
+        for (var v : results) {
+            valueMap.put(v.getHour(), v);
+        }
+
+
+        List<TrafficStaticsResponse.StaticsValue> fullList = new ArrayList<>();
+
+        for (int h = 0; h < 24; h++) {
+
+            LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
+            TrafficStaticsResponse.StaticsValue value = valueMap.get(hourLocalDateTime);
+            if (value == null) {
+                value = TrafficStaticsResponse.StaticsValue.builder()
+                        .hour(hourLocalDateTime)
+                        .build();
+            }
+            fullList.add(value);
+        } 
+        return TrafficStaticsResponse.builder()
+                .refDevice(refDevice)
+                .dataPoints(fullList)
+                .build();
+
     }
 }
