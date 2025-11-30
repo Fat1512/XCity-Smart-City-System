@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9002:9002"
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    stdin_open: true
+    tty: true
+    networks:
+      - xcity-network
+
+  orion-ld:
+    image: quay.io/fiware/orion-ld:1.10.0
+    container_name: orion-ld
+    restart: always
+    ports:
+      - "1026:1026"
+    command: -dbhost mongo
+    networks:
+      - xcity-network
+
+  iot-agent:
+    image: fiware/iotagent-json
+    container_name: iot-agent
+    restart: always
+    depends_on:
+      - mqtt-broker
+      - orion-ld
+    ports:
+      - "4041:4041"
+    environment:
+      - IOTA_CB_HOST=orion-ld
+      - IOTA_CB_PORT=1026
+      - IOTA_CB_NGSI_VERSION=ld
+      - IOTA_JSON_LD_CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.7.jsonld
+      - IOTA_MQTT_HOST=mqtt-broker
+      - IOTA_MQTT_PORT=1883
+      - IOTA_REGISTRY_TYPE=mongodb
+      - IOTA_MONGO_URI=mongodb+srv://nutritrack:OPvS5bLso4NQDHJp@cluster0.x0imgvl.mongodb.net/iotagentjson?retryWrites=true&w=majority
+      - IOTA_MONGO_DB=iotagentjson
+      - IOTA_PROVIDER_URL=http://iot-agent:4041/
+      - IOTA_LOG_LEVEL=DEBUG
+      - IOTA_TIMESTAMP=true
+      - IOTA_AUTOCAST=true
+      - IOTA_AUTO_REGISTER_DEVICES=false
+      - IOTA_AMQP_DISABLED=true
+    networks:
+      - xcity-network
+
+  sensor:
+    build:
+      context: ./SensorService
+      dockerfile: Dockerfile
+    container_name: xcity-sensor
+    ports:
+      - "5000:5000"
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+    volumes:
+      - ./SensorService:/app
+      - ./SensorService/separated_stations:/app/separated_stations
+    depends_on:
+      - mqtt-broker
+    networks:
+      - xcity-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./XCityServer
+      dockerfile: Dockerfile
+    container_name: xcity-backend
+    ports:
+      - "8090:8090"
+    environment:
+      - MONGO_URL=mongodb+srv://nutritrack:OPvS5bLso4NQDHJp@cluster0.x0imgvl.mongodb.net/x-city
+      - AUTH_SECRET_KEY=e62038b1f2a3f81701bca5bc6c8bb0fa862852eac1c92315a8c0dcf54cf46a83
+      - AI_SERVER_URL=http://ai-service:8000
+      - ORION_LD_URL=http://orion:1026
+      - CLIENT_URL=http://frontend:5173
+      - SENSOR_SERVICE=http://sensor:5000
+      - IOT_AGENT=http://iot-agent:4041
+    depends_on:
+      - sensor
+    networks:
+      - xcity-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./FE
+      dockerfile: Dockerfile
+    container_name: xcity-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - VITE_BASE_URL=/backend-service/xcity-service/api/v1
+      - VITE_AI_URL=http://localhost:5000/api/
+      - VITE_CAMERA_AI_URL=ws://localhost:5000/ws/frontend
+      - VITE_MAPBOX_TOKEN=pk.eyJ1IjoidGFubGU5MiIsImEiOiJjbWV2aTFjbHgwam5nMmlweGY4MHB3cDl2In0.iUzhSS3FOsgO_AvlY7m_Kw
+    volumes:
+      - ./FE/server.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+    networks:
+      - xcity-network
+    restart: unless-stopped
+
+networks:
+  xcity-network:
+    driver: bridge

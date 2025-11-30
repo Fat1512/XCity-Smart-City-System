@@ -102,10 +102,19 @@ public class JwtService {
 
     public Boolean validateToken(String token) {
 
-        if(token == null || token.trim().isEmpty()) return false;
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-        String username = extractUsername(token);
-        return !(username == null || username.isEmpty() || isTokenExpired(token));
+            String username = claims.getSubject();
+
+            return !(username == null || username.isEmpty() || isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private Key getSignInKey() {
