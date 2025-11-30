@@ -1,4 +1,19 @@
-import React, { useState } from 'react';
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
+import React, { useState } from "react";
 import {
   TextField,
   Button,
@@ -7,15 +22,10 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
-} from '@mui/material';
-import {
-  Visibility,
-  VisibilityOff,
-  Email,
-  Lock,
-} from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface LoginFormData {
   username: string;
@@ -24,24 +34,24 @@ interface LoginFormData {
 
 const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
     // Clear error when user starts typing
-    if (error) setError('');
+    if (error) setError("");
   };
 
   const handleTogglePassword = () => {
@@ -50,24 +60,24 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!formData.username || !formData.password) {
-      setError('Vui lòng điền đầy đủ thông tin');
+      setError("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       await login(formData.username, formData.password);
       // Redirect to admin page after successful login
-      navigate('/admin', { replace: true });
+      navigate("/admin", { replace: true });
     } catch (err: any) {
       setError(
-        err.response?.data?.message || 
-        err.message || 
-        'Đăng nhập thất bại. Vui lòng thử lại.'
+        err.response?.data?.message ||
+          err.message ||
+          "Đăng nhập thất bại. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);
@@ -81,7 +91,7 @@ const LoginForm: React.FC = () => {
           {error}
         </Alert>
       )}
-      
+
       <TextField
         margin="normal"
         required
@@ -103,14 +113,14 @@ const LoginForm: React.FC = () => {
         }}
         sx={{ mb: 2 }}
       />
-      
+
       <TextField
         margin="normal"
         required
         fullWidth
         name="password"
         label="Mật khẩu"
-        type={showPassword ? 'text' : 'password'}
+        type={showPassword ? "text" : "password"}
         id="password"
         autoComplete="current-password"
         value={formData.password}
@@ -137,7 +147,7 @@ const LoginForm: React.FC = () => {
         }}
         sx={{ mb: 3 }}
       />
-      
+
       <Button
         type="submit"
         fullWidth
@@ -148,16 +158,16 @@ const LoginForm: React.FC = () => {
           mt: 2,
           mb: 2,
           py: 1.5,
-          fontSize: '1rem',
+          fontSize: "1rem",
           fontWeight: 600,
           borderRadius: 2,
-          textTransform: 'none',
+          textTransform: "none",
         }}
       >
         {isLoading ? (
           <CircularProgress size={24} color="inherit" />
         ) : (
-          'Đăng nhập'
+          "Đăng nhập"
         )}
       </Button>
     </Box>

@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 "use client";
 import {
   FiMail,
@@ -9,19 +24,17 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden border-t border-border bg-gradient-to-b from-card to-background">
+    <footer className="relative overflow-hidden border-t border-border bg-linear-to-b from-card to-background">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_50%)]" />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        {/* Top section */}
         <div className="grid md:grid-cols-4 gap-10 mb-16">
-          {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-5 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-accent flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 rounded-xl bg-linear-to-r from-primary to-accent flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <span className="text-white font-bold text-base">SC</span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
                 SmartCity
               </span>
             </div>
@@ -30,7 +43,6 @@ export default function Footer() {
               connected technology.
             </p>
 
-            {/* Social Icons */}
             <div className="flex gap-4 mt-6">
               {[FiTwitter, FiLinkedin, FiFacebook].map((Icon, i) => (
                 <a
@@ -44,7 +56,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Product */}
           <div>
             <h4 className="font-semibold text-lg mb-4 text-foreground">
               Product
@@ -106,7 +117,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Section */}
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-foreground/60">
           <p className="text-center md:text-left mb-4 md:mb-0">
             © 2025 SmartCity. All rights reserved.

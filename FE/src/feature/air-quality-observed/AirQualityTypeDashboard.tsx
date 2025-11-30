@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 import type { SensorValues } from "../../context/AirQualityContext";
 import RealtimeChart from "./RealtimeChart";
 import { FaSmog, FaWind, FaCloud, FaBiohazard } from "react-icons/fa";
@@ -49,7 +64,7 @@ const AirQualityTypeDashboard = ({ dataPoints }: Props) => {
   return (
     <div className="p-6 bg-white rounded-2xl shadow">
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-        <span className="bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+        <span className="bg-linear-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
           {dataPoints[0].name} Dashboard
         </span>
       </h2>

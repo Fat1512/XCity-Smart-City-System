@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 "use client";
 import {
   FiCloud,
@@ -52,7 +67,7 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-background to-background/80 relative overflow-hidden"
+      className="py-24 px-4 sm:px-6 lg:px-8 bg-linear-to-b from-background to-background/80 relative overflow-hidden"
     >
       {/* Decorative Background Glow */}
       <div className="absolute inset-0 -z-10 opacity-30">
@@ -64,7 +79,7 @@ export default function Features() {
         {/* Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
               Powerful Features
             </span>
           </h2>
@@ -86,12 +101,12 @@ export default function Features() {
                 group relative overflow-hidden`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                {/* Animated gradient border on hover */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-accent/30 to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-lg -z-10" />
+                {/* Animated linear border on hover */}
+                <div className="absolute inset-0 bg-linear-to-r from-primary/30 via-accent/30 to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-lg -z-10" />
 
                 {/* Icon */}
                 <div
-                  className="w-14 h-14 mb-5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 
+                  className="w-14 h-14 mb-5 rounded-xl bg-linear-to-br from-primary/20 to-accent/20 
                     flex items-center justify-center group-hover:from-primary/40 
                     group-hover:to-accent/40 transition-all duration-500"
                 >
