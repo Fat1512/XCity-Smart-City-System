@@ -38,6 +38,7 @@ import ErrorMessage from "../../ui/ErrorMessage";
 import { toast } from "react-toastify";
 import useTriggerSensor from "./useTriggerSensor";
 import useUpdateDevice from "./useUpdateDevice";
+import { useNavigate } from "react-router-dom";
 
 export interface Address {
   addressLocality?: string;
@@ -89,7 +90,7 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
   const { isPending: isUpdating, updateDevice } = useUpdateDevice();
   const { triggerSensor } = useTriggerSensor();
   const [modalOpen, setModalOpen] = useState(false);
-
+  const navigate = useNavigate();
   const device = watch();
   const deviceStatus = watch("deviceState") || "inactive";
 
@@ -138,7 +139,10 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
     if (!device.id) {
       createDevice(request, {
-        onSuccess: () => toast.success("Tạo thiết bị mới thành công"),
+        onSuccess: () => {
+          toast.success("Tạo thiết bị mới thành công");
+          navigate("/admin/devices");
+        },
         onError: (err) => toast.error(err.message),
       });
       return;
@@ -273,15 +277,15 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                       Thành phố
                     </label>
                     <input
-                      {...register("address.addressLocality", {
+                      {...register("address.addressRegion", {
                         required: "Thành phố bắt buộc",
                       })}
                       className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
                       placeholder="TP. HCM"
                     />
-                    {errors.address?.addressLocality && (
+                    {errors.address?.addressRegion && (
                       <ErrorMessage
-                        message={errors.address.addressLocality.message}
+                        message={errors.address.addressRegion.message}
                       />
                     )}
                   </div>
@@ -291,37 +295,20 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                       Phường/xã
                     </label>
                     <input
-                      {...register("address.district", {
+                      {...register("address.addressLocality", {
                         required: "Phường/xã bắt buộc",
                       })}
                       className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
                       placeholder="Quận 1"
                     />
-                    {errors.address?.district && (
-                      <ErrorMessage message={errors.address.district.message} />
+                    {errors.address?.addressLocality && (
+                      <ErrorMessage
+                        message={errors.address.addressLocality.message}
+                      />
                     )}
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
-                    Vùng
-                  </label>
-                  <input
-                    {...register("address.addressRegion", {
-                      required: "Vùng bắt buộc",
-                    })}
-                    className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-                    placeholder="Miền Nam"
-                  />
-                  {errors.address?.addressRegion && (
-                    <ErrorMessage
-                      message={errors.address.addressRegion.message}
-                    />
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                <div className="gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
                       Tên đường
@@ -337,22 +324,6 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
                       <ErrorMessage
                         message={errors.address.streetAddress.message}
                       />
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
-                      Số đường
-                    </label>
-                    <input
-                      {...register("address.streetNr", {
-                        required: "Số đường bắt buộc",
-                      })}
-                      className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-                      placeholder="123"
-                    />
-                    {errors.address?.streetNr && (
-                      <ErrorMessage message={errors.address.streetNr.message} />
                     )}
                   </div>
                 </div>
@@ -375,7 +346,6 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
               </div>
             </div>
 
-            {/* Device Config */}
             <div className="shadow-lg border border-gray-100">
               <div className="bg-linear-to-r rounded-t-2xl from-purple-500 to-pink-500 px-6 py-4">
                 <div className="flex items-center gap-2">

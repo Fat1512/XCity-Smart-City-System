@@ -55,6 +55,8 @@ import {
 } from "chart.js";
 import ProtectedRoute from "./ui/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import RouterPicker from "./feature/map/RouterPicker";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -90,6 +92,7 @@ const App = () => {
                     element={<BuildingList />}
                   />
                   <Route path="/map/air" element={<SensorWrapper />} />
+                  <Route path="/map/route" element={<RouterPicker />} />
                   <Route
                     path="/map/traffic"
                     element={<VehicleSpeedMonitor />}

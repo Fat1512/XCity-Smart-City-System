@@ -35,7 +35,7 @@ const CameraItem: React.FC<CameraCardProps> = ({ camera }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-md p-5 bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300">
+    <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-2xl transition-all duration-300">
       <div className="flex justify-between items-start mb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">{cameraName}</h2>

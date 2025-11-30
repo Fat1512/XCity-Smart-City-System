@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
+import License from "../../../ui/License";
 import { FORMAT } from "../../../utils/appConstant";
 
 interface SensorValues {
@@ -364,9 +365,8 @@ aq:sensor${sensorIndex}_point${pointIndex} rdf:type aq:AirQualityMeasurement ;
             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        Dữ liệu mở tuân thủ chuẩn quốc tế, phù hợp cho nghiên cứu và tích hợp hệ
-        thống
       </p>
+      <License />
     </div>
   );
 };
