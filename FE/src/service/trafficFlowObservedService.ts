@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
+import type { RoutingParams } from "../feature/map/useRoutePath";
 import type { TrafficStaticsParams } from "../feature/traffic-monitor/useGetStaticsTraffic";
 import type { TrafficDownloadParams } from "../feature/traffic-monitor/useTrafficDownLoad";
-import { API } from "../utils/axiosConfig";
+import { AI_REQUEST, API } from "../utils/axiosConfig";
+import { AI_URL } from "../utils/Url";
 
 export async function getTrafficDailyStatics({
   cameraId,
@@ -40,6 +42,19 @@ export async function getDownLoadStatics({
     const res = await API.post(`/traffic/download-statics/`, {
       refDevices,
       date,
+    });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
+export async function getRoute({ start, end }: RoutingParams) {
+  try {
+    const res = await AI_REQUEST.post(`/route`, {
+      start,
+      end,
     });
     return res.data;
   } catch (error: any) {

@@ -32,6 +32,7 @@ import {
 } from "../../utils/appConstant";
 import { useSearchParams } from "react-router-dom";
 import AlertDownloadSection from "./AlertDownloadSection";
+import MetaCreateionAccordion from "../../ui/MetaCreateionAccordion";
 
 const AlertReportDashboard = () => {
   const [searchParams, setSearhParams] = useSearchParams();
@@ -161,6 +162,7 @@ const AlertReportDashboard = () => {
       </div>
       <div className="mb-8">
         <AlertDownloadSection type={type} />
+        <MetaCreateionAccordion coverageText="Cảnh báo trong phạm vi thành phố Hồ Chí Minh" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

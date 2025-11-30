@@ -13,31 +13,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import { useTrafficMonitorContext } from "../../context/TrafficMonitorContext";
-
-ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend
-);
-
+import type { ChartOptions } from "chart.js";
 const MAX_POINTS = 10;
 const randomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 80%, 50%)`;
 
+const options: ChartOptions<"line"> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      labels: {
+        color: "#black", // màu chữ
+        font: { size: 14 }, // kích thước font
+      },
+    },
+  },
+  scales: {
+    y: {
+      title: {
+        display: true,
+        text: "Vận tốc (km/h)",
+        color: "#333",
+        font: {
+          size: 14,
+          weight: "bold",
+        },
+      },
+      beginAtZero: true,
+    },
+    x: {
+      title: {
+        display: true,
+        text: "Thời gian",
+        color: "#333",
+        font: {
+          size: 14,
+          weight: "bold",
+        },
+      },
+    },
+  },
+};
 interface TrafficChartProps {
   streamId: string;
   roadName?: string;
@@ -48,6 +68,8 @@ const TrafficRealtimeChart = ({ streamId, roadName }: TrafficChartProps) => {
   const [labels, setLabels] = useState<string[]>([]);
   const [dataPoints, setDataPoints] = useState<number[]>([]);
   const [color] = useState(randomColor());
+
+  const lastRenderTsRef = useRef<number>(0);
 
   useEffect(() => {
     if (!ws) return;
@@ -65,13 +87,20 @@ const TrafficRealtimeChart = ({ streamId, roadName }: TrafficChartProps) => {
       const metaJson = decoder.decode(metaBytes);
       const meta = JSON.parse(metaJson);
 
+      if (!meta.ts) return;
+      const ts = meta.ts;
+      if (ts - lastRenderTsRef.current < 5000) {
+        return;
+      }
       if (meta.stream_id !== streamId) return;
+
+      lastRenderTsRef.current = ts;
 
       const trafficValue = meta.metrics?.current_count ?? 0;
 
       setDataPoints((prev) => [...prev, trafficValue].slice(-MAX_POINTS));
       setLabels((prev) =>
-        [...prev, new Date().toLocaleTimeString()].slice(-MAX_POINTS)
+        [...prev, new Date(ts).toLocaleTimeString()].slice(-MAX_POINTS)
       );
     };
 
@@ -91,8 +120,6 @@ const TrafficRealtimeChart = ({ streamId, roadName }: TrafficChartProps) => {
       },
     ],
   };
-
-  const options = { responsive: true, maintainAspectRatio: false };
 
   return (
     <div className="bg-white rounded-2xl shadow p-4 h-[250px] mb-6">

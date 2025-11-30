@@ -35,6 +35,7 @@ import { Line, Bar } from "react-chartjs-2";
 import { type CameraOverviewResponse } from "./useGetAllCamera";
 import useGetStaticsTraffic from "./useGetStaticsTraffic";
 import TrafficDownloadSection from "./TrafficDownloadSection";
+import MetaCreateionAccordion from "../../ui/MetaCreateionAccordion";
 
 ChartJS.register(
   LineElement,
@@ -181,11 +182,14 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras }) => {
           </div>
         </div>
         {selectedCameras.length > 0 && (
-          <TrafficDownloadSection
-            chartData={chartData}
-            cameras={selectedCameras}
-            viewDate={date}
-          />
+          <>
+            <TrafficDownloadSection
+              chartData={chartData}
+              cameras={selectedCameras}
+              viewDate={date}
+            />
+            <MetaCreateionAccordion coverageText="Tình trạng giao thông trong thành phố Hồ Chí Minh" />
+          </>
         )}
         <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">

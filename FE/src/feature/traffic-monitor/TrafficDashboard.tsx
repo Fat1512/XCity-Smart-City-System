@@ -14,29 +14,11 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 import { useState } from "react";
-import {
-  Chart as ChartJS,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
 
 import TrafficStatics from "./TrafficStatics";
 import useGetAllCamera from "./useGetAllCamera";
 import MiniSpinner from "../../ui/MiniSpinner";
 import TrafficRealtimeChart from "./TrafficRealtimeChart";
-
-ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend
-);
 
 const TrafficDashboard = () => {
   const [viewMode, setViewMode] = useState<"realtime" | "stats">("realtime");
@@ -45,32 +27,24 @@ const TrafficDashboard = () => {
   if (isLoading) return <MiniSpinner />;
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-2xl font-semibold mb-6">
-        🚦 Traffic Monitoring Dashboard
+      <h1 className="text-4xl font-extrabold mb-8 text-transparent h-[45px] bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+        Traffic Monitoring Dashboard
       </h1>
 
-      <div className="flex gap-3 mb-6">
-        <button
-          className={`px-5 py-2 rounded-xl font-medium transition-all ${
-            viewMode === "realtime"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white border"
-          }`}
-          onClick={() => setViewMode("realtime")}
-        >
-          🔴 Realtime Dashboard
-        </button>
-
-        <button
-          className={`px-5 py-2 rounded-xl font-medium transition-all ${
-            viewMode === "stats"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white border"
-          }`}
-          onClick={() => setViewMode("stats")}
-        >
-          📈 Statistics
-        </button>
+      <div className="flex gap-4 mb-8">
+        {["realtime", "stats"].map((mode) => (
+          <button
+            key={mode}
+            className={`px-6 cursor-pointer py-3 font-semibold rounded-3xl transition-all duration-300 transform ${
+              viewMode === mode
+                ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg hover:scale-105"
+                : "bg-white text-gray-700 border border-gray-300 hover:shadow-lg hover:scale-105"
+            }`}
+            onClick={() => setViewMode(mode as "realtime" | "stats")}
+          >
+            {mode === "realtime" ? "🔴 Realtime Dashboard" : "📈 Statistics"}
+          </button>
+        ))}
       </div>
 
       {viewMode === "realtime" && (
@@ -79,7 +53,7 @@ const TrafficDashboard = () => {
             <TrafficRealtimeChart
               key={cam.id}
               streamId={cam.id}
-              roadName={cam.address.streetAddress}
+              roadName={`${cam.address.streetAddress}, ${cam.address.addressLocality}, ${cam.address.addressRegion}`}
             />
           ))}
         </div>

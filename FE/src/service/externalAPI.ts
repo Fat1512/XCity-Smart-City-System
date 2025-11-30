@@ -14,6 +14,8 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+
 export async function geocodeAddress(address: string) {
   const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
     address
@@ -25,4 +27,19 @@ export async function geocodeAddress(address: string) {
   if (!data.features?.length) return null;
 
   return data.features[0].geometry.coordinates;
+}
+
+export const searchLocation = async (query: string) => {
+  const url = `${NOMINATIM_URL}?q=${encodeURIComponent(
+    query + " Hồ Chí Minh"
+  )}&format=json&addressdetails=1&limit=5`;
+
+  const res = await fetch(url);
+  return res.json();
+};
+export async function getRoadNameFromCoordinate([lng, lat]: [number, number]) {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data?.address?.road || "Không xác định";
 }

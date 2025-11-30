@@ -50,7 +50,7 @@ export default function StreamPanel({
       <div className="absolute inset-0 backdrop-blur-3xl bg-white/[0.02]" />
 
       <div className="relative p-6">
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-6 h-[120px]">
           <div className="flex items-start gap-4">
             <div className="relative">
               <div

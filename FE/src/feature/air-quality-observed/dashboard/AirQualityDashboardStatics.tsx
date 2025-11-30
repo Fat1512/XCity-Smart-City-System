@@ -24,6 +24,7 @@ import MiniSpinner from "../../../ui/MiniSpinner";
 import AirQualityChartNonData from "./AirQualityChartNonData";
 import DownloadSection from "./DownloadSection";
 import AirQualityStaticChart from "./AirQualityStaticChart";
+import MetadataAccordion from "../../../ui/MetadataAccordion";
 
 interface SensorValues {
   pm25: number | null;
@@ -208,7 +209,7 @@ const AirQualityDashboard4Charts = () => {
   }, [selectedSensors, chartTypes]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8">
+    <div className="bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="space-y-6">
         <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
           <div className="space-y-6">
@@ -320,12 +321,15 @@ const AirQualityDashboard4Charts = () => {
             </div>
 
             {selectedSensors.length > 0 && (
-              <DownloadSection
-                selectedSensors={selectedSensors}
-                viewMode={viewMode}
-                selectedDate={selectedDate}
-                selectedMonth={selectedMonth}
-              />
+              <>
+                <DownloadSection
+                  selectedSensors={selectedSensors}
+                  viewMode={viewMode}
+                  selectedDate={selectedDate}
+                  selectedMonth={selectedMonth}
+                />
+                <MetadataAccordion />
+              </>
             )}
           </div>
         </div>

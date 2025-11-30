@@ -30,6 +30,7 @@ import type { Address } from "../building/AdminBuilding";
 import type { Location } from "../air-quality-observed/AirQualityAdmin";
 import useCreateCamera from "./useCreateCamera";
 import useUpdateCamera from "./useUpdateCamera";
+import { useNavigate } from "react-router-dom";
 
 export interface CameraCreate {
   id?: string;
@@ -65,7 +66,7 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
   const { isPending, createCamera } = useCreateCamera();
   const { isPending: isUpdatingCamera, updateCamera } = useUpdateCamera();
   const camera = watch();
-
+  const navigate = useNavigate();
   function handleOnChangeLocation(coords: [number, number]) {
     setValue("location.coordinates", coords, { shouldValidate: true });
   }
@@ -83,7 +84,10 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
 
     if (!camera.id) {
       createCamera(request, {
-        onSuccess: () => toast.success("Tạo camera mới thành công"),
+        onSuccess: () => {
+          toast.success("Tạo camera mới thành công");
+          navigate("/admin/traffic");
+        },
         onError: (err) => toast.error(err.message),
       });
       return;
@@ -182,15 +186,15 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
                       Thành phố
                     </label>
                     <input
-                      {...register("address.addressLocality", {
+                      {...register("address.addressRegion", {
                         required: "Thành phố bắt buộc",
                       })}
                       className="w-full  border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
                       placeholder="TP. HCM"
                     />
-                    {errors.address?.addressLocality && (
+                    {errors.address?.addressRegion && (
                       <ErrorMessage
-                        message={errors.address.addressLocality.message}
+                        message={errors.address.addressRegion.message}
                       />
                     )}
                   </div>
@@ -200,37 +204,21 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
                       Phường/xã
                     </label>
                     <input
-                      {...register("address.district", {
+                      {...register("address.addressLocality", {
                         required: "Phường/xã bắt buộc",
                       })}
                       className="w-full  border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
                       placeholder="Quận 1"
                     />
-                    {errors.address?.district && (
-                      <ErrorMessage message={errors.address.district.message} />
+                    {errors.address?.addressLocality && (
+                      <ErrorMessage
+                        message={errors.address.addressLocality.message}
+                      />
                     )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
-                    Vùng
-                  </label>
-                  <input
-                    {...register("address.addressRegion", {
-                      required: "Vùng bắt buộc",
-                    })}
-                    className="w-full  border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-                    placeholder="Miền Nam"
-                  />
-                  {errors.address?.addressRegion && (
-                    <ErrorMessage
-                      message={errors.address.addressRegion.message}
-                    />
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                <div className="gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
                       Tên đường
@@ -246,22 +234,6 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
                       <ErrorMessage
                         message={errors.address.streetAddress.message}
                       />
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-2">
-                      Số đường
-                    </label>
-                    <input
-                      {...register("address.streetNr", {
-                        required: "Số đường bắt buộc",
-                      })}
-                      className="w-full  border-2 border-gray-200 rounded-lg px-3 py-2.5 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
-                      placeholder="123"
-                    />
-                    {errors.address?.streetNr && (
-                      <ErrorMessage message={errors.address.streetNr.message} />
                     )}
                   </div>
                 </div>
