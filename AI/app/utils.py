@@ -1,5 +1,7 @@
+import base64
+import time
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from PIL import Image
 import os
 
@@ -19,8 +21,30 @@ class TrafficState:
     def get_segment_speed(self, segment_id: str, default_speed_kmh: float) -> float:
         return float(self._segment_speed.get(str(segment_id), default_speed_kmh))
 
+    def snapshot(self) -> Dict[str, float]:
+        return dict(self._segment_speed)
+
 
 traffic_state = TrafficState()
+
+
+class TrafficMedia:
+    def __init__(self) -> None:
+        # stream_id -> (timestamp, jpg_bytes)
+        self._frames: Dict[str, Tuple[float, bytes]] = {}
+
+    def update_frame(self, stream_id: str, jpg_bytes: bytes) -> None:
+        self._frames[str(stream_id)] = (time.time(), jpg_bytes)
+
+    def snapshot(self):
+        result: Dict[str, Dict[str, str]] = {}
+        for sid, (ts, data) in self._frames.items():
+            b64 = base64.b64encode(data).decode("ascii")
+            result[sid] = {
+                "ts": ts,
+                "image_base64": b64,
+            }
+        return result
 
 def resize_image(image_path, max_size=(1024, 1024), quality=85):
     try:
@@ -42,6 +66,9 @@ def resize_image(image_path, max_size=(1024, 1024), quality=85):
     except Exception as e:
         print(f"Error resizing image {image_path}: {e}")
         return image_path
+
+
+traffic_media = TrafficMedia()
 
 
 ORION_URL = "http://localhost:1026"

@@ -16,6 +16,8 @@ from components.manager import ToolManager
 from service.guardrail_service import RAGGuardrailService
 from service.history_service import RedisHistoryService
 
+from app.utils import traffic_media
+
 
 import re
 COORD_PAIR_RE = re.compile(
@@ -78,7 +80,12 @@ class MiniRagService:
             if coord_pairs:
                 start, end = coord_pairs
             else:
-                return {"answer": "Bạn muốn tính đường — vui lòng cung cấp hai tọa độ theo định dạng: lat,lon ví dụ 10.7769,106.7009 -> 10.78,106.71."}
+                return {
+                    "answer": (
+                        "Bạn muốn tính đường — vui lòng cung cấp hai tọa độ theo định dạng: "
+                        "lat,lon ví dụ 10.7769,106.7009 -> 10.78,106.71."
+                    )
+                }
 
             tm = ToolManager()
             try:
@@ -94,23 +101,92 @@ class MiniRagService:
             except Exception as e:
                 return {"answer": f"Không thể tính đường: {e}"}
 
-            prompt = (
-                f"Người dùng: {query}\n\n"
-                "Bạn là trợ lý bằng tiếng Việt. Dưới đây là kết quả route (GeoJSON FeatureCollection):\n"
-                f"{json.dumps(geojson, ensure_ascii=False)}\n\n"
-                "Hãy tóm tắt ngắn gọn (2-3 câu): 1) Tổng thời gian ước tính (phút), 2) Tổng khoảng cách (m), 3) Bắt đầu và kết thúc. Trả bằng tiếng Việt."
-            )
-            answer = self.rag_llm.generate(prompt)
-            summary_text = answer.get("text")
+            try:
+                geojson_str = json.dumps(geojson, ensure_ascii=False)
+                route_prompt = self.rag_prompts.load(
+                    "route_summary",
+                    query=query,
+                    geojson=geojson_str,
+                    history=history_string,
+                )
+            except Exception as e:
+                return {"error": f"Could not load route_summary prompt: {e}"}
 
-            history_list.append({"query": query, "answer": answer})
+            response = self.rag_llm.generate(route_prompt)
+            summary_text = response.get("text", "Đã tính xong lộ trình.")
+
+            history_list.append({"query": query, "answer": summary_text})
             self.history_service.save_history(conversation_id, history_list)
 
             return {
                 "answer": summary_text,
                 "tool_result": geojson,
-                "conversation_id": conversation_id
+                "conversation_id": conversation_id,
             }
+
+
+        if intent == "TRAFFIC":
+            from app.utils import traffic_state
+            speeds = traffic_state.snapshot()
+            frames = traffic_media.snapshot()
+
+            if not speeds:
+                answer = "Hiện hệ thống chưa có dữ liệu giao thông realtime (chưa có stream nào đang chạy)."
+                history_list.append({"query": query, "answer": answer})
+                self.history_service.save_history(conversation_id, history_list)
+                return {
+                    "answer": answer,
+                    "traffic_stats": None,
+                    "traffic_images": [],
+                    "conversation_id": conversation_id,
+                }
+
+            n = len(speeds)
+            avg_speed = sum(speeds.values()) / n
+            slow_segments = {sid: v for sid, v in speeds.items() if v < 20}
+            stats = {
+                "num_segments": n,
+                "avg_speed_kmh": round(avg_speed, 1),
+                "num_congested": len(slow_segments),
+                "congested_segments": slow_segments,
+            }
+
+            import json as _json
+            stats_str = _json.dumps(stats, ensure_ascii=False)
+
+            try:
+                traffic_prompt = self.rag_prompts.load(
+                    "traffic_summary",
+                    query=query,
+                    history=history_string,
+                    stats_json=stats_str,
+                )
+            except Exception as e:
+                return {"error": f"Could not load traffic_summary prompt: {e}"}
+
+            response = self.rag_llm.generate(traffic_prompt)
+            answer = response.get("text", "Hiện tại hệ thống đang ghi nhận tình trạng giao thông bình thường.")
+
+            history_list.append({"query": query, "answer": answer})
+            self.history_service.save_history(conversation_id, history_list)
+
+            traffic_images = [
+                {
+                    "stream_id": sid,
+                    "ts": info["ts"],
+                    "mime_type": "image/jpeg",
+                    "image_base64": info["image_base64"],
+                }
+                for sid, info in frames.items()
+            ]
+
+            return {
+                "answer": answer,
+                "traffic_stats": stats,
+                "traffic_images": traffic_images,
+                "conversation_id": conversation_id,
+            }
+
 
         if intent == "GREETING":
             try:

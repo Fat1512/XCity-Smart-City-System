@@ -21,15 +21,20 @@ Nhiệm vụ: phân loại chính xác **một** truy vấn người dùng thàn
    - Truy vấn rõ ràng **yêu cầu tính đường / bản đồ / lộ trình** hoặc yêu cầu một công cụ (tool) để tìm đường, ví dụ khi người dùng đưa tọa độ (lat,lon) hoặc viết "tính đường", "đường ngắn nhất", "route", "navigate", "hướng đi".
    - Ví dụ: "Tính đường từ 10.7769,106.7009 tới 10.78,106.71", "Cho tôi lộ trình ngắn nhất từ A tới B", "Từ Bến Thành đến Landmark 81 đường ngắn nhất".
 
+6. TRAFFIC
+   - Truy vấn về **tình trạng giao thông / kẹt xe / mật độ xe cộ hiện tại**, có thể kèm theo camera, hình ảnh, đoạn đường hay khu vực cụ thể.
+   - Ví dụ: "Hiện tại đoạn đường này có kẹt xe không?", "Tình hình giao thông quanh Bến Thành sao rồi?", "Cho tôi xem tình trạng giao thông hiện tại", "Camera giao thông ở ngã tư X đang thế nào?".
+
 **QUY TẮC QUYẾT ĐỊNH**
-- Nếu câu chứa hai cặp tọa độ (ví dụ hai lần `lat,lon`) hoặc chứa từ khóa rõ ràng kiểu "tính đường", "đường ngắn nhất", "hướng đi", gán `ROUTE`.
-- Nếu câu là về domain RAG -> `RAG_QUERY`.
-- Nếu không thuộc bất kỳ loại trên -> `OUT_OF_DOMAIN`.
-- Nếu là chào hỏi -> `GREETING`.
-- Nếu hỏi về AI -> `META_QUERY`.
+- Nếu câu chứa hai cặp tọa độ (ví dụ hai lần `lat,lon`) hoặc chứa từ khóa rõ ràng kiểu "tính đường", "đường ngắn nhất", "lộ trình", "hướng đi", "route", "navigate" → gán `ROUTE`.
+- Nếu câu hỏi về tình trạng giao thông, kẹt xe, tốc độ di chuyển, mật độ xe trên đường, hoặc muốn xem hình ảnh/camera giao thông hiện tại → gán `TRAFFIC`.
+- Nếu câu là về domain RAG (sức khỏe, dinh dưỡng, thực phẩm, tập luyện, bệnh lý) →`RAG_QUERY`.
+- Nếu không thuộc bất kỳ loại trên → `OUT_OF_DOMAIN`.
+- Nếu là chào hỏi → `GREETING`.
+- Nếu hỏi về AI/bot → `META_QUERY`.
 
 **CHỈ TRẢ VỀ CHỈ 1 TỪ (KHÔNG GIẢI THÍCH)**
 Ví dụ đầu vào:
 {query}
 
-Kết quả (một từ): 
+Kết quả (một từ):

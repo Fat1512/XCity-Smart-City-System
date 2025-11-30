@@ -11,6 +11,8 @@ import time
 from service.vehicle_speed_stream_service import VehicleSpeedStreamService
 from app.utils import publish_to_orion_ld
 from app.utils import traffic_state
+from app.utils import traffic_media
+
 
 router = APIRouter()
 
@@ -200,6 +202,7 @@ async def process_ws(websocket: WebSocket):
                     if not ok:
                         continue
                     jpg_out = encoded.tobytes()
+                    traffic_media.update_frame(stream_id, jpg_out)
 
                     try:
                         await websocket.send_text(json.dumps({

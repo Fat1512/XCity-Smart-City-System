@@ -19,7 +19,30 @@
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
     "yolo_weights": "yolo11n.pt",
-    "segment_ids": ["1328044064", "1265743180"]
+    "segment_ids": ["1328044064", "1265743180"],
+    "address": "Lê quý đôn"
+  },
+  {
+    "stream_id": "cam01",
+    "video_path": "video1.mp4",
+    "limit_fps": 3,
+    "image_pts": [
+      [6, 80],
+      [308, 4],
+      [635, 236],
+      [206, 353]
+    ],
+    "world_pts": [
+      [0, 0],
+      [15, 0],
+      [15, 15],
+      [0, 15]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "yolo_weights": "yolo11n.pt",
+    "segment_ids": ["1328044064", "1265743180"],
+    "address": "Xa lộ hà nội"
   }
-
 ]
