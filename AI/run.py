@@ -35,36 +35,28 @@ from app.routes import router as api_router
 from app.ws_traffic import router as ws_traffic_router
 from app.ws_flood import router as ws_flood_router
 
-from service.mini_rag_service import MiniRagService
-from components.watcher.local_watcher import LocalFolderWatcher
+from service.rag.rag_service import MiniRagService
 from components.watcher.rss_watcher import RSSWatcher
+from components.watcher.s3_watcher import S3Watcher
 
-# Import and initialize ToolManager to register tools
 from components.manager import ToolManager
 
-# ===============================
-# INITIALIZE TOOLS
-# ===============================
+
 def initialize_tools():
-    """Initialize and register all tools including FloodDetector"""
     tool_manager = ToolManager()
     tool_manager.auto_register_from_package()
     print(f"Registered tools: {[t['name'] for t in tool_manager.list_tools()]}")
 
-# ===============================
-# START WATCHERS (background)
-# ===============================
+
 async def start_watchers(loop):
     print("Initializing Watchers...")
 
     rag_service = MiniRagService()
     tasks = []
 
-    local_watch_dir = os.getenv("WATCHER_LOCAL_PATH")
-    if local_watch_dir:
-        print(f"Watching local folder: {local_watch_dir}")
-        local_watcher = LocalFolderWatcher(watch_dir=local_watch_dir)
-        tasks.append(loop.create_task(local_watcher.start(rag_service, loop)))
+    s3_bucket = os.getenv("WATCHER_S3_BUCKET")
+    s3_prefix = os.getenv("WATCHER_S3_PREFIX", "")
+    s3_interval = int(os.getenv("WATCHER_S3_INTERVAL", "60"))
 
     rss_urls_str = os.getenv("WATCHER_RSS_URLS")
     if rss_urls_str:
@@ -74,13 +66,28 @@ async def start_watchers(loop):
             rss_watcher = RSSWatcher(
                 feed_urls=rss_urls,
                 check_interval_seconds=rss_interval,
-                save_dir=local_watch_dir
+                save_dir=None,
+                s3_bucket=s3_bucket,
+                s3_prefix=s3_prefix,
             )
             tasks.append(loop.create_task(rss_watcher.start(rag_service, loop)))
+
+    if s3_bucket:
+        print(
+            f"Watching S3 bucket: {s3_bucket}, prefix='{s3_prefix}', "
+            f"interval={s3_interval}s"
+        )
+        s3_watcher = S3Watcher(
+            bucket_name=s3_bucket,
+            prefix=s3_prefix,
+            poll_interval=s3_interval,
+        )
+        tasks.append(loop.create_task(s3_watcher.start(rag_service, loop)))
 
     if tasks:
         print(f"Running {len(tasks)} watchers...")
         await asyncio.gather(*tasks)
+
 
 
 def run_watcher_thread():
@@ -90,11 +97,7 @@ def run_watcher_thread():
     loop.close()
 
 
-# ===============================
-# FASTAPI APP
-# ===============================
 def create_app():
-    # Initialize tools first
     initialize_tools()
     
     app = FastAPI(title="AI API + WS Stream")
@@ -133,4 +136,4 @@ def create_app():
 
 app = create_app()
 
-# threading.Thread(target=run_watcher_thread, daemon=True).start()
+threading.Thread(target=run_watcher_thread, daemon=True).start()

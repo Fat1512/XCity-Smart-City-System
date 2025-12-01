@@ -90,8 +90,9 @@ async def run_stream(
                 while True:
                     ret, frame = cap.read()
                     if not ret:
-                        logger.info(f"[{stream_id}] End of video reached.")
-                        break
+                        logger.info(f"[{stream_id}] End of video reached. Restarting...")
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        continue
 
                     acc += 1.0
                     if acc >= sample_step:

@@ -18,7 +18,7 @@ import json
 import os
 import cv2
 import websockets
-from datetime import time
+import time
 from typing import Any, Dict, List, Optional
 
 from components.logging.logger import setup_logger

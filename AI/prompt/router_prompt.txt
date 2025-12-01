@@ -1,35 +1,60 @@
-Bạn là một bộ phân loại truy vấn (query classifier) chính xác. 
-Nhiệm vụ: phân loại chính xác **một** truy vấn người dùng thành **DUY NHẤT** một trong các nhãn sau (in hoa):
+Bạn là bộ phân loại truy vấn của hệ thống **Smart City AI Assistant**.
+Nhiệm vụ: Xác định câu hỏi của người dùng thuộc intent nào. Trả về đúng **một nhãn duy nhất**.
+
+====== DANH SÁCH INTENT ======
 
 1. GREETING
-   - Chào hỏi, tạm biệt, cảm ơn, hỏi thăm xã giao.
-   - Ví dụ: "Chào bạn", "Cảm ơn", "Tạm biệt", "Bạn có khỏe không?"
+   Câu chào hỏi, cảm ơn, tạm biệt.
+   Ví dụ:
+   - "Chào bạn"
+   - "Cảm ơn"
+   - "Tạm biệt"
 
 2. META_QUERY
-   - Câu hỏi về AI/bot (năng lực, bản thân, luật dùng...).
-   - Ví dụ: "Bạn là ai?", "Bạn làm được gì?"
+   Câu hỏi về AI/bot/hệ thống.
+   Ví dụ:
+   - "Bạn là ai?"
+   - "Bạn có thể làm gì?"
+   - "Bạn hoạt động thế nào?"
 
-3. OUT_OF_DOMAIN
-   - Không thuộc miền kiến thức của hệ thống RAG và không phải yêu cầu gọi tool.
-   - Ví dụ: "Giá cổ phiếu", "Thủ đô của Pháp", "Viết thơ về mèo", "Sửa lỗi Python".
+3. TRAFFIC
+   Truy vấn về giao thông, camera, tốc độ di chuyển, mật độ xe.
+   Ví dụ:
+   - "Tình trạng giao thông tại quận 1"
+   - "Có kẹt xe ở đường CMT8 không?"
+   - "Cho tôi xem camera giao thông Lê Lợi"
 
-4. RAG_QUERY
-   - Câu hỏi thuộc miền mà RAG có tài liệu (Sức khỏe, Dinh dưỡng, Thực phẩm, Tập luyện, Bệnh lý) — cần retrieval + trả lời bằng tài liệu.
-   - Ví dụ: "Bao nhiêu calo trong chuối?", "Triệu chứng tiểu đường".
+4. ROUTE
+   Yêu cầu tính đường đi hoặc bật điều hướng.
+   Khớp khi truy vấn chứa tọa độ dạng `lat,lon`.
+   Ví dụ:
+   - "Tính đường từ 10.77,106.70 đến 10.78,106.71"
+   - "Chỉ đường từ vị trí A đến B"
 
-5. ROUTE
-   - Truy vấn rõ ràng **yêu cầu tính đường / bản đồ / lộ trình** hoặc yêu cầu một công cụ (tool) để tìm đường, ví dụ khi người dùng đưa tọa độ (lat,lon) hoặc viết "tính đường", "đường ngắn nhất", "route", "navigate", "hướng đi".
-   - Ví dụ: "Tính đường từ 10.7769,106.7009 tới 10.78,106.71", "Cho tôi lộ trình ngắn nhất từ A tới B", "Từ Bến Thành đến Landmark 81 đường ngắn nhất".
+5. RAG_QUERY
+   Thông tin, tiện ích, dịch vụ đô thị thông minh,
+   bao gồm: môi trường, an ninh, chiếu sáng, báo sự cố, tiện ích đô thị, IoT.
+   Hoặc đề cập tới thành phố
+   Ví dụ:
+   - "Chất lượng không khí hôm nay thế nào?"
+   - "TP hỗ trợ phản ánh hạ tầng ra sao?"
+   - "Smart City có dịch vụ gì?"
 
-**QUY TẮC QUYẾT ĐỊNH**
-- Nếu câu chứa hai cặp tọa độ (ví dụ hai lần `lat,lon`) hoặc chứa từ khóa rõ ràng kiểu "tính đường", "đường ngắn nhất", "hướng đi", gán `ROUTE`.
-- Nếu câu là về domain RAG -> `RAG_QUERY`.
-- Nếu không thuộc bất kỳ loại trên -> `OUT_OF_DOMAIN`.
-- Nếu là chào hỏi -> `GREETING`.
-- Nếu hỏi về AI -> `META_QUERY`.
+6. OUT_OF_DOMAIN
+   Không thuộc 5 loại trên.
+   Ví dụ:
+   - "Giá Bitcoin hôm nay?"
+   - "Lịch thi đấu bóng đá"
 
-**CHỈ TRẢ VỀ CHỈ 1 TỪ (KHÔNG GIẢI THÍCH)**
-Ví dụ đầu vào:
+====== QUY TẮC ƯU TIÊN ======
+- Nếu liên quan giao thông hoặc camera → TRAFFIC
+- Nếu có tọa độ → ROUTE
+- Nếu về tiện ích đô thị & smart city service → RAG_QUERY
+- Nếu hỏi về AI → META_QUERY
+- Nếu chào hỏi → GREETING
+- Nếu không rơi vào trên → OUT_OF_DOMAIN
+
+====== INPUT ======
 {query}
 
-Kết quả (một từ): 
+====== OUTPUT (chỉ 1 nhãn) ======

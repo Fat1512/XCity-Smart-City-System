@@ -1,20 +1,7 @@
-# -----------------------------------------------------------------------------
-# Copyright 2025 Fenwick Team
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# -----------------------------------------------------------------------------
+import base64
+import time
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from PIL import Image
 import os
 
@@ -25,17 +12,56 @@ import requests
 class TrafficState:
     def __init__(self):
         self._segment_speed: Dict[str, float] = {}
-
+        self._segment_to_address: Dict[str, str] = {}
+    
+    def register_segment(self, segment_id: str, address: str):
+        self._segment_to_address[str(segment_id)] = address
+        print(f"[TrafficState] Registered: segment_id={segment_id} -> address={address}")
+    
     def update_segment_speed(self, segment_id: str, speed_kmh: float):
         if speed_kmh <= 0:
             return
         self._segment_speed[str(segment_id)] = float(speed_kmh)
-
+    
     def get_segment_speed(self, segment_id: str, default_speed_kmh: float) -> float:
         return float(self._segment_speed.get(str(segment_id), default_speed_kmh))
+    
+    def snapshot(self) -> Dict[str, float]:
+        return dict(self._segment_speed)
+    
+    def snapshot_with_addresses(self) -> Dict[str, Dict[str, Any]]:
+        result = {}
+        for seg_id, speed in self._segment_speed.items():
+            result[seg_id] = {
+                "speed": speed,
+                "address": self._segment_to_address.get(seg_id, f"Đoạn {seg_id}")
+            }
+        print(f"[TrafficState] Snapshot: {len(result)} segments")
+        for seg_id, data in result.items():
+            print(f"  - {seg_id}: {data['address']} = {data['speed']:.1f} km/h")
+        return result
 
 
 traffic_state = TrafficState()
+
+
+class TrafficMedia:
+    def __init__(self) -> None:
+        # stream_id -> (timestamp, jpg_bytes)
+        self._frames: Dict[str, Tuple[float, bytes]] = {}
+
+    def update_frame(self, stream_id: str, jpg_bytes: bytes) -> None:
+        self._frames[str(stream_id)] = (time.time(), jpg_bytes)
+
+    def snapshot(self):
+        result: Dict[str, Dict[str, str]] = {}
+        for sid, (ts, data) in self._frames.items():
+            b64 = base64.b64encode(data).decode("ascii")
+            result[sid] = {
+                "ts": ts,
+                "image_base64": b64,
+            }
+        return result
 
 def resize_image(image_path, max_size=(1024, 1024), quality=85):
     try:
@@ -59,7 +85,9 @@ def resize_image(image_path, max_size=(1024, 1024), quality=85):
         return image_path
 
 
-ORION_URL = "http://localhost:1026"
+traffic_media = TrafficMedia()
+
+
 
 
 def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
@@ -139,7 +167,7 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
             ],
             **attrs
         }
-
+        ORION_URL = os.getenv("ORION_URL")
         payload = [entity_body]
         upsert_url = ORION_URL.rstrip("/") + "/ngsi-ld/v1/entityOperations/upsert"
         headers = {

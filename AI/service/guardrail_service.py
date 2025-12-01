@@ -44,6 +44,8 @@ class RAGGuardrailService:
                 return "OUT_OF_DOMAIN", router_tokens
             if "ROUTE" in intent:
                 return "ROUTE", router_tokens
+            if "TRAFFIC" in intent:
+                return "TRAFFIC", router_tokens
             
             return "RAG_QUERY", router_tokens
             
