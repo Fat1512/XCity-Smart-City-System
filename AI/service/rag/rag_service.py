@@ -48,10 +48,7 @@ class MiniRagService:
         self.streams_config = self._load_streams_config()
         logger.info(f"Loaded {len(self.streams_config)} traffic streams")
 
-        # danh sách handler cho từng intent
         self.intent_handlers = create_intent_handlers()
-
-    # ---- UTILITIES ---------------------------------------------------------
 
     def _load_streams_config(self):
         config_path = "config/streams_config.json"
@@ -61,10 +58,6 @@ class MiniRagService:
         return []
 
     def parse_two_coord_pairs(self, text: str):
-        """
-        Wrapper quanh regex tách 2 cặp tọa độ từ string.
-        Dùng cho RouteIntent qua service instance để tránh circular import.
-        """
         matches = COORD_PAIR_RE.findall(text)
         if len(matches) < 2:
             return None
@@ -77,18 +70,15 @@ class MiniRagService:
         except Exception:
             return None
 
-    # ---- CHAT ENTRYPOINT ---------------------------------------------------
 
     def chat(self, query: str, conversation_id: str = None):
         if not self.history_service.is_available:
             return {"error": "Server error: Chat history service (Redis) is unavailable."}
 
-        # tạo conversation_id nếu chưa có
         if not conversation_id:
             conversation_id = str(uuid.uuid4())
             logger.info(f"Starting new conversation: {conversation_id}")
 
-        # load history và build context string
         history_list = self.history_service.load_history(conversation_id)
         K_TURNS = int(os.getenv("K_TURNS", 5))
         recent_history_list = history_list[-K_TURNS:]
@@ -97,17 +87,14 @@ class MiniRagService:
         for turn in recent_history_list:
             history_string += f"Người dùng: {turn['query']}\nTrợ lý: {turn['answer']}\n\n"
 
-        # route intent bằng guardrail
         intent, router_tokens = self.rag_guardrails.route_intent(query)
         logger.info(f"Routed intent: {intent}")
 
-        # nếu user gõ 2 cặp tọa độ hợp lệ thì ưu tiên ROUTE
         coord_pairs = self.parse_two_coord_pairs(query)
         if coord_pairs and intent != "ROUTE":
             logger.info("Detected coordinate pairs in query, overriding intent to ROUTE")
             intent = "ROUTE"
 
-        # dispatch cho handler tương ứng
         for handler in self.intent_handlers:
             if handler.handles(intent):
                 return handler.handle(
@@ -120,13 +107,11 @@ class MiniRagService:
                     router_tokens=router_tokens,
                 )
 
-        # fallback (không nên tới đây do RagIntent luôn handle default)
         answer = "Hiện tại intent này chưa được hỗ trợ."
         history_list.append({"query": query, "answer": answer})
         self.history_service.save_history(conversation_id, history_list)
         return {"answer": answer, "conversation_id": conversation_id}
 
-    # ---- INGEST / DOCUMENT UTILS ------------------------------------------
 
     def ingest_file(self, file_path: str, filename: str) -> Dict[str, Any]:
         text, error = self.reader_manager.read_file(file_path)
@@ -166,7 +151,6 @@ class MiniRagService:
 
         documents = chunks
 
-        # xóa version cũ của file trước khi add mới
         self.db.delete(
             collection_name=self.collection_name,
             where_filter={"source": filename},

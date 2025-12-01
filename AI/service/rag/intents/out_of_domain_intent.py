@@ -22,7 +22,7 @@ class OutOfDomainIntent(BaseIntent):
         try:
             answer = (
                 "Tôi xin lỗi, tôi chỉ có thể trả lời các câu hỏi liên quan đến "
-                "chủ đề sức khỏe và dinh dưỡng. Bạn có câu hỏi nào khác về chủ đề này không?"
+                "thành phố. Bạn có câu hỏi nào khác về chủ đề này không?"
             )
 
             history_list.append({"query": query, "answer": answer})

@@ -18,7 +18,7 @@ class KnowledgeService:
         
         with self._lock:
             self._state = {
-                'local': bool(os.getenv("WATCHER_LOCAL_PATH")),
+                's3': bool(os.getenv("KNOWLEDGE_S3_ENABLED")),
                 'rss': bool(os.getenv("WATCHER_RSS_URLS"))
             }
             self._initialized = True

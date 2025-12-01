@@ -7,13 +7,24 @@ import os
 import functools
 from dateutil import parser as date_parser
 from datetime import datetime, timezone, timedelta
+import boto3
+
 from components.interfaces import BaseWatcher
+
 from service.rag.rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
 
 
+
 class RSSWatcher(BaseWatcher):
-    def __init__(self, feed_urls: list[str], check_interval_seconds: int = 3600, save_dir: str | None = None):
+    def __init__(
+        self,
+        feed_urls: list[str],
+        check_interval_seconds: int = 3600,
+        save_dir: str | None = None,
+        s3_bucket: str | None = None,
+        s3_prefix: str = "",
+    ):
         self.feed_urls = feed_urls
         self.check_interval = check_interval_seconds
         self.max_backfill_pages = int(os.getenv("RSS_MAX_BACKFILL_PAGES", "1"))
@@ -24,12 +35,23 @@ class RSSWatcher(BaseWatcher):
         self.loop: asyncio.AbstractEventLoop = None
         self.seen_articles: dict[str, str] = {}
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+            )
         }
-        self.http_client = httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers=headers)
+        self.http_client = httpx.AsyncClient(
+            timeout=20.0, follow_redirects=True, headers=headers
+        )
 
         self.save_dir = save_dir
-        print(f"Initialized RSSWatcher, checking every {check_interval_seconds} seconds.")
+        self.s3_bucket = s3_bucket
+        self.s3_prefix = s3_prefix
+        self.s3_client = boto3.client("s3") if s3_bucket else None
+
+        print(
+            f"Initialized RSSWatcher, checking every {check_interval_seconds} seconds."
+        )
 
         if self.max_age_days > 0:
             print(f"Auto-delete RSS files older than {self.max_age_days} days: ENABLED")
@@ -141,9 +163,24 @@ class RSSWatcher(BaseWatcher):
                     continue
 
                 filename = self._create_filename(entry.link, entry.title)
-                if self.save_dir:
+                publication_date = pub_date_str or now_utc.isoformat()
+
+                if self.s3_bucket and self.s3_client:
+                    if not is_backfill:
+                        print(f"New/updated article (upload to S3): {entry.title}")
+
+                    await self.loop.run_in_executor(
+                        None,
+                        self._upload_to_s3,
+                        filename,
+                        raw_bytes,
+                        publication_date,
+                        entry.link,
+                    )
+
+                elif self.save_dir:
                     save_path = os.path.join(self.save_dir, filename)
-                    
+
                     if os.path.exists(save_path):
                         continue
 
@@ -153,7 +190,7 @@ class RSSWatcher(BaseWatcher):
                             f.write(raw_bytes)
                     except Exception as e:
                         print(f"Error saving RSS file {save_path}: {e}")
-                
+
                 else:
                     if self.rag_service.document_exists(filename):
                         print(f"Skipping existing article '{filename}'")
@@ -162,14 +199,13 @@ class RSSWatcher(BaseWatcher):
                     if not is_backfill:
                         print(f"New/updated article (direct ingest): {entry.title}")
 
-                    publication_date = pub_date_str or now_utc.isoformat()
                     await self.rag_service.ingest_bytes(
                         raw_bytes,
                         filename,
                         extra_metadata={
                             "publication_date": publication_date,
-                            "source_url": entry.link
-                        }
+                            "source_url": entry.link,
+                        },
                     )
 
                 self.seen_articles[article_id] = last_updated
@@ -201,3 +237,30 @@ class RSSWatcher(BaseWatcher):
         safe_title = "".join(c for c in title if c.isalnum() or c in " _-").strip()
         safe_title = safe_title[:50].strip().replace(" ", "_")
         return f"rss_{safe_title}_{url_hash}.txt"
+
+    def _upload_to_s3(
+        self,
+        filename: str,
+        raw_bytes: bytes,
+        publication_date: str,
+        source_url: str,
+    ):
+        if not self.s3_client or not self.s3_bucket:
+            raise RuntimeError("S3 client/bucket not configured for RSSWatcher")
+
+        key = f"{self.s3_prefix}{filename}" if self.s3_prefix else filename
+        print(f"RSSWatcher: uploading article to S3: s3://{self.s3_bucket}/{key}")
+
+        extra_args = {
+            "Metadata": {
+                "publication_date": publication_date,
+                "source_url": source_url,
+            }
+        }
+
+        self.s3_client.put_object(
+            Bucket=self.s3_bucket,
+            Key=key,
+            Body=raw_bytes,
+            **extra_args,
+        )

@@ -234,7 +234,6 @@ async def process_ws(websocket: WebSocket):
                     if send_new_metrics:
                         last_metrics_time = now
                         last_metrics_data = metrics
-                        # publish lên Orion cũng 5s/lần
                         try:
                             publish_to_orion_ld(stream_id, metrics)
                         except Exception:

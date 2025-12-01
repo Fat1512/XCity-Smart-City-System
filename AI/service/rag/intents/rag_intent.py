@@ -19,7 +19,7 @@ class RagIntent(BaseIntent):
         conversation_id: str,
         router_tokens: Dict[str, Any],
     ) -> Dict[str, Any]:
-        service.logger = service.__dict__.get("logger", None)  # không bắt buộc
+        service.logger = service.__dict__.get("logger", None)
 
         context_chunks = service.retrieve_context(query, n_results=3)
 

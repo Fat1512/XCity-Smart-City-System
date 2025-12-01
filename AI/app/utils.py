@@ -88,7 +88,6 @@ def resize_image(image_path, max_size=(1024, 1024), quality=85):
 traffic_media = TrafficMedia()
 
 
-ORION_URL = "http://localhost:1026"
 
 
 def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
@@ -168,7 +167,7 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
             ],
             **attrs
         }
-
+        ORION_URL = os.getenv("ORION_URL")
         payload = [entity_body]
         upsert_url = ORION_URL.rstrip("/") + "/ngsi-ld/v1/entityOperations/upsert"
         headers = {

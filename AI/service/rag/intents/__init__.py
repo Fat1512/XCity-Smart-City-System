@@ -8,16 +8,11 @@ from .rag_intent import RagIntent
 
 
 def create_intent_handlers():
-    """
-    Thứ tự quan trọng:
-    - ROUTE / TRAFFIC / GREETING / META / OUT_OF_DOMAIN
-    - RAGIntent luôn để cuối cùng để làm default handler.
-    """
     return [
         RouteIntent(),
         TrafficIntent(),
         GreetingIntent(),
         MetaIntent(),
-        OutOfDomainIntent(),
         RagIntent(),
+        OutOfDomainIntent(),
     ]

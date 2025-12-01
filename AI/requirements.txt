@@ -19,3 +19,4 @@ osmnx
 opencv-python
 supervision
 ultralytics
+boto3
