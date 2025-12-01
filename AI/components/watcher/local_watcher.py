@@ -5,7 +5,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from components.interfaces import BaseWatcher
 
-from service.mini_rag_service import MiniRagService
+from service.rag.rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
 
 class LocalFolderWatcher(BaseWatcher, FileSystemEventHandler):

@@ -20,7 +20,7 @@ from app.routes import router as api_router
 from app.ws_traffic import router as ws_traffic_router
 from app.ws_flood import router as ws_flood_router
 
-from service.mini_rag_service import MiniRagService
+from service.rag.rag_service import MiniRagService
 from components.watcher.local_watcher import LocalFolderWatcher
 from components.watcher.rss_watcher import RSSWatcher
 

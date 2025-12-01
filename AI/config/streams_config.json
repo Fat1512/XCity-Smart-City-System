@@ -18,7 +18,6 @@
     "classes": [2, 3, 5, 6],
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
-    "yolo_weights": "yolo11n.pt",
     "segment_ids": ["1328044064", "1265743180"],
     "address": "Lê quý đôn"
   },
@@ -41,8 +40,7 @@
     "classes": [2, 3, 5, 6],
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
-    "yolo_weights": "yolo11n.pt",
-    "segment_ids": ["1328044064", "1265743180"],
+    "segment_ids": ["123456", "678594"],
     "address": "Xa lộ hà nội"
   }
 ]

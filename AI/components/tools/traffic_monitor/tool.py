@@ -34,7 +34,7 @@ class VehicleSpeedTool(Tool):
     category: str = "traffic"
     enabled: bool = True
 
-    def __init__(self, yolo_weights: str = "yolo11m.pt", detector_weights: str = "yolov8m.pt"):
+    def __init__(self, yolo_weights: str = "yolo11n.pt", detector_weights: str = "yolov8n.pt"):
         self.yolo_weights = yolo_weights
         self.stream_ready = False
         self.model = None

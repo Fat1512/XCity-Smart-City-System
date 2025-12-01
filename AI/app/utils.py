@@ -1,7 +1,7 @@
 import base64
 import time
 from datetime import datetime, timezone
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 from PIL import Image
 import os
 
@@ -12,17 +12,34 @@ import requests
 class TrafficState:
     def __init__(self):
         self._segment_speed: Dict[str, float] = {}
-
+        self._segment_to_address: Dict[str, str] = {}
+    
+    def register_segment(self, segment_id: str, address: str):
+        self._segment_to_address[str(segment_id)] = address
+        print(f"[TrafficState] Registered: segment_id={segment_id} -> address={address}")
+    
     def update_segment_speed(self, segment_id: str, speed_kmh: float):
         if speed_kmh <= 0:
             return
         self._segment_speed[str(segment_id)] = float(speed_kmh)
-
+    
     def get_segment_speed(self, segment_id: str, default_speed_kmh: float) -> float:
         return float(self._segment_speed.get(str(segment_id), default_speed_kmh))
-
+    
     def snapshot(self) -> Dict[str, float]:
         return dict(self._segment_speed)
+    
+    def snapshot_with_addresses(self) -> Dict[str, Dict[str, Any]]:
+        result = {}
+        for seg_id, speed in self._segment_speed.items():
+            result[seg_id] = {
+                "speed": speed,
+                "address": self._segment_to_address.get(seg_id, f"Đoạn {seg_id}")
+            }
+        print(f"[TrafficState] Snapshot: {len(result)} segments")
+        for seg_id, data in result.items():
+            print(f"  - {seg_id}: {data['address']} = {data['speed']:.1f} km/h")
+        return result
 
 
 traffic_state = TrafficState()

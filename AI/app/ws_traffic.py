@@ -9,10 +9,12 @@ import cv2
 import time
 
 from service.vehicle_speed_stream_service import VehicleSpeedStreamService
+from components.logging import logger
 from app.utils import publish_to_orion_ld
 from app.utils import traffic_state
 from app.utils import traffic_media
 
+logger = logger.setup_logger("ws_traffic")
 
 router = APIRouter()
 
@@ -115,6 +117,15 @@ async def process_ws(websocket: WebSocket):
         segment_ids = cfg.get("segment_ids") or cfg.get("segment_id") or []
         if isinstance(segment_ids, str):
             segment_ids = [segment_ids]
+
+        address = cfg.get("address", "") 
+
+        logger.info(f"Stream connecting: stream_id={stream_id}")
+        logger.info(f"Address: {address}")
+        logger.info(f"Segment IDs: {segment_ids}")
+
+        for seg_id in segment_ids:
+            traffic_state.register_segment(seg_id, address)
         
         _segments_by_stream[stream_id] = segment_ids
 
@@ -131,7 +142,7 @@ async def process_ws(websocket: WebSocket):
                 fps=cfg.get("fps", 30),
             )
         except:
-            traceback.print_exc()
+            traceback.logger.info_exc()
             await websocket.close(code=1011)
             return
 
@@ -192,7 +203,7 @@ async def process_ws(websocket: WebSocket):
 
                         if speed_kmh is not None:
                             seg_ids = _segments_by_stream.get(stream_id, [])
-                            # print(f"[traffic] stream={stream_id} seg_ids={seg_ids} speed_kmh={speed_kmh}")
+                            # logger.info(f"[traffic] stream={stream_id} seg_ids={seg_ids} speed_kmh={speed_kmh}")
                             for seg_id in seg_ids:
                                 traffic_state.update_segment_speed(seg_id, speed_kmh)
                     except Exception:
@@ -214,7 +225,7 @@ async def process_ws(websocket: WebSocket):
                             }
                         }))
                     except:
-                        print("OK")
+                        logger.info("OK")
 
                     now = time.time()
 

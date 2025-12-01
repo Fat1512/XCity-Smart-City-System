@@ -8,7 +8,7 @@ import functools
 from dateutil import parser as date_parser
 from datetime import datetime, timezone, timedelta
 from components.interfaces import BaseWatcher
-from service.mini_rag_service import MiniRagService
+from service.rag.rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
 
 

@@ -7,7 +7,7 @@ import os
 
 from app.schemas import *
 
-from service.mini_rag_service import MiniRagService
+from service.rag.rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
 from service.route_service import RouteService
 
