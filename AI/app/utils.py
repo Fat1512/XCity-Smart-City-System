@@ -114,7 +114,7 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
 
     try:
         observed_at = datetime.now(timezone.utc).isoformat()
-        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id.split(":")[-1]}"
+        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id.split(':')[-1]}"
         entity_type = "TrafficFlowObserved"
 
         cur_count = float(metrics.get("current_count", 0) or 0)
