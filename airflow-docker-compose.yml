@@ -87,12 +87,12 @@ x-airflow-common: &airflow-common
     POSTGRES_HOST: ${POSTGRES_HOST}
     POSTGRES_PORT: ${POSTGRES_PORT}
   volumes:
-    - ./airflow/dags:/opt/airflow/dags
-    - ./airflow/logs:/opt/airflow/logs
-    - ./airflow/config:/opt/airflow/config
-    - ./airflow/plugins:/opt/airflow/plugins
-    - ./data:/opt/airflow/data
-    - ./scripts:/opt/airflow/scripts
+    - ./Data/airflow/dags:/opt/airflow/dags
+    - ./Data/airflow/logs:/opt/airflow/logs
+    - ./Data/airflow/config:/opt/airflow/config
+    - ./Data/airflow/plugins:/opt/airflow/plugins
+    - ./Data/data:/opt/airflow/data
+    - ./Data/scripts:/opt/airflow/scripts
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
   depends_on: &airflow-common-depends-on
     redis:

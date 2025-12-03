@@ -34,6 +34,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,14 +57,25 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
 
         String id = (String) data.get("id");
-        String notifiedAtStr = (String) data.get("dateObserved");
+        String notifiedAtStr = (String) data.getOrDefault("dateObserved", "");
 
         if(notifiedAtStr.isEmpty() || id.isEmpty()) {
             notifiedAtStr = (String) measurement.get("notifiedAt");
         }
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                .optionalStart()
+                .appendOffsetId()
+                .optionalEnd()
+                .toFormatter();
 
-        LocalDateTime dateObserved = LocalDateTime.parse(notifiedAtStr);
+        TemporalAccessor ta = formatter.parse(notifiedAtStr);
 
+        // Convert to LocalDateTime (handles both)
+        LocalDateTime dateObserved =
+                ta instanceof OffsetDateTime
+                        ? ((OffsetDateTime) ta).toLocalDateTime()
+                        : LocalDateTime.from(ta);
         AirQualityObserved airQualityObserved = objectMapper.convertValue(data, AirQualityObserved.class);
         airQualityObserved.setId(UUID.randomUUID().toString());
         airQualityObserved.setRefDevice(id);
