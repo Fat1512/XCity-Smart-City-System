@@ -68,7 +68,7 @@ services:
         ipv4_address: 172.24.0.103
 
   xcity-sensor:
-    image: fat1512/sensor:v11
+    image: fat1512/sensor:v21
     container_name: xcity-sensor
     ports:
       - "5000:5000"
@@ -85,7 +85,7 @@ services:
     restart: unless-stopped
 
   xcity-backend:
-    image: fat1512/be:v12
+    image: fat1512/be:v20
     container_name: xcity-backend
     ports:
       - "8090:8090"
@@ -94,7 +94,7 @@ services:
       - AUTH_SECRET_KEY=${AUTH_SECRET_KEY}
       - ORION_LD_URL=http://orion-ld:1026/ngsi-ld/v1/entities
       - CLIENT_URL=http://xcity-frontend
-      - SENSOR_SERVICE=http://xcity-sensor:5000/sensor
+      - SENSOR_SERVICE=http://172.24.0.104:5000/sensor
       - IOT_AGENT=http://iot-agent:4041/iot
     depends_on:
       - xcity-sensor
@@ -106,7 +106,7 @@ services:
     restart: unless-stopped
 
   xcity-frontend:
-    image: fat1512/fe:v12
+    image: fat1512/fe:v20
     container_name: xcity-frontend
     ports:
       - "80:80"
