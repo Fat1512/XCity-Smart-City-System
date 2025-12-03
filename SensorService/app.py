@@ -14,7 +14,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 import json
-
+import time
 import threading
 import csv
 import os
@@ -22,7 +22,8 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 from flask import Flask, request, jsonify
 
-BROKER = "localhost"
+# BROKER = "localhost"
+BROKER = "172.24.0.100"
 PORT = 1883
 
 mqtt_client = mqtt.Client()
@@ -238,4 +239,4 @@ def push_station4_data():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=6000)
