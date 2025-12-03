@@ -13,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from .tool import VehicleSpeedTool
+from .vehicle_speed_tool import VehicleSpeedTool
 
 __all__ = ["VehicleSpeedTool"]
