@@ -1,3 +1,18 @@
+# -----------------------------------------------------------------------------
+# Copyright 2025 Fenwick Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# -----------------------------------------------------------------------------
 spring:
   application:
     name: XCity
@@ -9,9 +24,13 @@ app:
   token:
     secret: ${AUTH_SECRET_KEY}
     expirationTime: 200000
-  ai-server: ${AI_SERVER_URL}
+  overpass-url: https://overpass-api.de/api/interpreter
+  orion-url: ${ORION_LD_URL}
+  client-url: ${CLIENT_URL}
+  sensor-url: ${SENSOR_SERVICE}
+  iot-agent-url: ${IOT_AGENT}
 
 server:
-  port: 8080
+  port: 8091
   servlet:
     context-path: /xcity-service

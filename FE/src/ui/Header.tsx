@@ -1,3 +1,19 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
+import { Link } from "react-router-dom";
 import {
   FaHome,
   FaMapMarkedAlt,
@@ -5,37 +21,37 @@ import {
   FaCog,
   FaInfoCircle,
 } from "react-icons/fa";
+const MENU_ITEMS = [
+  { name: "Trang chủ", icon: <FaHome size={18} />, path: "/home" },
+  { name: "Bản đồ", icon: <FaMapMarkedAlt size={18} />, path: "/map" },
+  { name: "Báo cáo", icon: <FaChartBar size={18} />, path: "/report" },
+  { name: "Cài đặt", icon: <FaCog size={18} />, path: "/settings" },
+  { name: "Giới thiệu", icon: <FaInfoCircle size={18} />, path: "/about" },
+];
 const Header = () => {
   return (
     <header className="p-4 border-b bg-white/70 backdrop-blur-md flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2 cursor-pointer group">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-md">
+        <div className="w-9 h-9 rounded-xl bg-linear-to-r from-blue-500 to-cyan-500 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-md">
           <span className="text-white font-bold text-sm">SC</span>
         </div>
-        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+        <h1 className="text-xl font-bold bg-linear-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
           SmartCity
         </h1>
       </div>
 
-      {/* Navigation */}
       <nav className="flex items-center gap-6">
-        {[
-          { name: "Trang chủ", icon: <FaHome size={18} /> },
-          { name: "Bản đồ", icon: <FaMapMarkedAlt size={18} /> },
-          { name: "Báo cáo", icon: <FaChartBar size={18} /> },
-          { name: "Cài đặt", icon: <FaCog size={18} /> },
-          { name: "Giới thiệu", icon: <FaInfoCircle size={18} /> },
-        ].map((item) => (
-          <a
+        {MENU_ITEMS.map((item) => (
+          <Link
             key={item.name}
-            href="#"
+            to={item.path}
             className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-all duration-200 group"
           >
             {item.icon}
             <span className="text-sm font-medium group-hover:underline underline-offset-4">
               {item.name}
             </span>
-          </a>
+          </Link>
         ))}
       </nav>
     </header>

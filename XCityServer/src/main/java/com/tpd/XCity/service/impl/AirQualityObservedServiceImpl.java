@@ -1,0 +1,165 @@
+/*
+ * -----------------------------------------------------------------------------
+ * Copyright 2025 Fenwick Team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -----------------------------------------------------------------------------
+ */
+package com.tpd.XCity.service.impl;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.source.tree.Tree;
+import com.tpd.XCity.dto.response.AirQualityDailyStatics;
+import com.tpd.XCity.dto.response.AirQualityMonthlyStatics;
+import com.tpd.XCity.entity.air.AirQualityObserved;
+import com.tpd.XCity.entity.device.Device;
+import com.tpd.XCity.entity.device.TrafficFlowObserved;
+import com.tpd.XCity.mapper.AirQualityObservedMapper;
+import com.tpd.XCity.repository.AirQualityObservedRepository;
+import com.tpd.XCity.repository.DeviceRepository;
+import com.tpd.XCity.service.AirQualityObservedService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.TemporalAccessor;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.tpd.XCity.utils.OrionExtractHelper.*;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AirQualityObservedServiceImpl implements AirQualityObservedService {
+    private final AirQualityObservedRepository airQualityObservedRepository;
+    private final AirQualityObservedMapper airQualityObservedMapper;
+    private final ObjectMapper objectMapper;
+    private final DeviceRepository deviceRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @Override
+    public void saveMeasurementSensor(Map<String, Object> measurement) {
+        Map<String, Object> data = (Map<String, Object>) ((List) measurement.get("data")).get(0);
+
+        String id = (String) data.get("id");
+        String notifiedAtStr = (String) data.getOrDefault("dateObserved", "");
+
+        if(notifiedAtStr.isEmpty() || id.isEmpty()) {
+            notifiedAtStr = (String) measurement.get("notifiedAt");
+        }
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                .optionalStart()
+                .appendOffsetId()
+                .optionalEnd()
+                .toFormatter();
+
+        TemporalAccessor ta = formatter.parse(notifiedAtStr);
+
+        // Convert to LocalDateTime (handles both)
+        LocalDateTime dateObserved =
+                ta instanceof OffsetDateTime
+                        ? ((OffsetDateTime) ta).toLocalDateTime()
+                        : LocalDateTime.from(ta);
+        AirQualityObserved airQualityObserved = objectMapper.convertValue(data, AirQualityObserved.class);
+        airQualityObserved.setId(UUID.randomUUID().toString());
+        airQualityObserved.setRefDevice(id);
+        airQualityObserved.setDateObserved(dateObserved);
+        airQualityObservedRepository.save(airQualityObserved);
+
+        messagingTemplate.convertAndSend("/topic/air-quality",
+                airQualityObservedMapper.convertToResponse(airQualityObserved));
+
+        log.info("Saved AirQualityObservedTS entity | sensorId: {} | dateObserved: {}",
+                airQualityObserved.getRefDevice(), airQualityObserved.getDateObserved());
+    }
+
+    @Override
+    public AirQualityMonthlyStatics getStatics(String sensorId, int year, int month) {
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        Instant start = startDate.atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = endDate.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+
+        List<AirQualityMonthlyStatics.AirQualityMonthlyValue> stats =
+                airQualityObservedRepository.getAirQualityByMonth(sensorId, start, end);
+
+
+        TreeMap<LocalDate, AirQualityMonthlyStatics.AirQualityMonthlyValue> map = new TreeMap<>();
+        for (int d = 1; d <= startDate.lengthOfMonth(); d++) {
+            LocalDate date = startDate.withDayOfMonth(d);
+            AirQualityMonthlyStatics.AirQualityMonthlyValue value = AirQualityMonthlyStatics.AirQualityMonthlyValue
+                    .builder()
+                    .day(date)
+                    .build();
+            map.put(date, value);
+        }
+
+        for (AirQualityMonthlyStatics.AirQualityMonthlyValue s : stats) {
+            map.put(s.getDay(), s);
+        }
+
+        return AirQualityMonthlyStatics.builder()
+                .sensorId(sensorId)
+                .dataPoints(map.values().stream()
+                        .toList())
+                .build();
+    }
+
+    @Override
+    public AirQualityDailyStatics getStatics(String sensorId, String date) {
+        LocalDate localDate = LocalDate.parse(date);
+        ZoneId zoneVN = ZoneId.of("Asia/Ho_Chi_Minh");
+
+        Instant start = localDate.atStartOfDay(zoneVN).toInstant();
+
+        Instant end = localDate.atTime(LocalTime.MAX).atZone(zoneVN).toInstant();
+
+        List<AirQualityDailyStatics.AirQualityDailyValue> values =
+                airQualityObservedRepository.getAirQualityByHourRange(sensorId, start, end);
+
+
+        Map<LocalDateTime, AirQualityDailyStatics.AirQualityDailyValue> valueMap = new HashMap<>();
+        for (var v : values) {
+            valueMap.put(v.getHour(), v);
+        }
+
+
+        List<AirQualityDailyStatics.AirQualityDailyValue> fullList = new ArrayList<>();
+
+        for (int h = 0; h < 24; h++) {
+            LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
+
+            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(hourLocalDateTime);
+            if (value == null) {
+                value = AirQualityDailyStatics.AirQualityDailyValue.builder()
+                        .hour(hourLocalDateTime)
+                        .build();
+            }
+            fullList.add(value);
+        }
+
+        return AirQualityDailyStatics.builder()
+                .sensorId(sensorId)
+                .dataPoints(fullList.stream()
+                        .sorted(Comparator.comparing(AirQualityDailyStatics.AirQualityDailyValue::getHour))
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+}

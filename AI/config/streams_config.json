@@ -1,0 +1,46 @@
+[
+  {
+    "stream_id": "urn:ngsi-ld:Camera:70027910-094d-4567-82bf-341ad3156f8e",
+    "video_path": "video2.mp4",
+    "limit_fps": 5,
+    "image_pts": [
+      [4, 5],
+      [633, 4],
+      [631, 351],
+      [4, 349]
+    ],
+    "world_pts": [
+      [0, 0],
+      [40, 0],
+      [40, 30],
+      [0, 35]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "segment_ids": ["1328044064", "1265743180"],
+    "address": "Lê quý đôn"
+  },
+  {
+    "stream_id": "cam01",
+    "video_path": "video1.mp4",
+    "limit_fps": 3,
+    "image_pts": [
+      [800, 410],
+      [1125, 410],
+      [1920, 850],
+      [0, 850]
+    ],
+    "world_pts": [
+      [0, 0],
+      [32, 0],
+      [32, 140],
+      [0, 140]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "segment_ids": ["123456", "678594"],
+    "address": "Xa lộ hà nội"
+  }
+]

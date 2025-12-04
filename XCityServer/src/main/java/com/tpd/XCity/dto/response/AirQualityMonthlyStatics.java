@@ -1,0 +1,53 @@
+/*
+ * -----------------------------------------------------------------------------
+ * Copyright 2025 Fenwick Team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -----------------------------------------------------------------------------
+ */
+package com.tpd.XCity.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class AirQualityMonthlyStatics {
+    private String sensorId;
+    private List<AirQualityMonthlyValue> dataPoints;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class AirQualityMonthlyValue {
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate day;
+        private Double avgPm1;
+        private Double avgPm10;
+        private Double avgPm25;
+        private Double avgCo2;
+        private Double avgO3;
+        private Double avgTemperature;
+        private Double avgRelativeHumidity;
+    }
+}

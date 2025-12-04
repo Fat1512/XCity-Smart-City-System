@@ -1,0 +1,33 @@
+NHIỆM VỤ: Chọn camera giao thông phù hợp với câu hỏi.
+
+CÂU HỎI: {query}
+
+DANH SÁCH CAMERA:
+{streams_list}
+
+HƯỚNG DẪN:
+- Nếu câu hỏi KHÔNG chỉ định địa điểm cụ thể → trả về: ALL
+- Nếu câu hỏi có TÊN ĐƯỜNG/ĐỊA ĐIỂM → tìm stream_id có địa chỉ khớp → trả về stream_id đó
+- Nếu địa điểm KHÔNG CÓ trong danh sách → trả về: NONE
+- So sánh tên đường LINH HOẠT (bỏ dấu, hoa/thường): "Le quy don" = "Lê Quý Đôn"
+
+CHỈ TRẢ VỀ MỘT TRONG CÁC GIÁ TRỊ SAU (KHÔNG GIẢI THÍCH):
+- ALL
+- NONE  
+- stream_id (VD: cam01)
+- stream_id1,stream_id2 (nếu nhiều camera)
+
+VÍ DỤ:
+
+Câu hỏi: "tình hình giao thông hiện tại"
+→ ALL
+
+Câu hỏi: "đường Lê Quý Đôn có kẹt không"
+Camera có: stream_id=cam123, địa chỉ=Lê quý đôn
+→ cam123
+
+Câu hỏi: "Nguyễn Huệ"
+Camera không có Nguyễn Huệ
+→ NONE
+
+TRẢ LỜI (CHỈ 1 DÒNG):
