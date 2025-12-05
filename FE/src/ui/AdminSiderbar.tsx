@@ -15,7 +15,7 @@
 // -----------------------------------------------------------------------------
 import React from "react";
 import { IoCarSport, IoLeaf, IoFlash } from "react-icons/io5";
-import { MdOutlineSos } from "react-icons/md";
+import { MdAutoAwesome, MdOutlineSos } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface SimpleMenuItem {
@@ -44,6 +44,11 @@ const menuData: SimpleMenuItem[] = [
     label: "Cứu hộ",
     icon: <MdOutlineSos className="text-red-500" />,
     path: "/admin/alert",
+  },
+  {
+    label: "Quản lý Kiến thức Chatbot",
+    icon: <MdAutoAwesome className="text-blue-500" />,
+    path: "/admin/chatbot",
   },
 ];
 
