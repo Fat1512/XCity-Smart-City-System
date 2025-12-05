@@ -85,7 +85,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<AppLayout />}>
-                  <Route index element={<Navigate to="/map" replace />} />
+                  <Route index element={<Navigate to="/home" replace />} />
                   <Route path="map" element={<FeatureSelection />} />
                   <Route
                     path="/map/infrastructure"
