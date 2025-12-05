@@ -22,7 +22,7 @@
     "address": "Lê quý đôn"
   },
   {
-    "stream_id": "cam01",
+    "stream_id": "urn:ngsi-ld:Camera:b1a74c9e-b3b1-4192-b350-e9927e091440",
     "video_path": "video1.mp4",
     "limit_fps": 3,
     "image_pts": [
@@ -42,5 +42,27 @@
     "tracker_cfg": "bytetrack.yaml",
     "segment_ids": ["123456", "678594"],
     "address": "Xa lộ hà nội"
+  },
+  {
+    "stream_id": "urn:ngsi-ld:Camera:8b878af7-a322-4f12-bd80-9fba5a56dd61",
+    "video_path": "video3.mp4",
+    "limit_fps": 3,
+    "image_pts": [
+      [6, 406],
+      [668, 348],
+      [1033, 467],
+      [403, 700]
+    ],
+    "world_pts": [
+      [0, 0],
+      [30, 0],
+      [30, 20],
+      [0, 20]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "segment_ids": ["123456", "678594"],
+    "address": "Huỳnh Tấn Phát"
   }
 ]
