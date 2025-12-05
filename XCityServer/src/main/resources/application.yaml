@@ -24,7 +24,6 @@ app:
   token:
     secret: ${AUTH_SECRET_KEY}
     expirationTime: 200000
-  ai-server: ${AI_SERVER_URL}
   overpass-url: https://overpass-api.de/api/interpreter
   orion-url: ${ORION_LD_URL}
   client-url: ${CLIENT_URL}
@@ -32,6 +31,6 @@ app:
   iot-agent-url: ${IOT_AGENT}
 
 server:
-  port: 8090
+  port: 8091
   servlet:
     context-path: /xcity-service

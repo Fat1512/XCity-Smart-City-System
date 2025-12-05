@@ -1,3 +1,19 @@
+# -----------------------------------------------------------------------------
+# Copyright 2025 Fenwick Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# -----------------------------------------------------------------------------
+
 import base64
 import time
 from datetime import datetime, timezone
@@ -114,7 +130,7 @@ def publish_to_orion_ld(sensor_id: str, metrics: dict) -> bool:
 
     try:
         observed_at = datetime.now(timezone.utc).isoformat()
-        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id.split(":")[-1]}"
+        entity_id = f"urn:ngsi-ld:TrafficFlowObserved:{sensor_id.split(':')[-1]}"
         entity_type = "TrafficFlowObserved"
 
         cur_count = float(metrics.get("current_count", 0) or 0)
