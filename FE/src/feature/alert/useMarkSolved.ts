@@ -15,6 +15,7 @@
 // -----------------------------------------------------------------------------
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { markSolved as markSolvedAPI } from "../../service/alertService";
+import type { Response } from "../../types";
 
 export default function useMarkSolved() {
   const queryClient = useQueryClient();

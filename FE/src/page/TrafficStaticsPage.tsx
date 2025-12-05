@@ -13,26 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import TrafficDashboard from "../feature/traffic-monitor/TrafficDashboard";
 
-import type { DeviceCreated } from "./AirQualityAdmin";
-import { createDevice as createDeviceAPI } from "../../service/deviceService";
-import type { Response } from "../../types";
+const TrafficStaticsPage = () => {
+  return <TrafficDashboard />;
+};
 
-export default function useCreateDevice() {
-  const queryClient = useQueryClient();
-
-  const { isPending, mutate: createDevice } = useMutation<
-    Response,
-    Error,
-    DeviceCreated
-  >({
-    mutationFn: (device) => createDeviceAPI(device),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["devices"],
-      });
-    },
-  });
-  return { isPending, createDevice };
-}
+export default TrafficStaticsPage;

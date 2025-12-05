@@ -1,0 +1,102 @@
+version: "3.8"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9002:9002"
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    stdin_open: true
+    tty: true
+    networks:
+      - fiware
+
+  mongo:
+    image: mongo:5
+    container_name: mongo
+    restart: always
+    ports:
+      - "27019:27017"
+    networks:
+      - fiware
+
+  orion-ld:
+    image: quay.io/fiware/orion-ld:1.10.0
+    container_name: orion-ld
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - "1026:1026"
+    command: >
+      -dbhost mongo
+      -logLevel DEBUG
+      -logForHumans
+      -statCounters
+      -statNotifQueue
+      -noNotifyFalseUpdate
+    networks:
+      - fiware
+
+  iot-agent:
+    image: fiware/iotagent-json
+    container_name: iot-agent
+    restart: always
+    depends_on:
+      - mosquitto
+      - orion-ld
+      - mongo
+    ports:
+      - "4041:4041"
+    environment:
+      - IOTA_CB_HOST=orion-ld
+      - IOTA_CB_PORT=1026
+      - IOTA_CB_NGSI_VERSION=ld
+      - IOTA_JSON_LD_CONTEXT=https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.7.jsonld
+      - IOTA_MQTT_HOST=mosquitto
+      - IOTA_MQTT_PORT=1883
+      - IOTA_REGISTRY_TYPE=mongodb
+      - IOTA_MONGO_HOST=mongo
+      - IOTA_MONGO_PORT=27017
+      - IOTA_MONGO_DB=iotagentjson
+      - IOTA_PROVIDER_URL=http://iot-agent:4041
+      - IOTA_LOG_LEVEL=DEBUG
+      - IOTA_TIMESTAMP=true
+      - IOTA_AUTOCAST=true
+      - IOTA_AUTO_REGISTER_DEVICES=false
+      - IOTA_AMQP_DISABLED=true
+    networks:
+      - fiware
+
+  mqtt-ui:
+    image: emqx/mqttx-web:latest
+    container_name: mqtt-ui
+    environment:
+      - VUE_APP_MQTT_HOST=mosquitto
+      - VUE_APP_MQTT_PORT=9002
+      - VUE_APP_USE_WS=true
+    ports:
+      - "8082:80"
+    depends_on:
+      - mosquitto
+    networks:
+      - fiware
+  redis:
+    image: redis:7.2
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  fiware:
+    driver: bridge

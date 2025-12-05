@@ -122,7 +122,7 @@ const ReportSelection: React.FC = () => {
                   {report.title}
                 </h2>
 
-                <p className="text-gray-600 group-hover:text-white/95 transition-colors duration-500 mb-6 flex-grow text-sm leading-relaxed">
+                <p className="text-gray-600 group-hover:text-white/95 transition-colors duration-500 mb-6 grow text-sm leading-relaxed">
                   {report.description}
                 </p>
 
