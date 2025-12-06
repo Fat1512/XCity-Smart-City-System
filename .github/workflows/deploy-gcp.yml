@@ -1,0 +1,262 @@
+# -----------------------------------------------------------------------------
+# Copyright 2025 Fenwick Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# -----------------------------------------------------------------------------
+
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main
+      - test
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_ZONE: ${{ secrets.GCP_ZONE }}
+  GCP_INSTANCE_NAME: ${{ secrets.GCP_INSTANCE_NAME }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Generate version tag
+        id: version
+        run: |
+          VERSION="v$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./XCityServer
+          file: ./XCityServer/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/xcityserver:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/xcityserver:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/xcityserver:latest
+          cache-to: type=inline
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./FE
+          file: ./FE/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/xcityfe:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/xcityfe:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/xcityfe:latest
+          cache-to: type=inline
+
+      - name: Build and Push Sensor Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./SensorService
+          file: ./SensorService/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/sensor:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKER_USERNAME }}/sensor:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/sensor:latest
+          cache-to: type=inline
+
+      - name: Update docker-compose.yml with new tags
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/xcityserver:.*|image: ${{ secrets.DOCKER_USERNAME }}/xcityserver:$VERSION|g" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/xcityfe:.*|image: ${{ secrets.DOCKER_USERNAME }}/xcityfe:$VERSION|g" docker-compose.yml
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/sensor:.*|image: ${{ secrets.DOCKER_USERNAME }}/sensor:$VERSION|g" docker-compose.yml
+
+      - name: Upload updated docker-compose.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose
+          path: docker-compose.yml
+
+  deploy:
+    name: Deploy to GCP VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download updated docker-compose.yml
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-compose
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure SSH for GCP
+        run: |
+          # Add OS Login SSH key
+          gcloud compute os-login ssh-keys add --key-file=<(ssh-keygen -t rsa -f /tmp/temp_key -N "" && cat /tmp/temp_key.pub) --ttl=1h
+
+          # Or generate temporary SSH config
+          gcloud compute config-ssh --quiet
+
+      - name: Copy docker-compose files to VM
+        run: |
+          gcloud compute scp docker-compose.yml ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --recurse
+
+          gcloud compute scp airflow-docker-compose.yml ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+            --zone=${{ secrets.GCP_ZONE }}
+
+          gcloud compute scp --recurse mqtt ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+            --zone=${{ secrets.GCP_ZONE }} || true
+
+          gcloud compute scp FE/server.conf ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/FE/ \
+            --zone=${{ secrets.GCP_ZONE }} || true
+
+          gcloud compute scp --recurse SensorService/separated_stations ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/SensorService/ \
+            --zone=${{ secrets.GCP_ZONE }} || true
+
+      - name: Deploy Main Services
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              
+              # Pull latest images
+              docker-compose pull
+              
+              # Stop and remove old containers
+              docker-compose down
+              
+              # Start services
+              docker-compose up -d
+              
+              # Clean up unused images
+              docker image prune -af
+            "
+
+      - name: Deploy Airflow Services
+        if: github.ref == 'refs/heads/production'
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              
+              # Pull latest Airflow images
+              docker-compose -f airflow-docker-compose.yml pull
+              
+              # Stop and remove old Airflow containers
+              docker-compose -f airflow-docker-compose.yml down
+              
+              # Start Airflow services
+              docker-compose -f airflow-docker-compose.yml up -d
+            "
+
+      - name: Health Check
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command='
+              echo "Checking service health..."
+              
+              # Wait for services to be ready
+              sleep 10
+              
+              # Check main services
+              echo "Main services status:"
+              docker ps --filter "name=xcity" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+              
+              # Check if backend is healthy
+              if docker ps | grep -q "xcity-backend.*healthy"; then
+                echo "Backend is healthy"
+              else
+                echo "Backend health check failed"
+                exit 1
+              fi
+              
+              # Check if frontend is running
+              if docker ps | grep -q "xcity-frontend.*Up"; then
+                echo "Frontend is running"
+              else
+                echo "Frontend is not running"
+                exit 1
+              fi
+            '
+
+      - name: Verify Deployment
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              
+              echo 'Verifying deployment...'
+              
+              # Show running containers
+              echo 'Running containers:'
+              docker-compose ps
+              
+              # Show recent logs
+              echo 'Recent logs:'
+              docker-compose logs --tail=50
+            "
+
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "Deployment successful!"
+          else
+            echo "Deployment failed!"
+          fi
+
+      - name: Cleanup on Failure
+        if: failure()
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              docker-compose logs --tail=100
+              docker-compose ps
+            "
