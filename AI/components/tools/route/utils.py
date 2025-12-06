@@ -26,6 +26,7 @@ REQUEST_TIMEOUT = 300
 def _route_nodes_to_coords_and_eta(G_local, route_nodes: List[int], default_speed_kmh: float = DEFAULT_SPEED_KMH) -> Tuple[List[Tuple[float, float]], float]:
     coords: List[Tuple[float, float]] = []
     eta_s = 0.0
+    segment_ids = []
 
     for i in range(len(route_nodes) - 1):
         u = route_nodes[i]
@@ -42,6 +43,10 @@ def _route_nodes_to_coords_and_eta(G_local, route_nodes: List[int], default_spee
                 break
         if chosen_attr is None:
             chosen_attr = list(data_dict.values())[0]
+        # print("DEBUGGG",chosen_attr)
+        raw_osmid = chosen_attr.get("osmid") or chosen_attr.get("id")
+        if raw_osmid:
+            segment_ids.append(raw_osmid)
 
         if "travel_time" in chosen_attr:
             tt = float(chosen_attr["travel_time"])
@@ -74,4 +79,4 @@ def _route_nodes_to_coords_and_eta(G_local, route_nodes: List[int], default_spee
             else:
                 coords.extend(pts_latlon)
 
-    return coords, eta_s
+    return coords, eta_s, segment_ids
