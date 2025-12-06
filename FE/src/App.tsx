@@ -61,6 +61,7 @@ import AlertPage from "./page/AlertPage";
 import AlertReportPage from "./page/AlertReportPage";
 import AirQualityPage from "./page/AirQualityPage";
 import AirQualityReportPage from "./page/AirQualityReportPage";
+import AdminPage from "./page/AdminPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,6 +125,7 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 >
+                  <Route path="chatbot" element={<AdminPage />} />
                   <Route path="alert" element={<AlertAdmin />} />
                   <Route path="notifications" element={<NotificationList />} />
                   <Route
