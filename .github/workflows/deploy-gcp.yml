@@ -128,31 +128,41 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Configure SSH for GCP
+      - name: Create deployment directory on VM
         run: |
-          # Add OS Login SSH key
-          gcloud compute os-login ssh-keys add --key-file=<(ssh-keygen -t rsa -f /tmp/temp_key -N "" && cat /tmp/temp_key.pub) --ttl=1h
-
-          # Or generate temporary SSH config
-          gcloud compute config-ssh --quiet
-
-      - name: Copy docker-compose files to VM
-        run: |
-          gcloud compute scp docker-compose.yml ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
             --zone=${{ secrets.GCP_ZONE }} \
-            --recurse
+            --command="mkdir -p ~/pmnm-deploy"
 
-          gcloud compute scp airflow-docker-compose.yml ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+      - name: Copy all project files to VM
+        run: |
+          # Create archive excluding unnecessary files
+          tar --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='venv' \
+              --exclude='.venv' \
+              --exclude='__pycache__' \
+              --exclude='target' \
+              --exclude='build' \
+              --exclude='dist' \
+              --exclude='.env' \
+              -czf project.tar.gz .
+          
+          # Copy archive to VM
+          gcloud compute scp project.tar.gz ${{ secrets.GCP_INSTANCE_NAME }}:~/ \
             --zone=${{ secrets.GCP_ZONE }}
-
-          gcloud compute scp --recurse mqtt ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
-            --zone=${{ secrets.GCP_ZONE }} || true
-
-          gcloud compute scp FE/server.conf ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/FE/ \
-            --zone=${{ secrets.GCP_ZONE }} || true
-
-          gcloud compute scp --recurse SensorService/separated_stations ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/SensorService/ \
-            --zone=${{ secrets.GCP_ZONE }} || true
+          
+          # Extract on VM
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              tar -xzf ../project.tar.gz
+              rm ../project.tar.gz
+            "
+          
+          # Clean up local archive
+          rm project.tar.gz
 
       - name: Deploy Main Services
         run: |
