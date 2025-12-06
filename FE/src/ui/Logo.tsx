@@ -12,9 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import { useNavigate } from "react-router-dom";
+
 // -----------------------------------------------------------------------------
 const Logo = () => {
-  return <img src="./logo.png" className="w-[250px]" />;
+  const navigate = useNavigate();
+  return (
+    <img
+      onClick={() => navigate("/")}
+      src="https://tland-bucket.s3.us-east-1.amazonaws.com/logo.png"
+      className="w-[150px]"
+    />
+  );
 };
 
 export default Logo;

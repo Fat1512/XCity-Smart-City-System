@@ -16,11 +16,27 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import * as turf from "@turf/turf";
-import type { Building } from "./BuildingList";
-import { renderBuildingInfo } from "./BuildingPopup";
+
+import type {
+  Address,
+  Location,
+} from "../../air-quality-observed/AirQualityAdmin";
+import BuildingPopup from "./BuildingPopup";
+import { DEFAULT_LAT, DEFAULT_LNG } from "../../../utils/appConstant";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+export interface Building {
+  id: string;
+  name: string;
+  description: string;
+  address: Address;
+  dateModified?: string;
+  category?: string[];
+  dataProvider?: string;
+  dateCreated?: string;
+  location?: Location;
+}
 
 interface MapProps {
   buildings: Building[];
@@ -30,12 +46,11 @@ export default function Map({ buildings }: MapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
-  const [lng, setLng] = useState(106.6619);
-  const [lat, setLat] = useState(10.7602);
   const [zoom, setZoom] = useState(17);
 
-  const [selectedBuilding, setSelectedBuilding] = useState<any>(null);
-  const infoPanelRef = useRef<HTMLDivElement | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
+    null
+  );
 
   useEffect(() => {
     if (!mapContainerRef.current || !buildings) return;
@@ -43,7 +58,7 @@ export default function Map({ buildings }: MapProps) {
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
-      center: [lng, lat],
+      center: [DEFAULT_LNG, DEFAULT_LAT],
       zoom,
       pitch: 60,
       bearing: -20,
@@ -54,116 +69,48 @@ export default function Map({ buildings }: MapProps) {
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      const features = buildings
-        .filter((b) => b.location?.value?.coordinates)
-        .map((b) => {
-          const coords = b.location.value.coordinates;
-          let polygonCoords: number[][] = [];
+      map.addSource("mapbox-dem", {
+        type: "raster-dem",
+        url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+        tileSize: 512,
+        maxzoom: 14,
+      });
+      map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
 
-          if (Array.isArray(coords) && typeof coords[0] === "number") {
-            for (let i = 0; i < coords.length; i += 2) {
-              polygonCoords.push([coords[i], coords[i + 1]]);
-            }
-          } else {
-            // Nested array
-            polygonCoords = coords[0] as number[][];
-          }
+      const layers = map.getStyle().layers;
+      const labelLayerId = layers?.find(
+        (layer) => layer.type === "symbol" && layer.layout?.["text-field"]
+      )?.id;
 
-          return {
-            type: "Feature",
-            geometry: {
-              type: "Polygon",
-              coordinates: [polygonCoords],
-            },
-            properties: {
-              id: b.id,
-              name: b.name?.value || b.id,
-            },
-          };
-        });
-
-      map.addSource("buildings", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features,
+      map.addLayer(
+        {
+          id: "3d-buildings",
+          source: "composite",
+          "source-layer": "building",
+          filter: ["==", "extrude", "true"],
+          type: "fill-extrusion",
+          minzoom: 15,
+          paint: {
+            "fill-extrusion-color": "#aaa",
+            "fill-extrusion-height": ["get", "height"],
+            "fill-extrusion-base": ["get", "min_height"],
+            "fill-extrusion-opacity": 0.6,
+          },
         },
-      });
+        labelLayerId
+      );
 
-      map.addLayer({
-        id: "building-fill",
-        type: "fill",
-        source: "buildings",
-        paint: {
-          "fill-color": "#ff4757",
-          "fill-opacity": 0.3,
-        },
-      });
+      buildings.forEach((b) => {
+        if (!b.location?.coordinates) return;
+        const [markerLng, markerLat] = b.location.coordinates;
 
-      map.addLayer({
-        id: "building-outline",
-        type: "line",
-        source: "buildings",
-        paint: {
-          "line-color": "#ff4757",
-          "line-width": 2,
-        },
-      });
-
-      map.on("mouseenter", "building-fill", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-
-      map.on("mouseleave", "building-fill", () => {
-        map.getCanvas().style.cursor = "";
-      });
-
-      map.on("click", "building-fill", (e) => {
-        if (!e.features || e.features.length === 0) return;
-
-        const feature = e.features[0];
-
-        const buildingData = buildings.find(
-          (b) => b.id === feature.properties?.id
-        );
-
-        const buildingName =
-          buildingData?.name?.value || feature.properties?.name || "Unknown";
-        const buildingId = feature.properties?.id || "";
-
-        const infoPanel = renderBuildingInfo({
-          buildingName,
-          buildingId,
-          category: buildingData?.category?.value,
-          address: buildingData?.address?.value,
-          floorsAboveGround: buildingData?.floorsAboveGround?.value,
-          floorsBelowGround: buildingData?.floorsBelowGround?.value,
-          description: buildingData?.description?.value,
-        });
-
-        if (infoPanelRef.current) {
-          infoPanelRef.current.remove();
-        }
-
-        infoPanelRef.current = infoPanel;
-        const container = document.getElementById("info-panel-container");
-        if (container) {
-          container.appendChild(infoPanel);
-        }
-
-        setSelectedBuilding(feature);
-      });
-
-      features.forEach((feature) => {
-        const centroid = turf.centroid(feature);
-        const [markerLng, markerLat] = centroid.geometry.coordinates as [
-          number,
-          number
-        ];
-
-        new mapboxgl.Marker({ color: "#ff4757" })
+        const marker = new mapboxgl.Marker({ color: "#ff4757" })
           .setLngLat([markerLng, markerLat])
           .addTo(map);
+
+        marker.getElement().addEventListener("click", () => {
+          setSelectedBuilding(b);
+        });
       });
     });
 
@@ -171,20 +118,19 @@ export default function Map({ buildings }: MapProps) {
   }, [buildings]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+    <div className="relative w-full h-screen">
       <div ref={mapContainerRef} className="w-full h-full" />
 
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          zIndex: 1000,
-          pointerEvents: "none",
-        }}
-      >
-        <div style={{ pointerEvents: "auto" }} id="info-panel-container"></div>
-      </div>
+      {selectedBuilding && (
+        <BuildingPopup
+          id={selectedBuilding.id}
+          name={selectedBuilding.name}
+          description={selectedBuilding.description}
+          address={selectedBuilding.address}
+          coordinates={selectedBuilding.location?.coordinates || [0, 0]}
+          onClose={() => setSelectedBuilding(null)}
+        />
+      )}
     </div>
   );
 }

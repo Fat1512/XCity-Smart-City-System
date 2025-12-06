@@ -33,22 +33,11 @@ import java.util.Map;
 public class BuildingUpdateRequest {
 
     private Address address;
-    private String alternateName;
-    private String areaServed;
     private List<BuildingCategory> category;
-    private Double collapseRisk;
-    private ContainedInPlace containedInPlace;
     private String dataProvider;
     private String description;
-    private Double floorsAboveGround;
-    private Double floorsBelowGround;
     private Location location;
     private String name;
-    private List<String> occupier;
-    private Map<String, OH> openingHours;
-    private List<String> owner;
-    private Double peopleCapacity;
-    private Double peopleOccupancy;
     private String type = "Building";
 
 }

@@ -13,24 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useQuery } from "@tanstack/react-query";
-import { getBuildings } from "../../../service/buildingService";
-import jsonld from "jsonld";
-import { JSONLD_CONTEXT } from "../../../utils/appConstant";
-function useGetBuildings() {
-  const { isLoading, data: buildings } = useQuery({
-    queryKey: ["sBuildings"],
-    queryFn: async () => {
-      const buildings = await getBuildings();
+import { useMutation } from "@tanstack/react-query";
 
-      const compacted = await jsonld.compact(buildings ?? [], JSONLD_CONTEXT);
-      console.log("Compacted JSON-LD:", compacted);
-      console.log(compacted["@graph"]);
-      return compacted["@graph"] ?? [];
-    },
+import { getChatAI } from "../../service/chabotService";
+import type { MessageChatAI } from "./Chatbot";
+export interface SendMessage {
+  query: string;
+  conversationId?: string | null;
+}
+function useChatAI() {
+  const { isPending, mutate: chatWithAI } = useMutation<
+    MessageChatAI,
+    Error,
+    SendMessage
+  >({
+    mutationFn: ({ query, conversationId }) =>
+      getChatAI({ query, conversationId }),
   });
 
-  return { isLoading, buildings };
+  return { isPending, chatWithAI };
 }
 
-export default useGetBuildings;
+export default useChatAI;

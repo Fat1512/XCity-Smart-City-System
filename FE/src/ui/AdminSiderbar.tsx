@@ -15,8 +15,9 @@
 // -----------------------------------------------------------------------------
 import React from "react";
 import { IoCarSport, IoLeaf, IoFlash } from "react-icons/io5";
-import { MdOutlineSos } from "react-icons/md";
+import { MdAutoAwesome, MdOutlineSos } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
+import Logo from "./Logo";
 
 interface SimpleMenuItem {
   label: string;
@@ -45,6 +46,11 @@ const menuData: SimpleMenuItem[] = [
     icon: <MdOutlineSos className="text-red-500" />,
     path: "/admin/alert",
   },
+  {
+    label: "Quản lý Kiến thức Chatbot",
+    icon: <MdAutoAwesome className="text-blue-500" />,
+    path: "/admin/chatbot",
+  },
 ];
 
 const AdminSidebar = () => {
@@ -55,15 +61,7 @@ const AdminSidebar = () => {
     <aside className="w-64 fixed top-0 bottom-0 bg-linear-to-b from-white to-gray-50 border-r border-gray-200 flex flex-col shadow-lg">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-linear-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-105 transition-transform duration-200">
-            SC
-          </div>
-          <div>
-            <h1 className="text-xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Smart City
-            </h1>
-            <p className="text-xs text-gray-500">Admin Dashboard</p>
-          </div>
+          <Logo />
         </div>
       </div>
 

@@ -20,10 +20,22 @@ import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import { Button } from "@mui/material";
 import AlertModal from "./AlertModal";
 import useGetAllAlert from "./useGetAllAlert";
-import { DEFAULT_LAT, DEFAULT_LNG } from "../../utils/appConstant";
-import AlertDetail from "./AlertDetail";
+import {
+  DEFAULT_LAT,
+  DEFAULT_LNG,
+  MAPBOX_TOKEN,
+} from "../../utils/appConstant";
+import AlertDetail, { type Alert } from "./AlertDetail";
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const ALERT_COLORS: Record<string, string> = {
+  traffic: "#ef4444", // Đỏ giao thông
+  naturalDisaster: "#b91c1c", // Đỏ đậm thiên tai
+  weather: "#3b82f6", // Xanh dương thời tiết
+  environment: "#22c55e", // Xanh lá môi trường
+  health: "#a21caf", // Tím sức khỏe
+  security: "#f59e0b", // Vàng an ninh
+  agriculture: "#84cc16", // Xanh vàng nông nghiệp
+};
 
 const AlertMap: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -47,7 +59,7 @@ const AlertMap: React.FC = () => {
     const map = mapRef.current;
 
     const geocoder = new MapboxGeocoder({
-      accessToken: mapboxgl.accessToken,
+      accessToken: MAPBOX_TOKEN,
       mapboxgl: mapboxgl,
       marker: false,
       placeholder: "Tìm kiếm địa điểm...",
@@ -68,17 +80,16 @@ const AlertMap: React.FC = () => {
 
     const map = mapRef.current;
 
-    // Xóa tất cả markers cũ
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
     const geojsonData = {
-      type: "FeatureCollection",
-      features: alerts.map((a) => ({
+      features: alerts.map((a: Alert) => ({
         type: "Feature",
         properties: {
           id: a.id,
           alertData: JSON.stringify(a),
+          category: a.category,
         },
         geometry: { type: "Point", coordinates: a.location.coordinates },
       })),
@@ -100,7 +111,25 @@ const AlertMap: React.FC = () => {
           source: "alerts",
           filter: ["!", ["has", "point_count"]],
           paint: {
-            "circle-color": "#ef4444",
+            "circle-color": [
+              "match",
+              ["get", "category"],
+              "traffic",
+              "#ef4444",
+              "naturalDisaster",
+              "#b91c1c",
+              "weather",
+              "#3b82f6",
+              "environment",
+              "#22c55e",
+              "health",
+              "#a21caf",
+              "security",
+              "#f59e0b",
+              "agriculture",
+              "#84cc16",
+              "#6b7280",
+            ],
             "circle-radius": 10,
             "circle-stroke-width": 3,
             "circle-stroke-color": "#fff",

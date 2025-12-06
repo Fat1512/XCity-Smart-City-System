@@ -93,29 +93,30 @@ const MetadataAccordion = () => {
   };
 
   return (
-    <div className="mt-4 border rounded-lg overflow-hidden shadow-sm">
-      {sectionsData.map(({ title, content }) => (
-        <div key={title} className="border-b last:border-b-0">
-          <button
-            onClick={() => toggleSection(title)}
-            className="w-full text-left px-5 py-3 font-medium flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition"
-          >
-            {title}
-            <span className="text-xl font-bold">
-              {openSections[title] ? "−" : "+"}
-            </span>
-          </button>
+    <div className="mt-6">
+      <div className="bg-white rounded-xl overflow-hidden border border-gray-100">
+        {sectionsData.map(({ title, content }, index) => (
           <div
-            className={`px-5 py-3 text-gray-700 transition-all duration-300 ${
-              openSections[title]
-                ? "max-h-96 opacity-100"
-                : "max-h-0 opacity-0 overflow-hidden"
-            }`}
+            key={title}
+            className={index !== 0 ? "border-t border-gray-100" : ""}
           >
-            {content}
+            <button
+              onClick={() => toggleSection(title)}
+              className="w-full cursor-pointer text-left px-6 py-4 font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-50 transition-colors duration-200"
+            >
+              <span className="text-base">{title}</span>
+              <span className="text-2xl text-gray-400 font-light">
+                {openSections[title] ? "−" : "+"}
+              </span>
+            </button>
+            {openSections[title] && (
+              <div className="px-6 py-4 bg-gray-50 text-gray-700 text-sm leading-relaxed border-t border-gray-100">
+                {content}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

@@ -49,6 +49,7 @@ const RouterPicker: React.FC = () => {
   const [suggestionsStart, setSuggestionsStart] = useState<NominatimLocation[]>(
     []
   );
+  const [jamLayerId, setJamLayerId] = useState<string | null>(null);
   const [suggestionsEnd, setSuggestionsEnd] = useState<NominatimLocation[]>([]);
   const [roadNames, setRoadNames] = useState<string[]>([]);
   const [routeLayerId, setRouteLayerId] = useState<string | null>(null);
@@ -129,8 +130,40 @@ const RouterPicker: React.FC = () => {
       {
         onSuccess: async (data: GeoJsonRouteResponse) => {
           const feature = data.features?.[0];
+          const jamFeature = data.features?.[1];
           if (!feature) return;
 
+          if (jamFeature) {
+            const jamRoute = jamFeature.geometry;
+
+            if (jamLayerId && map.current.getSource(jamLayerId)) {
+              if (map.current.getLayer(jamLayerId)) {
+                map.current.removeLayer(jamLayerId);
+              }
+              map.current.removeSource(jamLayerId);
+            }
+
+            const jamId = "trafficjam-" + Date.now();
+
+            map.current.addSource(jamId, {
+              type: "geojson",
+              data: { type: "Feature", geometry: jamRoute },
+            });
+
+            map.current.addLayer({
+              id: jamId,
+              type: "line",
+              source: jamId,
+              layout: { "line-join": "round", "line-cap": "round" },
+              paint: {
+                "line-width": 6,
+                "line-color": "#ff0000", // MÀU ĐỎ
+                "line-opacity": 0.9,
+              },
+            });
+
+            setJamLayerId(jamId);
+          }
           const route = feature.geometry;
           setRoutePoints(route.coordinates);
 

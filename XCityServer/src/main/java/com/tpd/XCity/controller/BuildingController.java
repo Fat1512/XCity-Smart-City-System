@@ -30,6 +30,8 @@ import org.mapstruct.ap.internal.util.Message;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import static com.tpd.XCity.utils.AppConstant.*;
 
 @RestController
@@ -49,6 +51,15 @@ public class BuildingController {
     public ResponseEntity<BuildingDetailResponse> getBuilding(@PathVariable("id") String id) {
         BuildingDetailResponse response = buildingService.getEntitiesById(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/building-map")
+    public ResponseEntity<List<BuildingDetailResponse>> getBuildingMap(
+            @RequestParam(value = "kw", defaultValue = "", required = false) String kw,
+            @RequestParam(value = "page", defaultValue = PAGE_DEFAULT) String page,
+            @RequestParam(value = "size", defaultValue = PAGE_SIZE) String size) {
+        List<BuildingDetailResponse> pageResponse = buildingService.getBuildingMap();
+        return ResponseEntity.ok(pageResponse);
     }
 
     @GetMapping("/s-buildings")
