@@ -81,17 +81,13 @@ The pipeline consists of two jobs:
    - Version tag: `vYYYYMMDD-HHMMSS-<git-sha>`
    - Latest tag: `latest`
 3. **Pushes** to Docker Hub
-4. **Updates** `docker-compose.yml` with new version tags
-5. **Uploads** updated compose file as artifact
 
 ### Job 2: Deploy to GCP VM
-1. **Downloads** updated `docker-compose.yml`
-2. **Authenticates** with GCP using Service Account
-3. **Copies** files to VM
-4. **Pulls** new images
-5. **Deploys** services with zero downtime
-6. **Runs** health checks
-7. **Verifies** deployment
+1. **Authenticates** with GCP using Service Account
+2. **SSH to VM** and pulls latest Docker images
+3. **Restarts** the 3 custom services (backend, frontend, sensor)
+4. **Runs** health checks
+5. **Verifies** deployment
 
 ## Setup GCP VM
 
@@ -131,10 +127,17 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose --version
 ```
 
-### 4. Create deployment directory
+### 4. Set up docker-compose.yml on VM
 ```bash
-mkdir -p ~/pmnm-deploy
-cd ~/pmnm-deploy
+# Clone your repository once to get the docker-compose.yml and other config files
+cd ~
+git clone https://github.com/Fat1512/PMNM.git pmnm
+cd pmnm
+
+# Start all infrastructure services first
+docker-compose up -d mqtt-broker mongo orion-ld iot-agent
+
+# The pipeline will deploy the 3 custom services (backend, frontend, sensor)
 ```
 
 ### 5. Configure Firewall Rules
@@ -188,7 +191,7 @@ View your images at: `https://hub.docker.com/r/your-username/`
 Create `.env` files on your GCP VM for sensitive data:
 
 ```bash
-# ~/pmnm-deploy/.env
+# ~/pmnm/.env
 MONGO_URL=mongodb+srv://user:pass@cluster.mongodb.net/x-city
 AUTH_SECRET_KEY=your-secret-key
 AIRFLOW_JWT_SECRET=your-jwt-secret
@@ -207,7 +210,7 @@ AIRFLOW_FERNET_KEY=your-fernet-key
 gcloud compute ssh INSTANCE_NAME --zone=ZONE
 
 # Check services
-cd ~/pmnm-deploy
+cd ~/pmnm
 docker-compose ps
 docker-compose logs -f
 
@@ -218,21 +221,25 @@ docker-compose -f airflow-docker-compose.yml logs -f
 
 ## Rollback
 
-If deployment fails:
+If deployment fails, you can rollback to a previous Docker image version:
 
 ```bash
 # SSH to VM
 gcloud compute ssh INSTANCE_NAME --zone=ZONE
-cd ~/pmnm-deploy
+cd ~/pmnm
 
-# Stop services
-docker-compose down
+# Pull specific version
+docker pull your-username/xcityserver:v20250107-120000-abc1234
+docker pull your-username/xcityfe:v20250107-120000-abc1234
+docker pull your-username/sensor:v20250107-120000-abc1234
 
-# Pull previous version
-docker-compose pull
+# Update docker-compose.yml manually or via sed
+sed -i 's|xcityserver:latest|xcityserver:v20250107-120000-abc1234|g' docker-compose.yml
+sed -i 's|xcityfe:latest|xcityfe:v20250107-120000-abc1234|g' docker-compose.yml
+sed -i 's|sensor:latest|sensor:v20250107-120000-abc1234|g' docker-compose.yml
 
-# Start services
-docker-compose up -d
+# Restart services
+docker-compose up -d xcity-backend xcity-frontend xcity-sensor
 ```
 
 ## Troubleshooting
@@ -300,15 +307,44 @@ docker ps -a
 
 ### Restart specific service
 ```bash
+cd ~/pmnm
 docker-compose restart xcity-backend
 ```
 
 ### Update single service
 ```bash
-docker-compose up -d --no-deps xcity-backend
+cd ~/pmnm
+docker-compose pull xcity-backend
+docker-compose up -d xcity-backend
+```
+
+### View logs for specific service
+```bash
+docker logs xcity-backend -f
+docker logs xcity-frontend -f
+docker logs xcity-sensor -f
 ```
 
 ### Clean up system
 ```bash
 docker system prune -a
 ```
+
+## Deployment Workflow Summary
+
+1. **Developer pushes code** to `main` or `test` branch
+2. **GitHub Actions**:
+   - Builds 3 Docker images
+   - Pushes to Docker Hub with version tags and `latest` tag
+3. **Deployment**:
+   - Connects to GCP VM via SSH
+   - Pulls latest images (using `latest` tag)
+   - Restarts only the 3 custom services (backend, frontend, sensor)
+   - Infrastructure services (MongoDB, Orion-LD, etc.) keep running
+
+**Benefits**:
+- ✅ Simple and straightforward
+- ✅ No Git operations needed
+- ✅ Infrastructure services are not touched
+- ✅ Fast deployment (only custom services restart)
+- ✅ Always uses `:latest` tag for simplicity
