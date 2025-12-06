@@ -83,7 +83,7 @@ services:
         ipv4_address: 172.24.0.103
 
   xcity-sensor:
-    image: fat1512/sensor:v21
+    image: fat1512/sensor
     container_name: xcity-sensor
     ports:
       - "5000:5000"
@@ -100,7 +100,7 @@ services:
     restart: unless-stopped
 
   xcity-backend:
-    image: fat1512/be:v20
+    image: fat1512/xcityserver
     container_name: xcity-backend
     ports:
       - "8090:8090"
@@ -121,7 +121,7 @@ services:
     restart: unless-stopped
 
   xcity-frontend:
-    image: fat1512/fe:v20
+    image: fat1512/xcityfe
     container_name: xcity-frontend
     ports:
       - "80:80"
