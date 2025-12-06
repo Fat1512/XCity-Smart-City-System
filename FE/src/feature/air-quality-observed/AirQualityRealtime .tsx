@@ -45,7 +45,7 @@ const AirQualityRealtime = () => {
 
   return (
     <div className="p-6 font-sans bg-gray-100 min-h-screen">
-      <h2 className="text-3xl sm:text-4xl font-extrabold mb-8 h-[45px] text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+      <h2 className="text-3xl sm:text-4xl font-extrabold mb-8 h-[45px] text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
         Realtime Air Quality Dashboard
       </h2>
       <div className="flex gap-4 mb-8">
@@ -57,7 +57,7 @@ const AirQualityRealtime = () => {
             key={btn.value}
             className={`px-6 cursor-pointer py-3 font-semibold rounded-3xl transition-all duration-300 transform ${
               mode === btn.value
-                ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg hover:scale-105"
+                ? "bg-linear-to-r from-purple-500 to-blue-500 text-white shadow-lg hover:scale-105"
                 : "bg-white text-gray-700 border border-gray-300 hover:shadow-lg hover:scale-105"
             }`}
             onClick={() => setMode(btn.value as "realtime" | "static")}

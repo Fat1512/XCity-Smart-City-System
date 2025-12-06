@@ -21,7 +21,7 @@ import { DEFAULT_LAT, DEFAULT_LNG } from "../utils/appConstant";
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 interface MapViewProps {
-  coordinates?: [number, number];
+  coordinates?: number[];
   height?: string;
 }
 

@@ -13,26 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+const Logo = () => {
+  return <img src="./logo.png" className="w-[250px]" />;
+};
 
-import type { DeviceCreated } from "./AirQualityAdmin";
-import { createDevice as createDeviceAPI } from "../../service/deviceService";
-import type { Response } from "../../types";
-
-export default function useCreateDevice() {
-  const queryClient = useQueryClient();
-
-  const { isPending, mutate: createDevice } = useMutation<
-    Response,
-    Error,
-    DeviceCreated
-  >({
-    mutationFn: (device) => createDeviceAPI(device),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["devices"],
-      });
-    },
-  });
-  return { isPending, createDevice };
-}
+export default Logo;

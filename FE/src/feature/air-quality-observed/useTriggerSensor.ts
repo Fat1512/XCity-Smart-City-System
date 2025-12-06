@@ -16,6 +16,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { startSensor, stopSensor } from "../../service/deviceService";
 import type { DeviceCreated } from "./AirQualityAdmin";
+import type { Response } from "../../types";
 
 export default function useTriggerSensor() {
   const queryClient = useQueryClient();

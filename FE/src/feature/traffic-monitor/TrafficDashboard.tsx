@@ -27,7 +27,7 @@ const TrafficDashboard = () => {
   if (isLoading) return <MiniSpinner />;
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-4xl font-extrabold mb-8 text-transparent h-[45px] bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+      <h1 className="text-4xl font-extrabold mb-8 text-transparent h-[45px] bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
         Traffic Monitoring Dashboard
       </h1>
 
@@ -37,7 +37,7 @@ const TrafficDashboard = () => {
             key={mode}
             className={`px-6 cursor-pointer py-3 font-semibold rounded-3xl transition-all duration-300 transform ${
               viewMode === mode
-                ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg hover:scale-105"
+                ? "bg-linear-to-r from-purple-500 to-blue-500 text-white shadow-lg hover:scale-105"
                 : "bg-white text-gray-700 border border-gray-300 hover:shadow-lg hover:scale-105"
             }`}
             onClick={() => setViewMode(mode as "realtime" | "stats")}

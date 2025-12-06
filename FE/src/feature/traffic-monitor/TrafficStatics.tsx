@@ -59,10 +59,10 @@ const HOURS = Array.from(
   (_, i) => `${i.toString().padStart(2, "0")}:00`
 );
 interface TrafficStaticsProps {
-  cameras: CameraOverviewResponse[];
+  cameras?: CameraOverviewResponse[];
 }
 
-const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras }) => {
+const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras = [] }) => {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [selectedCameras, setSelectedCameras] = useState<
     CameraOverviewResponse[]
@@ -138,17 +138,17 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras }) => {
     [chartData, cameras]
   );
 
-  const intensityDatasets = useMemo(
-    () =>
-      Object.entries(chartData).map(([id, d], idx) => ({
-        label: cameras?.find((c) => c.id === id)?.address.streetAddress || id,
-        data: d.intensity,
-        backgroundColor: `hsla(${idx * 60}, 70%, 50%, 0.5)`,
-        borderRadius: 6,
-        barThickness: 18,
-      })),
-    [chartData, cameras]
-  );
+  // const intensityDatasets = useMemo(
+  //   () =>
+  //     Object.entries(chartData).map(([id, d], idx) => ({
+  //       label: cameras?.find((c) => c.id === id)?.address.streetAddress || id,
+  //       data: d.intensity,
+  //       backgroundColor: `hsla(${idx * 60}, 70%, 50%, 0.5)`,
+  //       borderRadius: 6,
+  //       barThickness: 18,
+  //     })),
+  //   [chartData, cameras]
+  // );
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>

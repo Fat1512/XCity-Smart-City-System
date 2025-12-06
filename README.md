@@ -55,7 +55,6 @@
 
 Link thuyết trình cho dự án: [Fenwick Presentation](https://www.canva.com/design/DAG6glXaXeU/8pedF1WVn8uQD4tN-9W_yg/edit?utm_content=DAG6glXaXeU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
-
 ---
 
 ## ⚡ Các tính năng chính
@@ -151,7 +150,6 @@ PMNM/
 | **Data/IoT** | Mosquitto MQTT, Airflow         |
 |  **Infra**   | Docker, Docker Compose, GCP     |
 
-
 ## 🏗️ Kiến trúc hệ thống
 
 ![architecture](./docs/architecture.png)
@@ -209,8 +207,7 @@ cd PMNM
 ### Các dịch vụ cần thiết khác
 
 ```bash
-cd external-service
-docker compose up -d
+docker compose -f service-docker-compose.yml up -d
 ```
 
 #### Sensor Service
@@ -440,7 +437,9 @@ curl -X POST "http://localhost:1026/ngsi-ld/v1/subscriptions" \
 ```
 
 ### 4️⃣ Docker & compose
+
 Thiết lập các biến môi trường
+
 ```bash
 MONGO_URL=your-url
 AUTH_SECRET_KEY=your-secret-key
