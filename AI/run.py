@@ -31,7 +31,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import router as api_router
+from app.routers import knowledge, streams, navigation
 from app.ws_traffic import router as ws_traffic_router
 from app.ws_flood import router as ws_flood_router
 
@@ -109,7 +109,12 @@ def create_app():
         allow_headers=["*"],
     )
 
-    app.include_router(api_router, prefix="/api/v1")
+    api_prefix = "/api/v1"
+    
+    app.include_router(knowledge.router, prefix=api_prefix)
+    app.include_router(streams.router, prefix=api_prefix)
+    app.include_router(navigation.router, prefix=api_prefix)
+
     app.include_router(ws_traffic_router)
     app.include_router(ws_flood_router)
 
