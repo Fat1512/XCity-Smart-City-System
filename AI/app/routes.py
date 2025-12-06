@@ -15,6 +15,7 @@
 # -----------------------------------------------------------------------------
 import asyncio
 from typing import Optional, Tuple
+import boto3
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -38,6 +39,8 @@ router = APIRouter()
 rag_service = MiniRagService()
 watcher_state_service = KnowledgeService()
 route_service = RouteService()
+
+s3_client = boto3.client("s3")
 
 traffic_stream_task: Optional[asyncio.Task] = None
 flood_stream_task: Optional[asyncio.Task] = None
@@ -69,18 +72,59 @@ def toggle_watcher(payload: dict):
 
 
 @router.post("/rag/upload")
-def rag_upload(file: UploadFile = File(...)):
-    watch_dir = os.getenv("WATCHER_LOCAL_PATH")
-    if not watch_dir:
-        raise HTTPException(500, "WATCHER_LOCAL_PATH not configured")
+async def rag_upload(file: UploadFile = File(...)):
+    bucket_name = os.getenv("WATCHER_S3_BUCKET")
+    if not bucket_name:
+        raise HTTPException(500, "WATCHER_S3_BUCKET environment variable is not set")
 
-    save_path = os.path.join(watch_dir, file.filename)
-    os.makedirs(watch_dir, exist_ok=True)
+    prefix = os.getenv("WATCHER_S3_PREFIX", "")
+    
+    s3_key = f"{prefix}{file.filename}"
 
-    with open(save_path, "wb") as f:
-        f.write(file.file.read())
+    try:
+        file_content = await file.read()
+        
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=file_content
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload to S3: {str(e)}")
 
-    return {"status": "success", "filename": file.filename}
+    return {
+        "status": "success", 
+        "filename": file.filename, 
+        "s3_bucket": bucket_name,
+        "s3_key": s3_key,
+        "message": "File uploaded to S3. RAG ingestion will start automatically via S3Watcher."
+    }
+
+
+@router.delete("/rag/s3/document")
+def rag_delete_s3(payload: dict):
+    filename = payload.get("filename")
+    if not filename:
+        raise HTTPException(400, "Missing filename")
+
+    bucket_name = os.getenv("WATCHER_S3_BUCKET")
+    if not bucket_name:
+        raise HTTPException(500, "WATCHER_S3_BUCKET environment variable is not set")
+    
+    prefix = os.getenv("WATCHER_S3_PREFIX", "")
+    
+    target_key = f"{prefix}{filename}"
+
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=target_key)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete from S3: {str(e)}")
+
+    return {
+        "status": "success", 
+        "deleted_s3_key": target_key,
+        "message": "File deleted from S3. S3Watcher will remove it from RAG DB shortly."
+    }
 
 
 @router.post("/rag/chat")
@@ -97,23 +141,6 @@ def rag_chat(payload: dict):
 @router.get("/rag/documents")
 def rag_list():
     return {"documents": rag_service.list_documents()}
-
-
-@router.delete("/rag/document")
-def rag_delete(payload: dict):
-    filename = payload.get("filename")
-    if not filename:
-        raise HTTPException(400, "Missing filename")
-
-    db_res = rag_service.delete_document(filename)
-
-    watch_dir = os.getenv("WATCHER_LOCAL_PATH")
-    if watch_dir:
-        fp = os.path.join(watch_dir, filename)
-        if os.path.exists(fp):
-            os.remove(fp)
-
-    return {"status": "success", "deleted": filename}
 
 
 
