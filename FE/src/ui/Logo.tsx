@@ -14,7 +14,12 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 const Logo = () => {
-  return <img src="./logo.png" className="w-[250px]" />;
+  return (
+    <img
+      src="https://tland-bucket.s3.us-east-1.amazonaws.com/logo.png"
+      className="w-[150px]"
+    />
+  );
 };
 
 export default Logo;

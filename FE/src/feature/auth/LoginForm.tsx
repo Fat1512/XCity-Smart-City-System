@@ -1,78 +1,30 @@
-// -----------------------------------------------------------------------------
-// Copyright 2025 Fenwick Team
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// -----------------------------------------------------------------------------
 import React, { useState } from "react";
-import {
-  TextField,
-  Button,
-  Box,
-  Alert,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-} from "@mui/material";
-import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-
-interface LoginFormData {
-  username: string;
-  password: string;
-}
+import { EyeIcon, EyeOffIcon, Mail, Lock } from "lucide-react";
 
 const LoginForm: React.FC = () => {
-  const [formData, setFormData] = useState<LoginFormData>({
-    username: "",
-    password: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
-    if (error) setError("");
-  };
-
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.password) {
-      setError("Vui lòng điền đầy đủ thông tin");
+    if (!username || !password) {
+      setError("Vui lòng nhập đầy đủ thông tin.");
       return;
     }
 
-    setIsLoading(true);
-    setError("");
-
     try {
-      await login(formData.username, formData.password);
-      // Redirect to admin page after successful login
-      navigate("/admin", { replace: true });
+      setIsLoading(true);
+      await login(username, password);
+      navigate("/admin");
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
@@ -85,92 +37,84 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+    <div className="w-full  bg-white/95 backdrop-blur-xl p-10 rounded-3xl">
+      {/* Title */}
+      <h2 className="text-3xl font-bold text-emerald-600 text-center mb-2">
+        Đăng nhập
+      </h2>
+      <p className="text-gray-600 text-center mb-6">
+        Sử dụng tài khoản đã được cấp để truy cập hệ thống
+      </p>
+
+      {/* Error */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="mb-4 w-full rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-medium">
           {error}
-        </Alert>
+        </div>
       )}
 
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        id="username"
-        label="Tên đăng nhập hoặc Email"
-        name="username"
-        autoComplete="username"
-        autoFocus
-        value={formData.username}
-        onChange={handleInputChange}
-        disabled={isLoading}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Email color="action" />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 2 }}
-      />
+      <form onSubmit={handleSubmit}>
+        {/* Username */}
+        <div className="mb-4">
+          <label className="text-sm font-semibold text-gray-700">
+            Tên đăng nhập hoặc Email
+          </label>
 
-      <TextField
-        margin="normal"
-        required
-        fullWidth
-        name="password"
-        label="Mật khẩu"
-        type={showPassword ? "text" : "password"}
-        id="password"
-        autoComplete="current-password"
-        value={formData.password}
-        onChange={handleInputChange}
-        disabled={isLoading}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Lock color="action" />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleTogglePassword}
-                edge="end"
-                disabled={isLoading}
-              >
-                {showPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 3 }}
-      />
+          <div className="relative mt-2">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError("");
+              }}
+              placeholder="Nhập tên đăng nhập"
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 outline-none transition-all"
+            />
+          </div>
+        </div>
 
-      <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        size="large"
-        disabled={isLoading}
-        sx={{
-          mt: 2,
-          mb: 2,
-          py: 1.5,
-          fontSize: "1rem",
-          fontWeight: 600,
-          borderRadius: 2,
-          textTransform: "none",
-        }}
-      >
-        {isLoading ? (
-          <CircularProgress size={24} color="inherit" />
-        ) : (
-          "Đăng nhập"
-        )}
-      </Button>
-    </Box>
+        {/* Password */}
+        <div className="mb-6">
+          <label className="text-sm font-semibold text-gray-700">
+            Mật khẩu
+          </label>
+
+          <div className="relative mt-2">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+
+            <input
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              placeholder="Nhập mật khẩu"
+              className="w-full pl-11 pr-12 py-3 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 outline-none transition-all"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPw(!showPw)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-emerald-600 transition"
+            >
+              {showPw ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-3 text-white font-semibold text-lg rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/30 transition disabled:bg-gray-400 disabled:shadow-none"
+        >
+          {isLoading ? "Đang xử lý..." : "Đăng nhập"}
+        </button>
+      </form>
+    </div>
   );
 };
 

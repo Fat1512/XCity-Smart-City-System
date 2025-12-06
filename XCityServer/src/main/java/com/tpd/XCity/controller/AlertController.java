@@ -69,7 +69,6 @@ public class AlertController {
     public ResponseEntity<AlertStaticsResponse> getStatics(
             @RequestParam("type") String type
     ) {
-
         AlertStaticsResponse responses = alertService.getStaticsAlert(type);
         return ResponseEntity.ok(responses);
     }
