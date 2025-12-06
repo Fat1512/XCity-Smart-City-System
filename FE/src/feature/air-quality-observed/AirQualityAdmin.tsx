@@ -39,6 +39,7 @@ import { toast } from "react-toastify";
 import useTriggerSensor from "./useTriggerSensor";
 import useUpdateDevice from "./useUpdateDevice";
 import { useNavigate } from "react-router-dom";
+import { formatTime } from "../../utils/helper";
 
 export interface Address {
   addressLocality?: string;
@@ -156,6 +157,28 @@ const AirQualityAdmin = ({ deviceProps = {} }: DeviceProps) => {
 
   return (
     <div className="p-6 bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+        {device.id && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">ID:</span>
+            <span className="font-mono font-semibold">{device.id}</span>
+          </div>
+        )}
+
+        {device.dateCreated && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày tạo:</span>
+            <span>{formatTime(device.dateCreated)}</span>
+          </div>
+        )}
+
+        {device.dateModified && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày sửa:</span>
+            <span>{formatTime(device.dateModified)}</span>
+          </div>
+        )}
+      </div>
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">

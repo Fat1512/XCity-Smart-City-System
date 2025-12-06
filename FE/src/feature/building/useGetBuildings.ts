@@ -16,9 +16,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useSearchParams } from "react-router-dom";
-import { PAGE, PAGE_SIZE } from "../../utils/appConstant";
+import { PAGE } from "../../utils/appConstant";
 import { getSBuildings } from "../../service/buildingService";
-
+const PAGE_SIZE = 12;
 export default function useGetBuildings() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();

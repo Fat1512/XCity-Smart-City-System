@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tpd.XCity.dto.request.BuildingUpdateRequest;
 import com.tpd.XCity.dto.response.*;
+import com.tpd.XCity.entity.Address;
 import com.tpd.XCity.entity.building.Building;
 import com.tpd.XCity.entity.building.GeoJsonType;
 import com.tpd.XCity.entity.building.GeoProperty;
@@ -108,6 +109,14 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
+    public List<BuildingDetailResponse> getBuildingMap() {
+        List<BuildingDetailResponse> buildingDetailResponses = buildingRepository.findAll().stream()
+                .map(b -> buildingMapper.convertToDetailResponse(b))
+                .collect(Collectors.toList());
+        return buildingDetailResponses;
+    }
+
+    @Override
     public PageResponse<BuildingOverviewResponse> getBuildings(String kw, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
@@ -134,15 +143,25 @@ public class BuildingServiceImpl implements BuildingService {
     public void initBuildingFromOverpass() {
         try {
             String query = """
-                    [out:json][timeout:180];
-                    area["name"="Quận 10"]->.searchArea;
-                                        
-                    (
-                      node["building"](area.searchArea);
-                      way["building"](area.searchArea);
-                      relation["building"](area.searchArea);
-                    );
-                    out tags geom 50;
+                    [out:json][timeout:60];          
+                      (
+                        // Công an
+                        node["amenity"="police"](10.33,106.36,11.25,107.05);
+                        way["amenity"="police"](10.33,106.36,11.25,107.05);
+                        relation["amenity"="police"](10.33,106.36,11.25,107.05);
+                      
+                        // Bệnh viện
+                        node["amenity"="hospital"](10.33,106.36,11.25,107.05);
+                        way["amenity"="hospital"](10.33,106.36,11.25,107.05);
+                        relation["amenity"="hospital"](10.33,106.36,11.25,107.05);
+                      
+                        // Ủy ban nhân dân
+                        node["amenity"="townhall"](10.33,106.36,11.25,107.05);
+                        way["amenity"="townhall"](10.33,106.36,11.25,107.05);
+                        relation["amenity"="townhall"](10.33,106.36,11.25,107.05);
+                      );
+                      
+                      out center;
                     """;
 
             HttpHeaders headers = new HttpHeaders();
@@ -167,10 +186,8 @@ public class BuildingServiceImpl implements BuildingService {
             List<Building> buildingEntities = new ArrayList<>();
 
             for (JsonNode el : elements) {
-
                 String type = el.get("type").asText();
                 if (!List.of("node", "way", "relation").contains(type)) continue;
-
                 Building b = new Building();
                 b.setId("urn:ngsi-ld:Building:" + el.get("id").asText());
 
@@ -181,35 +198,97 @@ public class BuildingServiceImpl implements BuildingService {
                 }
 
                 Location loc = new Location();
+                loc.setType(GeoJsonType.Point);
+
                 if (el.has("lat") && el.has("lon")) {
                     loc.setCoordinates(List.of(el.get("lon").asDouble(), el.get("lat").asDouble()));
-                } else if (el.has("geometry")) {
-                    JsonNode geom = el.get("geometry");
-
-                    if (geom.size() > 0) {
-                        List<List<Double>> polygon = new ArrayList<>();
-                        for (JsonNode point : geom) {
-                            if (point.has("lat") && point.has("lon")) {
-                                polygon.add(List.of(point.get("lon").asDouble(), point.get("lat").asDouble()));
-                            }
-                        }
-
-                        loc.setType(GeoJsonType.Polygon);
-                        loc.setCoordinates(List.of(polygon));
-                    }
+                } else if (el.has("center")) {
+                    loc.setCoordinates(List.of(el.get("center").get("lon").asDouble(), el.get("center").get("lat").asDouble()));
                 }
                 b.setLocation(loc);
+                Address address = fillAddress(loc);
+                if (address == null) continue;
 
+                b.setAddress(address);
                 buildingEntities.add(b);
                 buildings.add(buildingMapper.toOrion(b));
+                log.info("Success add building", b.getId());
             }
 
             orionService.createEntities(buildings, BUILDING_CONTEXT);
             buildingRepository.saveAll(buildingEntities);
-            System.out.println("Done: Uploaded " + buildings.size() + " buildings to Orion-LD.");
+            log.info("Done upload building", buildingEntities.size());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    public Address fillAddress(Location loc) {
+        if (loc.getCoordinates() == null) return null;
+        Object coordsObj = loc.getCoordinates();
+        Collection<Double> coordinates;
+        List<Double> coordList;
+        double lon;
+        double lat;
+        if (coordsObj instanceof Collection<?> coll && coll.size() >= 2) {
+            // Nếu đã là Collection, ép kiểu an toàn
+            coordinates = new ArrayList<>();
+            Iterator<?> it = coll.iterator();
+            coordinates.add(((Number) it.next()).doubleValue());
+            coordinates.add(((Number) it.next()).doubleValue());
+
+            coordList = new ArrayList<>(coordinates);
+            lon = coordList.get(1);
+            lat = coordList.get(0);
+        } else {
+            return null;
+        }
+
+        try {
+            String url = String.format(
+                    "https://nominatim.openstreetmap.org/reverse?format=json&lat=%f&lon=%f&addressdetails=1",
+                    lat, lon
+            );
+
+            RestTemplate restTemplate = new RestTemplate();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+
+            org.springframework.http.ResponseEntity<JsonNode> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    entity,
+                    JsonNode.class
+            );
+
+            JsonNode body = response.getBody();
+            if (body != null && body.has("address")) {
+                JsonNode addressRes = body.get("address");
+
+                String road = Optional.ofNullable(addressRes.get("road")).map(JsonNode::asText).orElse(null);
+                String suburb = Optional.ofNullable(addressRes.get("suburb")).map(JsonNode::asText)
+                        .orElse(Optional.ofNullable(addressRes.get("neighbourhood")).map(JsonNode::asText).orElse(null));
+                String city = Optional.ofNullable(addressRes.get("city")).map(JsonNode::asText)
+                        .orElse(Optional.ofNullable(addressRes.get("town")).map(JsonNode::asText)
+                                .orElse(Optional.ofNullable(addressRes.get("village")).map(JsonNode::asText).orElse(null)));
+                String state = Optional.ofNullable(addressRes.get("state")).map(JsonNode::asText).orElse(null);
+                String country = Optional.ofNullable(addressRes.get("country")).map(JsonNode::asText).orElse(null);
+
+
+                Address address = Address.builder()
+                        .streetAddress(road)
+                        .addressLocality(city)
+                        .addressCountry(country)
+                        .addressLocality(suburb)
+                        .build();
+
+                return address;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

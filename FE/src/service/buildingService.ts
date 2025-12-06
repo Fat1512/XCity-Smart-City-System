@@ -15,7 +15,7 @@
 // -----------------------------------------------------------------------------
 import type { Building } from "../feature/building/AdminBuilding";
 import type { PaginationParams } from "../types/PaginationParams";
-import { API } from "../utils/axiosConfig";
+import { API, AUTH_REQUEST } from "../utils/axiosConfig";
 interface BuildingsParams extends PaginationParams {
   kw?: string;
 }
@@ -41,6 +41,16 @@ export async function getBuilding(id: string) {
     );
   }
 }
+export async function getBuildingMap() {
+  try {
+    const res = await API.get(`/building-map`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
 export async function getSBuildings({ page, size, kw }: BuildingsParams) {
   try {
     const params: Record<string, string | number> = { page, size };
@@ -58,8 +68,8 @@ export async function getSBuildings({ page, size, kw }: BuildingsParams) {
 }
 export async function updateBuilding(building: Building) {
   try {
-    const { id, dateCreated, dateModified, ...rest } = building;
-    const res = await API.put(`/building/${id}`, { ...rest });
+    const { id, dateCreated, dateUpdated, ...rest } = building;
+    const res = await AUTH_REQUEST.put(`/building/${id}`, { ...rest });
     return res.data;
   } catch (error: any) {
     throw new Error(
@@ -69,8 +79,8 @@ export async function updateBuilding(building: Building) {
 }
 export async function createBuilding(building: Building) {
   try {
-    const { id, dateCreated, dateModified, ...rest } = building;
-    const res = await API.put(`/building`, { ...rest });
+    const { id, dateCreated, dateUpdated, ...rest } = building;
+    const res = await AUTH_REQUEST.put(`/building`, { ...rest });
     return res.data;
   } catch (error: any) {
     throw new Error(

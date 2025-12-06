@@ -29,7 +29,7 @@ import AirQualityList from "./feature/air-quality-observed/AirQualityList";
 import AirQualityAdminWrapper from "./feature/air-quality-observed/AirQualityAdminWrapper";
 import { AirQualityProvider } from "./context/AirQualityContext";
 
-import FeatureSelection from "./ui/MapSelection";
+import FeatureSelection from "./ui/FeatureSelection";
 import ReportSelection from "./ui/ReportSelection";
 
 import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
@@ -98,7 +98,7 @@ const App = () => {
                     element={<BuildingList />}
                   />
                   <Route path="/map/air" element={<AirQualityPage />} />
-                  <Route path="/map/route" element={<RouterPicker />} />
+                  <Route path="/map/router" element={<RouterPicker />} />
                   <Route path="/map/traffic" element={<TrafficMonitorPage />} />
                   <Route path="/map/alert" element={<AlertPage />} />
 
@@ -150,6 +150,7 @@ const App = () => {
                   <Route path="camera" element={<CameraWrapper />} />
                   <Route path="camera/:cameraId" element={<CameraWrapper />} />
                 </Route>
+                <Route path="*" element={<Home />} />
               </Routes>
             </BrowserRouter>
           </TrafficMonitorContextProvider>

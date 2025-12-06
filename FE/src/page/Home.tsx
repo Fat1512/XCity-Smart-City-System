@@ -198,7 +198,7 @@ const Home = () => {
         <div className="px-4 sm:px-6 lg:px-8  mx-auto">
           <div className="grid grid-cols-12 justify-between items-center">
             <div className="cursor-pointer col-span-3">
-              <img src="./logo.png" className="w-[250px]" />
+              <Logo />
             </div>
 
             <div className="hidden md:flex items-center col-span-6 col-start-4 justify-center space-x-10 font-medium">

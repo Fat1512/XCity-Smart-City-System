@@ -29,30 +29,17 @@ public class OSMTagMapper {
     private static final Map<String, BiConsumer<Building, String>> TAG_MAPPING = Map.ofEntries(
             Map.entry("name", (b, v) -> b.setName(v)),
             Map.entry("description", (b, v) -> b.setDescription(v)),
-            Map.entry("building", (b, v) -> {
+            Map.entry("amenity", (b, v) -> {
                 try {
                     b.setCategory(List.of(BuildingCategory.valueOf(v.toUpperCase())));
                 } catch (IllegalArgumentException ignored) {
+                    b.setCategory(List.of(BuildingCategory.CIVIC));
                 }
-            }),
-            Map.entry("building:levels", (b, v) -> {
-                try {
-                    b.setFloorsAboveGround(Double.valueOf(v));
-                } catch (NumberFormatException ignored) {
-                }
-            }),
-            Map.entry("building:levels:underground", (b, v) -> {
-                try {
-                    b.setFloorsBelowGround(Double.valueOf(v));
-                } catch (NumberFormatException ignored) {
-                }
-            }),
+            })
 
-            Map.entry("addr:street", (b, v) -> ensureAddress(b).setStreetAddress(v)),
-            Map.entry("addr:city", (b, v) -> ensureAddress(b).setAddressLocality(v)),
-            Map.entry("addr:district", (b, v) -> ensureAddress(b).setDistrict(v)),
-            Map.entry("addr:postcode", (b, v) -> ensureAddress(b).setPostalCode(v)),
-            Map.entry("addr:housenumber", (b, v) -> ensureAddress(b).setStreetNr(v))
+//            Map.entry("addr:street", (b, v) -> ensureAddress(b).setStreetAddress(v)),
+//            Map.entry("addr:city", (b, v) -> ensureAddress(b).setAddressRegion(v)),
+//            Map.entry("addr:subdistrict", (b, v) -> ensureAddress(b).setAddressLocality(v))
     );
 
     public static void applyTags(Building building, JsonNode tagsNode) {

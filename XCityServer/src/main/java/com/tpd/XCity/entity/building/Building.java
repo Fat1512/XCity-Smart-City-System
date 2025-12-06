@@ -17,6 +17,7 @@
  */
 package com.tpd.XCity.entity.building;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tpd.XCity.entity.Address;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,24 +41,15 @@ public class Building {
     private String id;
     private Address address;
     private List<BuildingCategory> category;
-    private Double collapseRisk;
-    private ContainedInPlace containedInPlace;
     private String dataProvider;
     @CreatedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateCreated;
     @LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateUpdated;
     private String description;
-    private Double floorsAboveGround;
-    private Double floorsBelowGround;
     private Location location;
     private String name;
-    private List<String> openingHours;
-    private List<String> owner;
-    private Double peopleCapacity;
-    private Double peopleOccupancy;
-    private List<String> seeAlso;
-    private String source;
     private String type = "Building";
-
 }

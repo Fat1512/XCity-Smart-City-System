@@ -37,6 +37,8 @@ public interface AlertRepository extends MongoRepository<Alert, String> {
 
     List<Alert> findByDateCreatedBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
+    List<Alert> findAllBySolved(boolean isSolved);
+
 
     long countBySolvedAndDateCreatedBetween(boolean solved,
                                             LocalDateTime start,
