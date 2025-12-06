@@ -97,6 +97,9 @@ jobs:
     needs: build-and-push
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -106,6 +109,42 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Create deployment directory on VM
+        run: |
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="mkdir -p ~/pmnm-deploy"
+
+      - name: Copy project files to VM
+        run: |
+          # Create archive excluding unnecessary files
+          tar --exclude='.git' \
+              --exclude='node_modules' \
+              --exclude='venv' \
+              --exclude='.venv' \
+              --exclude='__pycache__' \
+              --exclude='target' \
+              --exclude='build' \
+              --exclude='dist' \
+              --exclude='.env' \
+              -czf project.tar.gz .
+          
+          # Copy archive to VM
+          gcloud compute scp project.tar.gz ${{ secrets.GCP_INSTANCE_NAME }}:~/pmnm-deploy/ \
+            --zone=${{ secrets.GCP_ZONE }}
+          
+          # Extract on VM
+          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
+            --zone=${{ secrets.GCP_ZONE }} \
+            --command="
+              cd ~/pmnm-deploy
+              tar -xzf project.tar.gz
+              rm project.tar.gz
+            "
+          
+          # Clean up local archive
+          rm project.tar.gz
 
       - name: Deploy Services
         run: |
