@@ -171,37 +171,6 @@ jobs:
               docker image prune -af
             "
 
-      - name: Health Check
-        run: |
-          gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
-            --zone=${{ secrets.GCP_ZONE }} \
-            --command='
-              echo "Checking service health..."
-              
-              # Wait for services to be ready
-              sleep 10
-              
-              # Check main services
-              echo "Main services status:"
-              docker ps --filter "name=xcity" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-              
-              # Check if backend is healthy
-              if docker ps | grep -q "xcity-backend.*healthy"; then
-                echo "Backend is healthy"
-              else
-                echo "Backend health check failed"
-                exit 1
-              fi
-              
-              # Check if frontend is running
-              if docker ps | grep -q "xcity-frontend.*Up"; then
-                echo "Frontend is running"
-              else
-                echo "Frontend is not running"
-                exit 1
-              fi
-            '
-
       - name: Verify Deployment
         run: |
           gcloud compute ssh ${{ secrets.GCP_INSTANCE_NAME }} \
