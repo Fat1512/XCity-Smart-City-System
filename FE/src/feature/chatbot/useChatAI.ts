@@ -13,18 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { Outlet } from "react-router-dom";
-import Header from "./Header";
-import Chatbot from "../feature/chatbot/Chatbot";
+import { useMutation } from "@tanstack/react-query";
 
-const AppLayout = () => {
-  return (
-    <div>
-      <Header />
-      <Outlet />
-      <Chatbot />
-    </div>
-  );
-};
+import { getChatAI } from "../../service/chabotService";
+import type { MessageChatAI } from "./Chatbot";
+export interface SendMessage {
+  query: string;
+  conversationId?: string | null;
+}
+function useChatAI() {
+  const { isPending, mutate: chatWithAI } = useMutation<
+    MessageChatAI,
+    Error,
+    SendMessage
+  >({
+    mutationFn: ({ query, conversationId }) =>
+      getChatAI({ query, conversationId }),
+  });
 
-export default AppLayout;
+  return { isPending, chatWithAI };
+}
+
+export default useChatAI;
