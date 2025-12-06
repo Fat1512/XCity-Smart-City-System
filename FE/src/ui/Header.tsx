@@ -21,6 +21,7 @@ import {
   FaCog,
   FaInfoCircle,
 } from "react-icons/fa";
+import Logo from "./Logo";
 const MENU_ITEMS = [
   { name: "Trang chủ", icon: <FaHome size={18} />, path: "/home" },
   { name: "Bản đồ", icon: <FaMapMarkedAlt size={18} />, path: "/map" },
@@ -32,12 +33,7 @@ const Header = () => {
   return (
     <header className="p-4 border-b bg-white/70 backdrop-blur-md flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2 cursor-pointer group">
-        <div className="w-9 h-9 rounded-xl bg-linear-to-r from-blue-500 to-cyan-500 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-md">
-          <span className="text-white font-bold text-sm">SC</span>
-        </div>
-        <h1 className="text-xl font-bold bg-linear-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-          SmartCity
-        </h1>
+        <Logo />
       </div>
 
       <nav className="flex items-center gap-6">

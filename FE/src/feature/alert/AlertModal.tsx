@@ -109,7 +109,7 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
         data.address?.addressRegion,
       ]
         .filter(Boolean)
-        .map((s) => s.trim())
+        .map((s) => s?.trim() ?? "")
         .join(", ");
 
       const geoCoords = await geocodeAddress(sAddress + ", Vietnam");
@@ -493,6 +493,7 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                   type="submit"
                   variant="contained"
                   fullWidth
+                  disabled={isPending}
                   endIcon={<SendIcon />}
                   sx={{
                     borderRadius: 2,
