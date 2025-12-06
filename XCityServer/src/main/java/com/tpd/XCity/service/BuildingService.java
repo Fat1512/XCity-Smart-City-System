@@ -33,6 +33,9 @@ public interface BuildingService {
 
     MessageResponse createBuilding(BuildingUpdateRequest request) throws JsonProcessingException;
 
+    List<BuildingDetailResponse> getBuildingMap();
+
     PageResponse<BuildingOverviewResponse> getBuildings(String kw, int page, int size);
+
     void initBuildingFromOverpass();
 }

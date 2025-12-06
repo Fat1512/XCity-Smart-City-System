@@ -14,23 +14,16 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 import { useQuery } from "@tanstack/react-query";
-import { getBuildings } from "../../../service/buildingService";
-import jsonld from "jsonld";
-import { JSONLD_CONTEXT } from "../../../utils/appConstant";
-function useGetBuildings() {
-  const { isLoading, data: buildings } = useQuery({
-    queryKey: ["sBuildings"],
-    queryFn: async () => {
-      const buildings = await getBuildings();
 
-      const compacted = await jsonld.compact(buildings ?? [], JSONLD_CONTEXT);
-      console.log("Compacted JSON-LD:", compacted);
-      console.log(compacted["@graph"]);
-      return compacted["@graph"] ?? [];
-    },
+import { getBuildingMap } from "../../../service/buildingService";
+
+function useGetBuildingMap() {
+  const { isLoading, data: buildings } = useQuery({
+    queryKey: ["building-map"],
+    queryFn: async () => getBuildingMap(),
   });
 
   return { isLoading, buildings };
 }
 
-export default useGetBuildings;
+export default useGetBuildingMap;

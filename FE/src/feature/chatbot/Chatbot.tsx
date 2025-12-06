@@ -16,7 +16,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Send } from "lucide-react";
 import useChatAI from "./useChatAI";
-import type { Message } from "react-hook-form";
 
 export interface MessageChatAI {
   text: string;
@@ -81,7 +80,7 @@ export default function Chatbot() {
       sendMessage();
     }
   };
-  console.log(messages);
+
   return (
     <>
       {!isOpen && (

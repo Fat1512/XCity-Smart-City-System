@@ -32,7 +32,6 @@ const AdminBuildingItem: React.FC<BuildingOverview> = ({
       address.district ||
       address.addressLocality ||
       address.addressRegion ||
-      address.postalCode ||
       address.addressCountry);
   const navigate = useNavigate();
   return (
@@ -66,7 +65,6 @@ const AdminBuildingItem: React.FC<BuildingOverview> = ({
               <p>- Thành phố: {address.addressLocality}</p>
             )}
             {address.addressRegion && <p>- Vùng: {address.addressRegion}</p>}
-            {address.postalCode && <p>- Mã bưu điện: {address.postalCode}</p>}
             {address.addressCountry && (
               <p>- Quốc gia: {address.addressCountry}</p>
             )}

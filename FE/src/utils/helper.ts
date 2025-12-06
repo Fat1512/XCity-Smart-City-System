@@ -61,14 +61,10 @@ export const flattenNGSILD = (entity: any) => {
 };
 
 export function formatVietnamTime(timeString: string) {
-  // timeString: "HH:mm"
   const [h, m] = timeString.split(":").map(Number);
 
-  // Tạo Date hiện tại
   const date = new Date();
   date.setHours(h, m, 0, 0);
-
-  // Convert sang giờ VN (UTC+7)
   const vnDate = new Date(
     date.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })
   );
@@ -78,12 +74,39 @@ export function formatVietnamTime(timeString: string) {
 
   return `${hh}:${mm}`;
 }
+export function formatTime(timestamp: string) {
+  const date = new Date(timestamp);
+  const now = new Date();
+
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffDay < 1) {
+    if (diffHour >= 1) return `${diffHour} giờ trước`;
+    if (diffMin >= 1) return `${diffMin} phút trước`;
+    return "Vừa xong";
+  }
+
+  // Format dd/MM/yyyy, HH:mm:ss
+  const dd = String(date.getDate()).padStart(2, "0");
+  const MM = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+
+  const HH = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+
+  return `${dd}/${MM}/${yyyy}, ${HH}:${mm}:${ss}`;
+}
 
 export function formatTimeAgo(timestamp: number): string {
-  // Chuyển timestamp sang mili giây (nếu timestamp đang là giây)
   const time = new Date(timestamp * 1000);
+  console.log(timestamp);
   const now = new Date();
-  const diff = now.getTime() - time.getTime(); // difference in ms
+  const diff = now.getTime() - time.getTime();
 
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -93,6 +116,7 @@ export function formatTimeAgo(timestamp: number): string {
   if (days > 0) return `${days} ngày trước`;
   if (hours > 0) return `${hours} giờ trước`;
   if (minutes > 0) return `${minutes} phút trước`;
+
   return `${seconds} giây trước`;
 }
 export const mapToLabels = (dataMap, sourceList) => {

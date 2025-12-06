@@ -150,6 +150,7 @@ const App = () => {
                   <Route path="camera" element={<CameraWrapper />} />
                   <Route path="camera/:cameraId" element={<CameraWrapper />} />
                 </Route>
+                <Route path="*" element={<Home />} />
               </Routes>
             </BrowserRouter>
           </TrafficMonitorContextProvider>

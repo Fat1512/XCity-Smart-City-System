@@ -67,6 +67,17 @@ const features = [
       "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
     path: "router",
   },
+  {
+    id: "infrastructure",
+    title: "Cơ sở hạ tầng",
+    description: "Khám phá các công trình và tiện ích",
+    icon: <FaBuilding size={40} />,
+    gradient: "from-amber-500 via-orange-600 to-red-700",
+    color: "orange",
+    mapPattern:
+      "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
+    path: "infrastructure",
+  },
 ];
 
 const FeatureSelection: React.FC = () => {

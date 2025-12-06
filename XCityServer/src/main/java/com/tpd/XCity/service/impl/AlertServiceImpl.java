@@ -93,7 +93,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public List<AlertResponse> getAlerts() {
-        List<AlertResponse> alertResponses = alertRepository.findAll().stream()
+        List<AlertResponse> alertResponses = alertRepository.findAllBySolved(false).stream()
                 .map(a -> alertMapper.convertToResponse(a))
                 .collect(Collectors.toList());
 

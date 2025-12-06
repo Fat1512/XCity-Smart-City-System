@@ -17,6 +17,7 @@
  */
 package com.tpd.XCity.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tpd.XCity.dto.common.OH;
 import com.tpd.XCity.entity.Address;
 import com.tpd.XCity.entity.building.BuildingCategory;
@@ -35,20 +36,14 @@ public class BuildingDetailResponse {
     private String id;
     private Address address;
     private List<BuildingCategory> category;
-    private Double collapseRisk;
-    private ContainedInPlace containedInPlace;
     private String dataProvider;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant dateCreated;
-    private Instant dateModified;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Instant dateUpdated;
     private String description;
-    private Double floorsAboveGround;
-    private Double floorsBelowGround;
     private Location location;
     private String name;
     private List<String> owner;
-    private Double peopleCapacity;
-    private Double peopleOccupancy;
     private String type = "Building";
-    private Map<String, OH> openingHours;
-
 }

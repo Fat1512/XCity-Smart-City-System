@@ -1,3 +1,18 @@
+// -----------------------------------------------------------------------------
+// Copyright 2025 Fenwick Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +53,6 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="w-full  bg-white/95 backdrop-blur-xl p-10 rounded-3xl">
-      {/* Title */}
       <h2 className="text-3xl font-bold text-emerald-600 text-center mb-2">
         Đăng nhập
       </h2>
@@ -46,7 +60,6 @@ const LoginForm: React.FC = () => {
         Sử dụng tài khoản đã được cấp để truy cập hệ thống
       </p>
 
-      {/* Error */}
       {error && (
         <div className="mb-4 w-full rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-medium">
           {error}
@@ -54,7 +67,6 @@ const LoginForm: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Username */}
         <div className="mb-4">
           <label className="text-sm font-semibold text-gray-700">
             Tên đăng nhập hoặc Email
@@ -75,7 +87,6 @@ const LoginForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Password */}
         <div className="mb-6">
           <label className="text-sm font-semibold text-gray-700">
             Mật khẩu
@@ -105,7 +116,6 @@ const LoginForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isLoading}

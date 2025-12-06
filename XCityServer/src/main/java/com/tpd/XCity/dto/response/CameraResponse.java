@@ -17,6 +17,7 @@
  */
 package com.tpd.XCity.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tpd.XCity.entity.Address;
 import com.tpd.XCity.entity.building.Location;
 import com.tpd.XCity.entity.device.CameraUsage;
@@ -35,7 +36,9 @@ public class CameraResponse {
     private Address address;
     private String cameraName;
     private String dataProvider;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime dateCreated;
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime dateModified;
     private String description;
     private CameraUsage cameraUsage;

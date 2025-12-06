@@ -13,52 +13,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import CreatableSelect from "react-select/creatable";
-import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { IoBusiness, IoCalendar } from "react-icons/io5";
-import { FaSave } from "react-icons/fa";
-
-import { BUILDING_TYPES, WEEK_DAYS } from "../../utils/appConstant";
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { IoBusiness } from "react-icons/io5";
+import { FaMapMarkerAlt, FaSave } from "react-icons/fa";
+
 import useUpdateBuilding from "./useUpdateBuilding";
-import { toast } from "react-toastify";
-import MiniSpinner from "../../ui/MiniSpinner";
 import useCreateBuilding from "./useCreateBuilding";
+import { toast } from "react-toastify";
+
+import MapViewLocation from "../../ui/MapViewLocation";
+import MapModal from "../../ui/MapModal";
+import MiniSpinner from "../../ui/MiniSpinner";
+import ErrorMessage from "../../ui/ErrorMessage";
+import { BUILDING_TYPES } from "../../utils/appConstant";
+import CreatableSelect from "react-select/creatable";
+import type { Address } from "../air-quality-observed/AirQualityAdmin";
+import { formatTime } from "../../utils/helper";
+
+export interface Location {
+  coordinates: [number, number];
+  type?: string;
+}
 
 export interface Building {
   id?: string;
   name?: string;
   description?: string;
   address?: Address;
-  areaServed?: string;
-  dateModified?: string;
-  category?: string[];
   dataProvider?: string;
-  dateCreated?: string;
-  floorsAboveGround?: number;
-  floorsBelowGround?: number;
-  collapseRisk?: number;
-  peopleCapacity?: number;
-  peopleOccupancy?: number;
-  owner?: string[];
-  occupier?: string[];
-  openingHours?: string[];
+  category?: string[];
   location?: Location;
+  dateCreated?: string;
+  dateUpdated?: string;
 }
-export interface Location {
-  coordinates: [];
-  type: string;
-}
-export interface Address {
-  addressCountry?: string;
-  addressLocality?: string;
-  addressRegion?: string;
-  streetAddress?: string;
-  streetNr?: string;
-  postOfficeBoxNumber?: string;
-  postalCode?: string;
-  district?: string;
-}
+
 interface AdminBuildingProps {
   buildingProps?: Building;
 }
@@ -66,329 +55,244 @@ interface AdminBuildingProps {
 export default function AdminBuilding({
   buildingProps = {},
 }: AdminBuildingProps) {
-  const [showCoords, setShowCoords] = useState(false);
-  const { register, handleSubmit, watch, control, setValue } =
-    useForm<Building>({
-      defaultValues: buildingProps,
-    });
-
   const [modalOpen, setModalOpen] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<Building>({
+    defaultValues: buildingProps,
+  });
+
+  const building = watch();
+
   const { isPending, updateBuilding } = useUpdateBuilding();
   const { isPending: isCreating, createBuilding } = useCreateBuilding();
-  const building = watch();
-  const handleOnChangeLocation = (coordinates: number[][]) => {
-    console.log(coordinates);
-    setValue("location.coordinates.0", coordinates);
-  };
-  console.log(building.location);
+
   const onSubmit = (data: Building) => {
     if (building.id) {
       updateBuilding(data, {
         onSuccess: () => toast.success("Cập nhật tòa nhà thành công"),
       });
-      return;
+    } else {
+      createBuilding(data, {
+        onSuccess: () => toast.success("Tạo tòa nhà mới thành công"),
+      });
     }
-    createBuilding(data, {
-      onSuccess: () => toast.success("Tạo tòa nhà mới thành công"),
-    });
+  };
+
+  const handleOnChangeLocation = (coordinates: [number, number]) => {
+    setValue("location.coordinates", coordinates);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="bg-gray-50 p-8 space-y-8 min-h-screen"
-    >
-      <header className="flex flex-wrap items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex-1 min-w-[250px]">
-          <div className="flex items-center gap-2 mb-2">
-            <IoBusiness className="text-green-600 text-2xl" />
-            <input
-              {...register("name")}
-              className="bg-transparent text-2xl font-semibold text-gray-800 border-b-2 border-transparent focus:border-green-500 focus:outline-none transition-all duration-300"
-              placeholder="Building name..."
+    <div className="bg-gray-50 p-8 min-h-screen space-y-8">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-3">
+        {building.id && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">ID:</span>
+            <span className="font-mono font-semibold">{building.id}</span>
+          </div>
+        )}
+
+        {building.dateCreated && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày tạo:</span>
+            <span>{formatTime(building.dateCreated)}</span>
+          </div>
+        )}
+
+        {building.dateUpdated && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày sửa:</span>
+            <span>{formatTime(building.dateUpdated)}</span>
+          </div>
+        )}
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-6 rounded-xl shadow-md border border-gray-200 gap-4">
+          <div className="flex-1 min-w-[250px]">
+            <div className="flex items-center gap-3 mb-1">
+              <IoBusiness className="text-green-600 text-3xl" />
+              <input
+                {...register("name", { required: "Tên tòa nhà bắt buộc" })}
+                className="bg-transparent text-2xl font-bold text-gray-800 border-b-2 border-gray-200 focus:border-green-500 focus:outline-none transition-colors duration-300 w-full"
+                placeholder="Tên tòa nhà..."
+              />
+            </div>
+            {errors.name && <ErrorMessage message={errors.name.message} />}
+
+            <textarea
+              {...register("description")}
+              className="w-full bg-transparent text-gray-600 text-sm border-b-2 border-transparent focus:border-green-500 focus:outline-none resize-none transition-all duration-300 mt-3"
+              placeholder="Mô tả tòa nhà..."
+              rows={2}
             />
           </div>
 
-          <textarea
-            {...register("description")}
-            className="w-full bg-transparent text-gray-600 text-sm border-b-2 border-transparent focus:border-green-500 focus:outline-none resize-none transition-all duration-300"
-            placeholder="Description..."
-            rows={2}
-          />
-        </div>
+          <button
+            type="submit"
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md transition-all duration-300"
+          >
+            <FaSave className="text-lg" />
+            {isPending || isCreating ? <MiniSpinner /> : "Lưu thay đổi"}
+          </button>
+        </header>
 
-        <button
-          type="submit"
-          className="flex items-center gap-2 cursor-pointer bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-lg shadow transition-all duration-300"
-        >
-          <FaSave className="text-lg" />
-          {isPending || isCreating ? <MiniSpinner /> : "Lưu thay đổi"}
-        </button>
-      </header>
-      <fieldset disabled={isPending || isCreating} className="space-y-8">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-5 space-y-6">
-            <section className="bg-white p-5 rounded-lg shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase mb-4">
-                General Information
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-2 space-x-5">
-                  <div>
-                    <label className="block text-gray-500">
-                      Address Locality
-                    </label>
-                    <input
-                      {...register("address.addressLocality")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500">District</label>
-                    <input
-                      {...register("address.district")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                </div>
-                <div className="grid ">
-                  <div>
-                    <label className="block text-gray-500">
-                      Address Region
-                    </label>
-                    <input
-                      {...register("address.addressRegion")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 space-x-5">
-                  <div>
-                    <label className="block text-gray-500">
-                      Street Address
-                    </label>
-                    <input
-                      {...register("address.streetAddress")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500">Street Nr</label>
-                    <input
-                      {...register("address.streetNr")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 space-x-5">
-                  <div>
-                    <label className="block text-gray-500">
-                      Post Office Box Number
-                    </label>
-                    <input
-                      {...register("address.postOfficeBoxNumber")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-500">Postal Code</label>
-                    <input
-                      {...register("address.postalCode")}
-                      className="w-full border border-gray-200 rounded px-2 py-1 "
-                    />
-                  </div>
-                </div>
+        <fieldset disabled={isPending || isCreating} className="space-y-8">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 lg:col-span-5 p-6 bg-white rounded-xl shadow-md border border-gray-200 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-500">Area Served</label>
+                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                    Thành phố
+                  </label>
                   <input
-                    {...register("areaServed")}
-                    className="w-full border border-gray-200 rounded px-2 py-1 "
+                    {...register("address.addressRegion", {
+                      required: "Thành phố bắt buộc",
+                    })}
+                    className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-green-500 focus:ring-1 focus:ring-green-200 transition-all"
+                    placeholder="TP. HCM"
                   />
-                </div>
-                <div>
-                  <label className="block text-gray-500 mb-1">Category</label>
-
-                  <Controller
-                    name="category"
-                    control={control}
-                    defaultValue={[]}
-                    render={({ field }) => (
-                      <CreatableSelect
-                        isMulti
-                        options={BUILDING_TYPES}
-                        className="text-sm"
-                        placeholder="Select or type to create..."
-                        isClearable
-                        value={field.value?.map((v: string) => {
-                          return (
-                            BUILDING_TYPES.find((opt) => opt.value === v) || {
-                              label: v,
-                              value: v,
-                            }
-                          );
-                        })}
-                        onChange={(options) => {
-                          field.onChange(options?.map((o) => o.value) ?? []);
-                        }}
-                      />
-                    )}
-                  />
+                  {errors.address?.addressRegion && (
+                    <ErrorMessage
+                      message={errors.address.addressRegion.message}
+                    />
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-gray-500">Data Provider</label>
+                  <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                    Phường/xã
+                  </label>
                   <input
-                    {...register("dataProvider")}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
+                    {...register("address.addressLocality", {
+                      required: "Phường/xã bắt buộc",
+                    })}
+                    className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-green-500 focus:ring-1 focus:ring-green-200 transition-all"
+                    placeholder="Quận 1"
                   />
+                  {errors.address?.addressLocality && (
+                    <ErrorMessage
+                      message={errors.address.addressLocality.message}
+                    />
+                  )}
                 </div>
               </div>
-            </section>
-            <section className="bg-white p-5 rounded-lg shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase mb-4">
-                Opening Hours
-              </h3>
 
-              <div className="space-y-2">
-                {WEEK_DAYS.map((day) => (
-                  <div
-                    key={day}
-                    className="grid grid-cols-3 items-center gap-3"
-                  >
-                    <label className="capitalize text-gray-500 w-20">
-                      {day}
-                    </label>
-
-                    <input
-                      type="time"
-                      {...register(`openingHours.${day}.opens`)}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 "
-                      placeholder="Open"
-                    />
-
-                    <input
-                      type="time"
-                      {...register(`openingHours.${day}.closes`)}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 "
-                      placeholder="Close"
-                    />
-                  </div>
-                ))}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                  Tên đường
+                </label>
+                <input
+                  {...register("address.streetAddress", {
+                    required: "Tên đường bắt buộc",
+                  })}
+                  className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-green-500 focus:ring-1 focus:ring-green-200 transition-all"
+                  placeholder="Lê Lợi"
+                />
+                {errors.address?.streetAddress && (
+                  <ErrorMessage
+                    message={errors.address.streetAddress.message}
+                  />
+                )}
               </div>
-            </section>
-            <section className="bg-white p-5 rounded-lg shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase mb-4">
-                Structural Details
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <label className="block text-gray-500">Floors Above</label>
-                  <input
-                    type="number"
-                    {...register("floorsAboveGround", { valueAsNumber: true })}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500">Floors Below</label>
-                  <input
-                    type="number"
-                    {...register("floorsBelowGround", { valueAsNumber: true })}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500">Collapse Risk</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register("collapseRisk", { valueAsNumber: true })}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500">Capacity</label>
-                  <input
-                    type="number"
-                    {...register("peopleCapacity", { valueAsNumber: true })}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-500">Occupancy</label>
-                  <input
-                    type="number"
-                    {...register("peopleOccupancy", { valueAsNumber: true })}
-                    className="w-full border border-gray-200 rounded px-2 py-1"
-                  />
-                </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
+                  Nhà cung cấp
+                </label>
+                <input
+                  {...register("dataProvider", {
+                    required: "Nhà cung cấp bắt buộc",
+                  })}
+                  className="w-full bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-green-500 focus:ring-1 focus:ring-green-200 transition-all"
+                  placeholder="Nhập tên nhà cung cấp"
+                />
+                {errors.dataProvider && (
+                  <ErrorMessage message={errors.dataProvider.message} />
+                )}
               </div>
-            </section>
-          </div>
+              <div>
+                <label className="block text-gray-500 mb-1">Loại hạ t</label>
 
-          <div className="col-span-7 space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase">
-                Vị trí
-              </h3>
-
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="px-3 py-1 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
-              >
-                Thay đổi vị trí
-              </button>
-            </div>
-
-            <div className="rounded-lg overflow-hidden shadow-md border border-gray-200">
-              {/* <MapLocation coordinates={building.location?.coordinates[0]} /> */}
-            </div>
-
-            {modalOpen && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-xl w-[700px] max-w-full p-6 space-y-4 shadow-lg relative">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-lg font-semibold text-gray-700">
-                      Edit Location
-                    </h4>
-                    <button
-                      onClick={() => setModalOpen(false)}
-                      className="text-gray-400 hover:text-gray-600 transition text-xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-inner h-[400px]">
-                    {/* <MapLocationEditor
-                      onConfirm={handleOnChangeLocation}
-                      coordinates={building.location?.coordinates[0]}
-                    /> */}
-                  </div>
-
-                  <div className="flex justify-end gap-3 mt-2">
-                    <button
-                      className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition"
-                      onClick={() => setModalOpen(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-                      onClick={() => {
-                        setModalOpen(false);
+                <Controller
+                  name="category"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <CreatableSelect
+                      isMulti
+                      options={BUILDING_TYPES}
+                      className="text-sm"
+                      placeholder="Select or type to create..."
+                      isClearable
+                      value={field.value?.map((v: string) => {
+                        return (
+                          BUILDING_TYPES.find((opt) => opt.value === v) || {
+                            label: v,
+                            value: v,
+                          }
+                        );
+                      })}
+                      onChange={(options) => {
+                        field.onChange(options?.map((o) => o.value) ?? []);
                       }}
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
+                    />
+                  )}
+                />
               </div>
-            )}
+            </div>
+
+            <div className="col-span-12 lg:col-span-7">
+              <div className="rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+                <div className="bg-linear-to-r from-blue-500 to-cyan-500 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-white text-xl" />
+                    <h3 className="text-white font-bold text-lg">
+                      Vị trí thiết bị
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(true)}
+                    className="flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-all duration-300"
+                  >
+                    <FaMapMarkerAlt />
+                    <span>Thay đổi</span>
+                  </button>
+                </div>
+
+                <div className="overflow-hidden">
+                  <MapViewLocation
+                    coordinates={building.location?.coordinates}
+                  />
+                </div>
+
+                {building.location?.coordinates && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <p className="text-sm text-blue-800 font-medium">
+                      📍 Tọa độ: {building.location.coordinates[1].toFixed(6)},{" "}
+                      {building.location.coordinates[0].toFixed(6)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </fieldset>
-    </form>
+
+          <MapModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onChange={handleOnChangeLocation}
+            location={building.location?.coordinates}
+          />
+        </fieldset>
+      </form>
+    </div>
   );
 }

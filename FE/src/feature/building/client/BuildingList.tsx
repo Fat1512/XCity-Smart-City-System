@@ -13,10 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import useGetBuildings from "./useGetBuildings";
+
 import type { NgsiLdProperty, NgsiLdGeoProperty } from "../../../types/index";
 import Map from "./Map";
-import type { Address } from "../AdminBuilding";
+
+import MiniSpinner from "../../../ui/MiniSpinner";
+import useGetBuildingMap from "./useGetBuildingMap";
+import type { Address } from "../../air-quality-observed/AirQualityAdmin";
 
 export interface Building {
   id: string;
@@ -35,13 +38,11 @@ export interface Polygon {
 }
 
 const BuildingList = () => {
-  const { isLoading, buildings } = useGetBuildings();
+  const { isLoading, buildings } = useGetBuildingMap();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <MiniSpinner />;
 
-  if (!buildings?.data?.length) return <div>No buildings found</div>;
-
-  return <Map buildings={buildings.data} />;
+  return <Map buildings={buildings} />;
 };
 
 export default BuildingList;

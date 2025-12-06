@@ -61,10 +61,12 @@ public class WebSecurityConfig {
                                 "/api/v1/alert",
                                 "/api/v1/traffic/notify",
                                 "/api/v1/traffic/download-statics/",
+                                "/api/v1/building/init",
                                 "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/air/monthly-statics",
                                 "/api/v1/air/daily-statics",
+                                "/api/v1/building-map",
                                 "/api/v1/alerts",
                                 "/api/v1/alert/solved",
                                 "/api/v1/alert/statics",

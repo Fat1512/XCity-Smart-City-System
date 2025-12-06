@@ -26,11 +26,14 @@ import CreatableSelect from "react-select/creatable";
 import MiniSpinner from "../../ui/MiniSpinner";
 import ErrorMessage from "../../ui/ErrorMessage";
 import { toast } from "react-toastify";
-import type { Address } from "../building/AdminBuilding";
-import type { Location } from "../air-quality-observed/AirQualityAdmin";
+import type {
+  Address,
+  Location,
+} from "../air-quality-observed/AirQualityAdmin";
 import useCreateCamera from "./useCreateCamera";
 import useUpdateCamera from "./useUpdateCamera";
 import { useNavigate } from "react-router-dom";
+import { formatTime } from "../../utils/helper";
 
 export interface CameraCreate {
   id?: string;
@@ -100,6 +103,28 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
 
   return (
     <div className="p-6 bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+        {camera.id && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">ID:</span>
+            <span className="font-mono font-semibold">{camera.id}</span>
+          </div>
+        )}
+
+        {camera.dateCreated && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày tạo:</span>
+            <span>{formatTime(camera.dateCreated)}</span>
+          </div>
+        )}
+
+        {camera.dateModified && (
+          <div className="flex items-center gap-2 text-lg">
+            <span className="font-bold w-24">Ngày sửa:</span>
+            <span>{formatTime(camera.dateModified)}</span>
+          </div>
+        )}
+      </div>
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">
