@@ -31,7 +31,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import knowledge, streams, navigation
+from app.routers import knowledge, streams, navigation, camera_setup
 from app.ws_traffic import router as ws_traffic_router
 from app.ws_flood import router as ws_flood_router
 
@@ -59,7 +59,8 @@ async def start_watchers(loop):
     s3_interval = int(os.getenv("WATCHER_S3_INTERVAL", "60"))
 
     rss_urls_str = os.getenv("WATCHER_RSS_URLS")
-    if rss_urls_str:
+    enable_rss = bool(True if str.lower(os.getenv("KNOWLEDGE_RSS_ENABLED")) == "true" else False)
+    if rss_urls_str and enable_rss:
         rss_urls = [u.strip() for u in rss_urls_str.split(',') if u.strip()]
         if rss_urls:
             rss_interval = int(os.getenv("WATCHER_RSS_INTERVAL", "3600"))
@@ -72,7 +73,9 @@ async def start_watchers(loop):
             )
             tasks.append(loop.create_task(rss_watcher.start(rag_service, loop)))
 
-    if s3_bucket:
+    enable_s3 = bool(True if str.lower(os.getenv("KNOWLEDGE_S3_ENABLED")) == "true" else False)
+
+    if s3_bucket and enable_s3:
         print(
             f"Watching S3 bucket: {s3_bucket}, prefix='{s3_prefix}', "
             f"interval={s3_interval}s"
@@ -114,6 +117,7 @@ def create_app():
     app.include_router(knowledge.router, prefix=api_prefix)
     app.include_router(streams.router, prefix=api_prefix)
     app.include_router(navigation.router, prefix=api_prefix)
+    app.include_router(camera_setup.router, prefix=api_prefix)
 
     app.include_router(ws_traffic_router)
     app.include_router(ws_flood_router)
