@@ -36,11 +36,9 @@ class RouteIntent(BaseIntent):
         conversation_id: str,
         router_tokens: Dict[str, Any],
     ) -> Dict[str, Any]:
-        # dùng helper của service để parse tọa độ
         coord_pairs = service.parse_two_coord_pairs(query)
 
         if not coord_pairs:
-            # giống logic cũ: intent ROUTE nhưng không có 2 cặp tọa độ
             return {
                 "answer": (
                     "Bạn muốn tính đường — vui lòng cung cấp hai tọa độ theo định dạng: "
@@ -55,7 +53,6 @@ class RouteIntent(BaseIntent):
         try:
             tm.auto_register_from_package()
         except Exception:
-            # nếu auto register fail vẫn tiếp tục, sẽ check route_tool tồn tại bên dưới
             pass
 
         if "route_tool" not in tm.tools:

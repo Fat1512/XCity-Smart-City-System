@@ -59,3 +59,24 @@ class RAGGuardrailService:
             return False, answer
             
         return True, ""
+    def check_answer_quality(self, query: str, answer: str) -> Tuple[bool, str]:
+        try:
+            validation_prompt = self.prompts.load(
+                "answer_validation", 
+                query=query, 
+                answer=answer
+            )
+
+            response = self.llm.generate(validation_prompt)
+            result = response.get("text", "").strip().upper()
+            
+            if "INVALID" in result:
+                print(f"Guardrail Alert: Answer rejected for query: '{query}'")
+                fallback_msg = "Xin lỗi, tôi không thể tìm được thông tin liên quan đến câu hỏi của bạn. Vui lòng thử lại hoặc diễn đạt cụ thể hơn."
+                return False, fallback_msg
+            
+            return True, ""
+            
+        except Exception as e:
+            print(f"Error in answer validation: {e}")
+            return True, ""

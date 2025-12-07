@@ -27,6 +27,7 @@ from components.manager import ReaderManager
 from components.manager import DatabaseManager
 from components.manager import PromptManager
 from components.manager import GenerationManager
+from components.manager import ConfigManager
 
 from service.guardrail_service import RAGGuardrailService
 from service.history_service import RedisHistoryService
@@ -47,6 +48,7 @@ class MiniRagService:
         self.reader_manager = ReaderManager()
         self.db = DatabaseManager()
         self.collection_name = collection_name
+        self.config_manager = ConfigManager()
 
         self.rag_guardrails = RAGGuardrailService()
         self.history_service = RedisHistoryService()
@@ -60,17 +62,21 @@ class MiniRagService:
             separators=["\n\n", "\n", ". ", " ", ""]
         )
 
-        self.streams_config = self._load_streams_config()
-        logger.info(f"Loaded {len(self.streams_config)} traffic streams")
+        # self.streams_config = self._load_streams_config()
+        # logger.info(f"Loaded {len(self.streams_config)} traffic streams")
 
         self.intent_handlers = create_intent_handlers()
 
-    def _load_streams_config(self):
-        config_path = "config/streams_config.json"
-        if os.path.exists(config_path):
-            with open(config_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return []
+    @property
+    def streams_config(self):
+        return self.config_manager.get_all_streams()
+
+    # def _load_streams_config(self):
+    #     config_path = "config/streams_config.json"
+    #     if os.path.exists(config_path):
+    #         with open(config_path, "r", encoding="utf-8") as f:
+    #             return json.load(f)
+    #     return []
 
     def parse_two_coord_pairs(self, text: str):
         matches = COORD_PAIR_RE.findall(text)
@@ -110,9 +116,10 @@ class MiniRagService:
             logger.info("Detected coordinate pairs in query, overriding intent to ROUTE")
             intent = "ROUTE"
 
+        response_payload = None
         for handler in self.intent_handlers:
             if handler.handles(intent):
-                return handler.handle(
+                response_payload = handler.handle(
                     query=query,
                     intent=intent,
                     service=self,
@@ -121,12 +128,27 @@ class MiniRagService:
                     conversation_id=conversation_id,
                     router_tokens=router_tokens,
                 )
+                break
+        
+        if not response_payload:
+            answer = "Hiện tại intent này chưa được hỗ trợ."
+            history_list.append({"query": query, "answer": answer})
+            self.history_service.save_history(conversation_id, history_list)
+            return {"answer": answer, "conversation_id": conversation_id}
 
-        answer = "Hiện tại intent này chưa được hỗ trợ."
-        history_list.append({"query": query, "answer": answer})
-        self.history_service.save_history(conversation_id, history_list)
-        return {"answer": answer, "conversation_id": conversation_id}
+        raw_answer = response_payload.get("answer", "")
+        
+        if intent == "RAG_QUERY" or intent == "META_QUERY":
+            is_valid, fallback_answer = self.rag_guardrails.check_answer_quality(query, raw_answer)
+            
+            if not is_valid:
+                response_payload["answer"] = fallback_answer
+                if history_list:
+                    history_list.pop() 
+                history_list.append({"query": query, "answer": fallback_answer})
+                self.history_service.save_history(conversation_id, history_list)
 
+        return response_payload
 
     def ingest_file(self, file_path: str, filename: str) -> Dict[str, Any]:
         text, error = self.reader_manager.read_file(file_path)

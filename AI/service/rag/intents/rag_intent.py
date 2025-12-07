@@ -38,8 +38,11 @@ class RagIntent(BaseIntent):
         router_tokens: Dict[str, Any],
     ) -> Dict[str, Any]:
         service.logger = service.__dict__.get("logger", None)
+        search_query = query
+        if "xcity" in query.lower():
+            search_query = f"{query} thành phố hồ chí minh sài gòn nam bộ"
 
-        initial_chunks = service.retrieve_context(query, n_results=10)
+        initial_chunks = service.retrieve_context(search_query, n_results=10)
 
         if initial_chunks:
             context_chunks = self.reranker_manager.rerank(
