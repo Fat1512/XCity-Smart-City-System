@@ -117,10 +117,6 @@ export const AirQualityProvider = ({
         setConnected(false);
         setActive(false);
       },
-      onStompError: (frame) => {
-        console.error("Broker reported error: " + frame.headers["message"]);
-        console.error("Additional details: " + frame.body);
-      },
     });
 
     client.activate();

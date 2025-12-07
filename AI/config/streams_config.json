@@ -11,18 +11,22 @@
     ],
     "world_pts": [
       [0, 0],
-      [40, 0],
-      [40, 30],
+      [10, 0],
+      [10, 30],
       [0, 35]
     ],
     "classes": [2, 3, 5, 6],
     "conf": 0.35,
     "tracker_cfg": "bytetrack.yaml",
-    "segment_ids": ["1328044064", "1265743180"],
-    "address": "Lê quý đôn"
+    "segment_ids": [
+      1185422227, 1185422676, 1178033815, 1185420427, 1185420369, 1185420036,
+      1185420037, 1185420260, 1185420038, 817147068, 1185420039, 1185419763,
+      1185419486, 1185419485, 1185419173, 1293804362
+    ],
+    "address": "Sư Vạn Hạnh"
   },
   {
-    "stream_id": "cam01",
+    "stream_id": "urn:ngsi-ld:Camera:b1a74c9e-b3b1-4192-b350-e9927e091440",
     "video_path": "video1.mp4",
     "limit_fps": 3,
     "image_pts": [
@@ -42,5 +46,27 @@
     "tracker_cfg": "bytetrack.yaml",
     "segment_ids": ["123456", "678594"],
     "address": "Xa lộ hà nội"
+  },
+  {
+    "stream_id": "urn:ngsi-ld:Camera:8b878af7-a322-4f12-bd80-9fba5a56dd61",
+    "video_path": "video3.mp4",
+    "limit_fps": 3,
+    "image_pts": [
+      [6, 406],
+      [668, 348],
+      [1033, 467],
+      [403, 700]
+    ],
+    "world_pts": [
+      [0, 0],
+      [30, 0],
+      [30, 20],
+      [0, 20]
+    ],
+    "classes": [2, 3, 5, 6],
+    "conf": 0.35,
+    "tracker_cfg": "bytetrack.yaml",
+    "segment_ids": ["123456", "678594"],
+    "address": "Huỳnh Tấn Phát"
   }
 ]

@@ -47,7 +47,7 @@ export default function StreamPanel({
       className={`relative rounded-3xl overflow-hidden shadow-2xl border transition-all duration-300 bg-slate-800/80 backdrop-blur-sm border-slate-700/30`}
     >
       <div className="absolute inset-0 bg-linear-to-br from-cyan-500/5 via-transparent to-purple-500/5 animate-pulse" />
-      <div className="absolute inset-0 backdrop-blur-3xl bg-white/[0.02]" />
+      <div className="absolute inset-0 backdrop-blur-3xl bg-white/2" />
 
       <div className="relative p-6">
         <div className="flex justify-between items-start mb-6 h-[120px]">

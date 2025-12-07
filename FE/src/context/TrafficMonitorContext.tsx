@@ -60,13 +60,9 @@ export function TrafficMonitorContextProvider({ children }: Props) {
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
-        } else {
-          console.error("❌ Max reconnection attempts reached");
         }
       };
-    } catch (error) {
-      console.error("Failed to create WebSocket:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {

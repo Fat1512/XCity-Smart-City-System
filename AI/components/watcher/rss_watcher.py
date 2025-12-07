@@ -40,15 +40,15 @@ class RSSWatcher(BaseWatcher):
         s3_bucket: str | None = None,
         s3_prefix: str = "",
     ):
-        self.feed_urls = feed_urls
         self.check_interval = check_interval_seconds
         self.max_backfill_pages = int(os.getenv("RSS_MAX_BACKFILL_PAGES", "1"))
-        self.max_age_days = int(os.getenv("RSS_MAX_AGE_DAYS", "0"))
+        
         self.state_service = KnowledgeService()
 
         self.rag_service: MiniRagService = None
         self.loop: asyncio.AbstractEventLoop = None
         self.seen_articles: dict[str, str] = {}
+        
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -64,46 +64,40 @@ class RSSWatcher(BaseWatcher):
         self.s3_prefix = s3_prefix
         self.s3_client = boto3.client("s3") if s3_bucket else None
 
-        print(
-            f"Initialized RSSWatcher, checking every {check_interval_seconds} seconds."
-        )
-
-        if self.max_age_days > 0:
-            print(f"Auto-delete RSS files older than {self.max_age_days} days: ENABLED")
-        else:
-            print("Auto-delete old RSS files: DISABLED")
+        print(f"Initialized RSSWatcher, checking every {check_interval_seconds} seconds.")
 
     async def start(self, rag_service: MiniRagService, loop: asyncio.AbstractEventLoop):
         self.rag_service = rag_service
         self.loop = loop
-        print(f"Starting RSSWatcher for {len(self.feed_urls)} feed(s).")
+        
+        current_max_age = self.state_service.get_rss_max_age_days()
+        if self.s3_client and self.state_service.is_enabled('rss') and current_max_age > 0:
+            print(f"RSSWatcher: Running startup cleanup (Files older than {current_max_age} days)...")
+            await self._cleanup_old_s3_files(current_max_age)
 
         try:
-            if self.state_service.is_enabled('rss'):
-                print("RSSWatcher: ENABLED on startup. Running backfill...")
-                await self._run_backfill()
-                print("Backfill completed. Starting to monitor for new articles...")
-            else:
-                print("RSSWatcher: DISABLED on startup. Backfill skipped.")
-
             while True:
                 if self.state_service.is_enabled('rss'):
-                    print("RSSWatcher: ENABLED. Checking for new articles...")
-                    for feed_url in self.feed_urls:
-                        await self._process_feed_url(feed_url, is_backfill=False)
+                    current_urls = self.state_service.get_rss_urls()
+                    current_max_age = self.state_service.get_rss_max_age_days()
+                    
+                    print(f"RSSWatcher: Scanning {len(current_urls)} feeds. Max Age: {current_max_age} days.")
+                    
+                    for feed_url in current_urls:
+                        await self._process_feed_url(feed_url, is_backfill=False, max_age_days=current_max_age)
 
-                    if self.max_age_days > 0:
-                        self.rag_service.delete_documents_older_than(
-                            prefix="rss_",
-                            days=self.max_age_days
-                        )
+                    if current_max_age > 0:
+                        self.rag_service.delete_documents_older_than(prefix="rss_", days=current_max_age)
+                        
+                        if self.s3_client:
+                            await self._cleanup_old_s3_files(current_max_age)
 
                     print(f"RSSWatcher: Finished checking. Sleeping for {self.check_interval} seconds...")
                     await asyncio.sleep(self.check_interval)
                 
                 else:
-                    print("RSSWatcher: DISABLED. Sleeping for 60s...")
-                    await asyncio.sleep(60)
+                    # print("RSSWatcher: DISABLED. Sleeping...")
+                    await asyncio.sleep(10)
 
         except asyncio.CancelledError:
             print("RSSWatcher is stopping...")
@@ -124,26 +118,20 @@ class RSSWatcher(BaseWatcher):
                     break
         print("RSS history backfill completed.")
 
-    async def _process_feed_url(self, feed_url: str, is_backfill: bool) -> bool:
+    async def _process_feed_url(self, feed_url: str, is_backfill: bool, max_age_days: int = 0) -> bool:
         try:
             print(f"Fetching feed: {feed_url}")
             response = await self.http_client.get(feed_url)
             response.raise_for_status()
             feed_content_bytes = response.content
             
-            print(f"Parsing feed: {feed_url} ({len(feed_content_bytes)} bytes)")
-            
             func_to_run = functools.partial(feedparser.parse, feed_content_bytes)
             parsed_feed = await self.loop.run_in_executor(None, func_to_run)
 
             if parsed_feed.bozo:
-                print(f"ERROR: Feed has error (bozo=True). Feed: {feed_url}")
-                if isinstance(parsed_feed.bozo_exception, Exception):
-                    print(f"   (Cause: {parsed_feed.bozo_exception})")
                 return False 
             
             if not parsed_feed.entries:
-                print(f"INFO: Feed parsed successfully but no articles found (entries=0). Feed: {feed_url}")
                 return False
 
             now_utc = datetime.now(timezone.utc)
@@ -154,20 +142,20 @@ class RSSWatcher(BaseWatcher):
                 pub_date_str = entry.get("published", entry.get("updated", None))
                 last_updated = entry.get("updated", pub_date_str)
 
-                if self.max_age_days > 0 and pub_date_str and date_parser:
+                if max_age_days > 0 and pub_date_str:
                     try:
                         pub_date_dt = date_parser.parse(pub_date_str)
                         if pub_date_dt.tzinfo is None:
                             pub_date_dt = pub_date_dt.replace(tzinfo=timezone.utc)
                         
-                        cutoff_dt = now_utc - timedelta(days=self.max_age_days)
+                        cutoff_dt = now_utc - timedelta(days=max_age_days)
                         
                         if pub_date_dt < cutoff_dt:
-                            print(f"SKIPPING (Too old: {pub_date_dt.date()}): {entry.title}")
+                            # print(f"SKIPPING (Too old: {pub_date_dt.date()}): {entry.title}")
                             continue
 
                     except Exception as e:
-                        print(f"Could not parse date '{pub_date_str}' for age check. Error: {e}")
+                        pass
 
                 if not is_backfill and article_id in self.seen_articles and \
                    self.seen_articles.get(article_id) == last_updated:
@@ -279,3 +267,43 @@ class RSSWatcher(BaseWatcher):
             Body=raw_bytes,
             **extra_args,
         )
+
+    async def _cleanup_old_s3_files(self, max_age_days: int):
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+
+        def _do_cleanup():
+            paginator = self.s3_client.get_paginator('list_objects_v2')
+            deleted_count = 0
+            
+            for page in paginator.paginate(Bucket=self.s3_bucket, Prefix=self.s3_prefix):
+                if 'Contents' not in page:
+                    continue
+                
+                for obj in page['Contents']:
+                    key = obj['Key']
+                    try:
+                        head = self.s3_client.head_object(Bucket=self.s3_bucket, Key=key)
+                        meta = head.get('Metadata', {})
+                        pub_date_str = meta.get('publication_date')
+                        
+                        file_date = None
+                        if pub_date_str:
+                            file_date = date_parser.parse(pub_date_str)
+                        else:
+                            file_date = obj['LastModified'] # Fallback
+
+                        if file_date.tzinfo is None:
+                            file_date = file_date.replace(tzinfo=timezone.utc)
+
+                        if file_date < cutoff_date:
+                            print(f"Deleting expired S3 file: {key}")
+                            self.s3_client.delete_object(Bucket=self.s3_bucket, Key=key)
+                            deleted_count += 1
+                            
+                    except Exception:
+                        pass
+            return deleted_count
+
+        count = await self.loop.run_in_executor(None, _do_cleanup)
+        if count > 0:
+            print(f"RSSWatcher: Cleanup finished. Deleted {count} files.")

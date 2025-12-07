@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MiniSpinner from "../../ui/MiniSpinner";
 import PaginationStack from "../../ui/PaginationStack";
-import type { Address } from "./AdminBuilding";
+
 import AdminBuildingItem from "./AdminBuildingItem";
 import useGetBuildings from "./useGetBuildings";
 import { PAGE, PAGE_SIZE } from "../../utils/appConstant";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import type { Address } from "../air-quality-observed/AirQualityAdmin";
 
 export interface BuildingOverview {
   id: string;

@@ -22,8 +22,11 @@ function useGetBuildings() {
     queryKey: ["sBuildings"],
     queryFn: async () => {
       const buildings = await getBuildings();
+
       const compacted = await jsonld.compact(buildings ?? [], JSONLD_CONTEXT);
-      return compacted;
+      console.log("Compacted JSON-LD:", compacted);
+      console.log(compacted["@graph"]);
+      return compacted["@graph"] ?? [];
     },
   });
 

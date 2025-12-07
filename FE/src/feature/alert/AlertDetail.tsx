@@ -20,6 +20,7 @@ import {
   ALERT_SUB_CATEGORIES,
 } from "../../utils/appConstant";
 import type { Address } from "../air-quality-observed/AirQualityAdmin";
+import { formatTime } from "../../utils/helper";
 
 interface Location {
   coordinates: [number, number];
@@ -48,11 +49,6 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
   onClose,
 }) => {
   if (!selectedAlert) return null;
-
-  const formatDate = (timestamp: number | number[]) => {
-    if (Array.isArray(timestamp)) return new Date().toLocaleString("vi-VN");
-    return new Date(timestamp * 1000).toLocaleString("vi-VN");
-  };
 
   return (
     <div className="w-[350px] top-8 absolute z-20 bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -130,7 +126,7 @@ const AlertDetail: React.FC<AlertDetailProps> = ({
             <div className="flex-1">
               <p className="text-xs text-gray-500 mb-0.5">Thời gian</p>
               <p className="text-sm text-gray-900 font-semibold">
-                {formatDate(selectedAlert.dateIssued)}
+                {formatTime(selectedAlert.dateIssued)}
               </p>
             </div>
           </div>

@@ -37,16 +37,14 @@ import static com.tpd.XCity.utils.Helper.*;
 @Mapper(componentModel = "spring")
 @DecoratedWith(BuildingMapperDecorator.class)
 public interface BuildingMapper {
-    @Mapping(target = "openingHours", ignore = true)
     BuildingDetailResponse convertToDetailResponse(Building building);
 
     BuildingOverviewResponse convertToOverviewResponse(Building building);
 
-    @Mapping(target = "openingHours", ignore = true)
+
     Building convertToEntity(BuildingUpdateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "openingHours", ignore = true)
     void updateBuilding(BuildingUpdateRequest request, @MappingTarget Building building);
 
     @Named("fromOrion")
@@ -56,9 +54,6 @@ public interface BuildingMapper {
         dto.setId(json.get("id").asText());
         dto.setName(getValue(json, "name"));
         dto.setDescription(getValue(json, "description"));
-
-        dto.setFloorsAboveGround(getDoubleValue(json, "floorsAboveGround"));
-        dto.setFloorsBelowGround(getDoubleValue(json, "floorsBelowGround"));
 
         JsonNode addr = json.path("address").path("value");
         dto.getAddress().setAddressLocality(addr.path("addressLocality").asText(null));
@@ -96,8 +91,6 @@ public interface BuildingMapper {
         safeSet(root, "name", mapper, dto.getName());
         safeSet(root, "description", mapper, dto.getDescription());
         safeSet(root, "category", mapper, dto.getCategory());
-        safeSet(root, "floorsAboveGround", mapper, dto.getFloorsAboveGround());
-        safeSet(root, "floorsBelowGround", mapper, dto.getFloorsBelowGround());
 
         // Địa chỉ (Address)
         if (dto.getAddress() != null) {

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
+import { Route } from "lucide-react";
 import React from "react";
 import {
   FaCar,
@@ -46,12 +47,25 @@ const features = [
   },
   {
     id: "alert",
-    title: "Cảnh báo",
-    description: "Tạo các cảnh báo khẩn cấp",
+    title: "Hệ thống cảnh báo",
+    description:
+      "Phát hiện sự cố và phát hành cảnh báo tức thời cho cộng đồng.",
     icon: <FaExclamationTriangle size={40} />,
     gradient: "from-red-500 via-rose-600 to-pink-700",
     bgGlow: "group-hover:shadow-red-500/50",
     path: "alert",
+  },
+  {
+    id: "router",
+    title: "Dẫn đường thông minh",
+    description:
+      "Tìm lộ trình nhanh nhất với dữ liệu thời gian thực và phân tích thông minh.",
+    icon: <Route size={40} />,
+    gradient: "from-amber-500 via-orange-600 to-red-700",
+    color: "orange",
+    mapPattern:
+      "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
+    path: "router",
   },
   {
     id: "infrastructure",
@@ -82,10 +96,11 @@ const FeatureSelection: React.FC = () => {
 
       <div className="max-w-7xl mx-auto mb-16 text-center relative z-10">
         <h1 className="text-5xl font-extrabold mb-4 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          Khám phá Bản đồ Thông minh
+          Khám phá các tính năng Thông minh
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Chọn loại bản đồ để xem thông tin chi tiết về thành phố của bạn
+          Truy cập các bản đồ và tiện ích nâng cao để khám phá thành phố theo
+          cách trực quan hơn.
         </p>
       </div>
 
@@ -112,7 +127,7 @@ const FeatureSelection: React.FC = () => {
                 <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white rounded-full animate-ping animation-delay-400"></div>
               </div>
 
-              <div className="relative p-8 flex flex-col items-center text-center h-full">
+              <div className="relative p-8 flex flex-col items-center text-center">
                 <div
                   className={`mb-6 p-6 rounded-2xl bg-linear-to-br ${feature.gradient} shadow-2xl transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
                 >
@@ -125,7 +140,7 @@ const FeatureSelection: React.FC = () => {
                   {feature.title}
                 </h2>
 
-                <p className="text-gray-600 group-hover:text-white/95 transition-colors duration-500 mb-6 flex-grow text-sm leading-relaxed">
+                <p className="text-gray-600 group-hover:text-white/95 transition-colors duration-500 mb-6 grow text-sm leading-relaxed">
                   {feature.description}
                 </p>
 

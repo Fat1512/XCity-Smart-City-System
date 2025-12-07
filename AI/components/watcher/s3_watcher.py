@@ -24,6 +24,9 @@ from components.interfaces import BaseWatcher
 from service.rag.rag_service import MiniRagService
 from service.knowledge_service import KnowledgeService
 
+from components.logging.logger import setup_logger
+
+logger = setup_logger("s3_watcher")
 
 class S3Watcher(BaseWatcher):
     def __init__(
@@ -49,10 +52,10 @@ class S3Watcher(BaseWatcher):
         self.loop = loop
 
         if not self.state_service.is_enabled("s3"):
-            print("S3Watcher: DISABLED (knowledge_service is_enabled('s3') = False)")
+            logger.info("S3Watcher: DISABLED (knowledge_service is_enabled('s3') = False)")
             return
 
-        print(
+        logger.info(
             f"S3Watcher: ENABLED. Bucket={self.bucket_name}, Prefix='{self.prefix}', "
             f"Interval={self.poll_interval}s"
         )
@@ -64,13 +67,13 @@ class S3Watcher(BaseWatcher):
                 await asyncio.sleep(self.poll_interval)
                 await self._scan_once(initial=False)
         except asyncio.CancelledError:
-            print("S3Watcher: cancelled, stopping watcher...")
+            logger.info("S3Watcher: cancelled, stopping watcher...")
         except Exception as e:
-            print(f"S3Watcher: unexpected error in main loop: {e}")
+            logger.error(f"S3Watcher: unexpected error in main loop: {e}")
 
     async def _scan_once(self, initial: bool = False):
         phase = "initial" if initial else "poll"
-        print(f"S3Watcher: starting {phase} scan...")
+        logger.info(f"S3Watcher: starting {phase} scan...")
 
         try:
             all_keys = await self.loop.run_in_executor(
@@ -90,13 +93,13 @@ class S3Watcher(BaseWatcher):
 
             self._known_keys = current_keys
 
-            print(
+            logger.info(
                 f"S3Watcher: scan done. total={len(current_keys)}, "
                 f"new={len(new_keys)}, deleted={len(deleted_keys)}"
             )
 
         except Exception as e:
-            print(f"S3Watcher: error while scanning S3: {e}")
+            logger.error(f"S3Watcher: error while scanning S3: {e}")
 
     def _list_all_keys(self):
         keys = []
@@ -125,7 +128,7 @@ class S3Watcher(BaseWatcher):
         return keys
 
     async def _process_new_object(self, key: str):
-        print(f"S3Watcher: new object detected: {key}")
+        logger.info(f"S3Watcher: new object detected: {key}")
 
         filename = Path(key).name
 
@@ -136,7 +139,7 @@ class S3Watcher(BaseWatcher):
                 filename,
             )
             if exists:
-                print(f"S3Watcher: document already exists in DB, skip: {filename}")
+                logger.info(f"S3Watcher: document already exists in DB, skip: {filename}")
                 return
 
             obj = await self.loop.run_in_executor(
@@ -169,7 +172,22 @@ class S3Watcher(BaseWatcher):
 
             await self.loop.run_in_executor(None, _ingest)
 
-            print(f"S3Watcher: ingest completed for {filename}")
+            logger.info(f"S3Watcher: ingest completed for {filename}")
 
         except Exception as e:
-            print(f"S3Watcher: error ingesting object {key}: {e}")
+            logger.error(f"S3Watcher: error ingesting object {key}: {e}")
+
+    async def _process_deleted_object(self, key: str):
+            logger.info(f"S3Watcher: Object deleted from S3: {key}")
+            
+            filename = Path(key).name
+
+            try:
+                await self.loop.run_in_executor(
+                    None,
+                    self.rag_service.delete_document,
+                    filename
+                )
+                logger.info(f"S3Watcher: Removed document '{filename}' from RAG database.")
+            except Exception as e:
+                logger.error(f"S3Watcher: Error removing document '{filename}': {e}")

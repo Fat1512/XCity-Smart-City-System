@@ -55,7 +55,6 @@
 
 Link thuyết trình cho dự án: [Fenwick Presentation](https://www.canva.com/design/DAG6glXaXeU/8pedF1WVn8uQD4tN-9W_yg/edit?utm_content=DAG6glXaXeU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
-
 ---
 
 ## ⚡ Các tính năng chính
@@ -94,7 +93,7 @@ PMNM/
 │   ├── service/                            # Business logic nghiệp vụ chính
 │   └── requirements.txt
 │
-├── 📊 Data/                                # Pipeline ETL
+├── 📊 Data/
 │   ├── airflow/
 │       ├── dags/
 │       └── config/                         # Cấu hình Airflow
@@ -150,7 +149,6 @@ PMNM/
 |  **AI/ML**   | YOLO-NAS                        |
 | **Data/IoT** | Mosquitto MQTT, Airflow         |
 |  **Infra**   | Docker, Docker Compose, GCP     |
-
 
 ## 🏗️ Kiến trúc hệ thống
 
@@ -209,8 +207,7 @@ cd PMNM
 ### Các dịch vụ cần thiết khác
 
 ```bash
-cd external-service
-docker compose up -d
+docker compose -f service-docker-compose.yml up -d
 ```
 
 #### Sensor Service
@@ -266,22 +263,33 @@ Thiết lập các biến môi trường cho AI service
 
 ```bash
 AI_HOST=localhost:5001
+ORION_URL = "http://localhost:1026"
 
 LLM_PROVIDER=openai
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_API_KEY=your-openai-api-key
 
-ORION_URL = "http://localhost:1026"
+#or use
+# LLM_PROVIDER=ollama
+# OLLAMA_MODEL=llama3.2:3b
+# OLLAMA_HOST=http://10.1.1.237:11434/
+
+
 
 EMBEDDING_PROVIDER=sentence_transformer
 EMBEDDING_MODEL_NAME=bkai-foundation-models/vietnamese-bi-encoder
+#or use
+# EMBEDDING_PROVIDER=ollama
+# EMBEDDING_MODEL_NAME=nomic-embed-text:latest
 
 REDIS_HOST=localhost
 REDIS_PORT=6739
+REDIS_USERNAME=your-username
+REDIS_PASSWORD=your-password
 
 AWS_ACCESS_KEY_ID=your-access-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-access-key
-AWS_DEFAULT_REGION=ap-southeast-2
+AWS_DEFAULT_REGION=your-region
 
 WATCHER_S3_BUCKET=tadel-media
 WATCHER_S3_PREFIX=rss/
@@ -440,7 +448,9 @@ curl -X POST "http://localhost:1026/ngsi-ld/v1/subscriptions" \
 ```
 
 ### 4️⃣ Docker & compose
+
 Thiết lập các biến môi trường
+
 ```bash
 MONGO_URL=your-url
 AUTH_SECRET_KEY=your-secret-key

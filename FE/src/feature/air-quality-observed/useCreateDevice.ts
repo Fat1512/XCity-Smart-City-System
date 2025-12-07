@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { DeviceCreated } from "./AirQualityAdmin";
 import { createDevice as createDeviceAPI } from "../../service/deviceService";
+import type { Response } from "../../types";
 
 export default function useCreateDevice() {
   const queryClient = useQueryClient();

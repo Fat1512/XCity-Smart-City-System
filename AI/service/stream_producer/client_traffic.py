@@ -20,6 +20,7 @@ import time
 from typing import Any, Dict, Optional
 
 from components.logging.logger import setup_logger
+from components.manager import ConfigManager
 
 import cv2
 import websockets
@@ -141,21 +142,29 @@ async def main(
     ws_url: str = DEFAULT_WS,
     concurrency: int = 4,
 ) -> int:
-    if not os.path.exists(config_path):
-        logger.info("Config file not found:", config_path)
-        return 1
+    config_manager = ConfigManager()
+    
+    data = config_manager.get_all_streams()
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    if not data:
+        logger.info("MongoDB empty or disconnected. Fallback to local JSON file.")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            logger.info(f"Config file not found: {config_path}")
+            return 1
 
-    if not isinstance(data, list):
-        logger.info("Config file must contain a JSON array of stream objects.")
+    if not isinstance(data, list) or len(data) == 0:
+        logger.info("No stream configurations found.")
         return 1
 
     semaphore = asyncio.Semaphore(concurrency) if concurrency and concurrency > 0 else None
+    
     tasks = [run_stream(cfg, ws_url, semaphore) for cfg in data]
 
-    logger.info(f"Running {len(tasks)} traffic streams…")
+    logger.info(f"Running {len(tasks)} traffic streams (Source: {'MongoDB' if config_manager.collection is not None else 'File'})...")
+    
     await asyncio.gather(*tasks)
     return 0
 

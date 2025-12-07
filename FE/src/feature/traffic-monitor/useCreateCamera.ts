@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { CameraCreate } from "./CameraAdmin";
 import { createCamera as createCameraAPI } from "../../service/cameraService";
+import type { Response } from "../../types";
 
 export default function useCreateCamera() {
   const queryClient = useQueryClient();

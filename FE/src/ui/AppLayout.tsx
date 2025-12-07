@@ -15,12 +15,14 @@
 // -----------------------------------------------------------------------------
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
+import Chatbot from "../feature/chatbot/Chatbot";
 
 const AppLayout = () => {
   return (
     <div>
       <Header />
       <Outlet />
+      <Chatbot />
     </div>
   );
 };

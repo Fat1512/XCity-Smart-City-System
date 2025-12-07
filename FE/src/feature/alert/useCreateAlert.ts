@@ -20,6 +20,7 @@ import type {
   Address,
   Location,
 } from "../air-quality-observed/AirQualityAdmin";
+import type { Response } from "../../types";
 
 export interface AlertCreateRequest {
   name?: string;

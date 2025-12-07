@@ -15,9 +15,8 @@
 // -----------------------------------------------------------------------------
 import { useState } from "react";
 import useGetAlertOverview from "../feature/alert/useGetAlertOverview";
-import { formatTimeAgo } from "../utils/helper";
+import { formatTime, formatTimeAgo } from "../utils/helper";
 import { ALERT_CATEGORIES } from "../utils/appConstant";
-import type { Alert } from "../feature/alert/AlertDetail";
 import PaginationStack from "./PaginationStack";
 import {
   Dialog,
@@ -34,6 +33,10 @@ import {
 import useMarkSolved from "../feature/alert/useMarkSolved";
 import { toast } from "react-toastify";
 import { useSearchParams } from "react-router-dom";
+import type {
+  Address,
+  Location,
+} from "../feature/air-quality-observed/AirQualityAdmin";
 
 const getCategoryIcon = (category: string) => {
   const icons: Record<string, string> = {
@@ -54,6 +57,18 @@ const STATUS = [
   { value: "unsolved", label: "Chưa giải quyết", icon: "⚠️" },
   { value: "solved", label: "Đã giải quyết", icon: "✅" },
 ];
+interface Alert {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  dateCreated: string;
+  subCategory: string;
+  address: Address;
+  location: Location;
+  dateIssued: string;
+  solved: boolean;
+}
 const NotificationList = () => {
   const { isLoading, alerts, totalPages, page } = useGetAlertOverview();
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -144,7 +159,7 @@ const NotificationList = () => {
           </Fade>
         ) : (
           <div className="space-y-4">
-            {alerts.map((alert: Alert, index) => (
+            {alerts.map((alert: Alert, index: number) => (
               <Zoom in timeout={300 + index * 100} key={alert.id}>
                 <div
                   onClick={() => openModal(alert)}
@@ -175,7 +190,7 @@ const NotificationList = () => {
                   <div className="relative p-6 flex items-start gap-5">
                     <div
                       className={`
-                      flex-shrink-0 w-16 h-16 rounded-2xl 
+                      shrink-0 w-16 h-16 rounded-2xl 
                       flex items-center justify-center text-3xl
                       shadow-lg border-2 
                       transition-all duration-500 
@@ -198,8 +213,8 @@ const NotificationList = () => {
                             (item) => item.value === alert.category
                           )?.label || alert.category}
                         </h3>
-                        <span className="flex-shrink-0 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
-                          {formatTimeAgo(alert.dateCreated)}
+                        <span className="shrink-0 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                          {formatTime(alert.dateCreated)}
                         </span>
                       </div>
 

@@ -25,22 +25,21 @@ import BuildingList from "./feature/building/client/BuildingList";
 import AdminLayout from "./ui/AdminLayout";
 import AdminBuildingWrapper from "./feature/building/AdminBuildingWrapper";
 import AdminBuildingList from "./feature/building/AdminBuildingList";
-import AirQualityRealtime from "./feature/air-quality-observed/AirQualityRealtime ";
 import AirQualityList from "./feature/air-quality-observed/AirQualityList";
 import AirQualityAdminWrapper from "./feature/air-quality-observed/AirQualityAdminWrapper";
 import { AirQualityProvider } from "./context/AirQualityContext";
-import SensorWrapper from "./feature/map/SensorMapWrapper";
-import FeatureSelection from "./ui/MapSelection";
+
+import FeatureSelection from "./ui/FeatureSelection";
 import ReportSelection from "./ui/ReportSelection";
-import VehicleSpeedMonitor from "./feature/traffic-monitor/VehicleSpeedMonitor";
+
 import CameraWrapper from "./feature/traffic-monitor/CameraWrapper";
 import CameraList from "./feature/traffic-monitor/CameraList";
-import TrafficDashboard from "./feature/traffic-monitor/TrafficDashboard";
+
 import { TrafficMonitorContextProvider } from "./context/TrafficMonitorContext";
-import AlertMap from "./feature/alert/AlertMap";
+
 import AlertAdmin from "./feature/alert/AlertAdmin";
 import NotificationList from "./ui/NotificationList";
-import AlertReportDashboard from "./feature/alert/AlertReportDashboard";
+
 import {
   Chart as ChartJS,
   ArcElement,
@@ -56,6 +55,13 @@ import {
 import ProtectedRoute from "./ui/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import RouterPicker from "./feature/map/RouterPicker";
+import TrafficMonitorPage from "./page/TrafficMonitorPage";
+import TrafficStaticsPage from "./page/TrafficStaticsPage";
+import AlertPage from "./page/AlertPage";
+import AlertReportPage from "./page/AlertReportPage";
+import AirQualityPage from "./page/AirQualityPage";
+import AirQualityReportPage from "./page/AirQualityReportPage";
+import AdminPage from "./page/AdminPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,29 +91,26 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<AppLayout />}>
-                  <Route index element={<Navigate to="/map" replace />} />
+                  <Route index element={<Navigate to="/home" replace />} />
                   <Route path="map" element={<FeatureSelection />} />
                   <Route
                     path="/map/infrastructure"
                     element={<BuildingList />}
                   />
-                  <Route path="/map/air" element={<SensorWrapper />} />
-                  <Route path="/map/route" element={<RouterPicker />} />
-                  <Route
-                    path="/map/traffic"
-                    element={<VehicleSpeedMonitor />}
-                  />
-                  <Route path="/map/alert" element={<AlertMap />} />
+                  <Route path="/map/air" element={<AirQualityPage />} />
+                  <Route path="/map/router" element={<RouterPicker />} />
+                  <Route path="/map/traffic" element={<TrafficMonitorPage />} />
+                  <Route path="/map/alert" element={<AlertPage />} />
 
                   <Route path="report" element={<ReportSelection />} />
-                  <Route path="/report/air" element={<AirQualityRealtime />} />
                   <Route
-                    path="/report/alert"
-                    element={<AlertReportDashboard />}
+                    path="/report/air"
+                    element={<AirQualityReportPage />}
                   />
+                  <Route path="/report/alert" element={<AlertReportPage />} />
                   <Route
                     path="/report/traffic"
-                    element={<TrafficDashboard />}
+                    element={<TrafficStaticsPage />}
                   />
                 </Route>
 
@@ -122,6 +125,7 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 >
+                  <Route path="chatbot" element={<AdminPage />} />
                   <Route path="alert" element={<AlertAdmin />} />
                   <Route path="notifications" element={<NotificationList />} />
                   <Route
@@ -146,6 +150,7 @@ const App = () => {
                   <Route path="camera" element={<CameraWrapper />} />
                   <Route path="camera/:cameraId" element={<CameraWrapper />} />
                 </Route>
+                <Route path="*" element={<Home />} />
               </Routes>
             </BrowserRouter>
           </TrafficMonitorContextProvider>

@@ -15,6 +15,11 @@
 # -----------------------------------------------------------------------------
 import threading
 import os
+from typing import List, Set
+
+from components.logging.logger import setup_logger
+
+logger = setup_logger("knowledge_service")
 
 class KnowledgeService:
     _instance = None
@@ -32,12 +37,45 @@ class KnowledgeService:
             return
         
         with self._lock:
+            default_days = int(os.getenv("RSS_MAX_AGE_DAYS", "1"))
             self._state = {
                 's3': bool(os.getenv("KNOWLEDGE_S3_ENABLED")),
                 'rss': bool(os.getenv("WATCHER_RSS_URLS"))
             }
+
+            self._rss_urls: Set[str] = set()
+            self._load_rss_config()
+            self._rss_max_age_days = default_days
+
             self._initialized = True
-            print(f"WatcherStateService initialized with states: {self._state}")
+            logger.info(f"KnowledgeService initialized. RSS URLs loaded: {len(self._rss_urls)}")
+
+    def _load_rss_config(self):
+        env_urls = os.getenv("WATCHER_RSS_URLS", "")
+        if env_urls:
+            for url in env_urls.split(','):
+                if url.strip():
+                    self._rss_urls.add(url.strip())
+
+    def get_rss_urls(self) -> List[str]:
+        with self._lock:
+            return list(self._rss_urls)
+
+    def add_rss_url(self, url: str):
+        with self._lock:
+            if url not in self._rss_urls:
+                self._rss_urls.add(url)
+                logger.info(f"Added RSS URL (Memory only): {url}")
+                return True
+            return False
+
+    def remove_rss_url(self, url: str):
+        with self._lock:
+            if url in self._rss_urls:
+                self._rss_urls.remove(url)
+                logger.info(f"Removed RSS URL (Memory only): {url}")
+                return True
+            return False
 
     def is_enabled(self, watcher_name: str) -> bool:
         with self._lock:
@@ -47,10 +85,18 @@ class KnowledgeService:
         with self._lock:
             if watcher_name in self._state:
                 self._state[watcher_name] = is_enabled
-                print(f"Watcher state '{watcher_name}' set to {is_enabled}")
             else:
-                print(f"Warning: Tried to set state for unknown watcher '{watcher_name}'")
+                logger.warning(f"Warning: Tried to set state for unknown watcher '{watcher_name}'")
 
     def get_all_states(self) -> dict:
         with self._lock:
             return self._state.copy()
+
+    def get_rss_max_age_days(self) -> int:
+            with self._lock:
+                return self._rss_max_age_days
+
+    def set_rss_max_age_days(self, days: int):
+        with self._lock:
+            self._rss_max_age_days = days
+            logger.info(f"Updated RSS Max Age to: {days} days")

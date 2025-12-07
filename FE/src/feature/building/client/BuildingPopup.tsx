@@ -13,255 +13,189 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-interface BuildingPopupProps {
-  buildingName: string;
-  buildingId: string;
-  category?: string;
-  address?: {
-    streetNr?: string;
-    streetAddress?: string;
-    addressRegion?: string;
-    addressLocality?: string;
-  };
-  floorsAboveGround?: number;
-  floorsBelowGround?: number;
-  description?: string;
-  onViewClick?: () => void;
+import React, { useEffect } from "react";
+
+interface Address {
+  streetAddress?: string;
+  streetNr?: string;
+  district?: string;
+  addressLocality?: string;
+  addressRegion?: string;
+  postalCode?: string;
 }
 
-export function renderBuildingInfo(props: BuildingPopupProps): HTMLDivElement {
-  const containerWrapper = document.createElement("div");
-  containerWrapper.style.position = "fixed";
-  containerWrapper.style.top = "0";
-  containerWrapper.style.left = "0";
-  containerWrapper.style.width = "100%";
-  containerWrapper.style.height = "100%";
-  containerWrapper.style.background = "rgba(0,0,0,0.3)";
-  containerWrapper.style.display = "flex";
-  containerWrapper.style.alignItems = "center";
-  containerWrapper.style.justifyContent = "center";
-  containerWrapper.style.zIndex = "9999";
+interface BuildingPopupProps {
+  id: string;
+  name: string;
+  description?: string;
+  address?: Address;
+  coordinates: [number, number];
+  onClose: () => void;
+}
 
-  const container = document.createElement("div");
-  containerWrapper.appendChild(container);
-
-  const {
-    buildingName,
-    buildingId,
-    category,
-    address,
-    floorsAboveGround,
-    floorsBelowGround,
-    description,
-    onViewClick,
-  } = props;
+const BuildingPopup: React.FC<BuildingPopupProps> = ({
+  id,
+  name,
+  description,
+  address,
+  coordinates,
+  onClose,
+}) => {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
 
   const fullAddress = [
-    address?.streetNr,
     address?.streetAddress,
+    address?.streetNr,
+    address?.district,
     address?.addressLocality,
+    address?.addressRegion,
   ]
     .filter(Boolean)
     .join(", ");
 
-  const categoryDisplay = category
-    ? category
-        .replace(/_/g, " ")
-        .toLowerCase()
-        .replace(/\b\w/g, (l) => l.toUpperCase())
-    : "-";
-
-  container.innerHTML = `
-    <div style="
-      width: 380px;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      position: relative;
-    ">
-      <!-- Close Button -->
-      <button id="close-popup" style="
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: transparent;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-      ">✖️</button>
-
-      <!-- Header -->
-      <div style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        position: relative;
-      ">
-        <div style="
-          display: inline-block;
-          background: rgba(255,255,255,0.2);
-          padding: 4px 10px;
-          border-radius: 20px;
-          font-size: 10px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 8px;
-        ">
-          ${categoryDisplay}
+  return (
+    <div
+      className="absolute top-0 left-0 flex items-center justify-center z-50 p-4 animate-fadeIn"
+      onClick={(e) => e.currentTarget === e.target && onClose()}
+      role="dialog"
+      aria-labelledby="popup-title"
+      aria-modal="true"
+    >
+      <div className="bg-white rounded-xl shadow-3xl max-w-lg w-full transform transition-all animate-zoomIn">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2
+            id="popup-title"
+            className="text-3xl font-extrabold text-gray-800 pr-4"
+          >
+            {name}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-all p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            aria-label="Close popup"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
-        <div style="font-size: 20px; font-weight: 700; margin-bottom: 4px;">
-          ${buildingName}
+
+        <div className="p-6 space-y-6">
+          {description && (
+            <div className="text-gray-600 leading-relaxed border-l-4 border-blue-400 pl-3 bg-blue-50/50 p-2 rounded">
+              {description}
+            </div>
+          )}
+
+          {address && fullAddress && (
+            <div className="flex items-start space-x-4 text-gray-700">
+              <svg
+                className="w-6 h-6 mt-0.5 shrink-0 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm text-gray-500 uppercase tracking-wider">
+                  Địa chỉ
+                </span>
+                <span className="flex-1 text-base">{fullAddress}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start space-x-4 text-gray-700">
+            <svg
+              className="w-6 h-6 mt-0.5 shrink-0 text-blue-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-gray-500 uppercase tracking-wider">
+                Tọa độ
+              </span>
+              <span className="flex-1 font-mono text-base">
+                Lat: **{coordinates[1].toFixed(5)}**, Lng: **
+                {coordinates[0].toFixed(5)}**
+              </span>
+            </div>
+          </div>
         </div>
-        <div style="font-size: 11px; opacity: 0.85; font-weight: 400;">
-          ${buildingId.replace("urn:ngsi-ld:Building:", "ID: ")}
+
+        <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+          <span className="text-xs font-medium text-gray-400">
+            Building ID: <span className="font-mono text-gray-600">{id}</span>
+          </span>
         </div>
       </div>
 
-      <!-- Content -->
-      <div style="background: white; padding: 20px;">
-        ${
-          fullAddress
-            ? `
-        <div style="margin-bottom: 16px;">
-          <div style="
-            display: flex;
-            align-items: start;
-            padding: 12px;
-            background: linear-gradient(135deg, #f093fb15 0%, #f5576c25 100%);
-            border-radius: 10px;
-            border-left: 3px solid #f093fb;
-          ">
-            <div style="font-size: 20px; margin-right: 10px; line-height: 1;">📍</div>
-            <div>
-              <div style="font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Address</div>
-              <div style="font-size: 13px; color: #2d3436; line-height: 1.4;">${fullAddress}</div>
-            </div>
-          </div>
-        </div>`
-            : ""
+      <style>{`
+        /* Custom Shadow for modern look */
+        .shadow-3xl {
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        <div style="margin-bottom: 16px;">
-          <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #666; margin-bottom: 12px; letter-spacing: 0.5px;">
-            Building Information
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            ${createInfoCard(
-              "Floors Above",
-              floorsAboveGround,
-              "floors",
-              "#4ecdc4",
-              "🏢"
-            )}
-            ${createInfoCard(
-              "Floors Below",
-              floorsBelowGround,
-              "floors",
-              "#ff6b6b",
-              "🏗️"
-            )}
-          </div>
-        </div>
-
-        ${
-          description
-            ? `
-        <div style="margin-bottom: 20px;">
-          <div style="padding: 12px; background: #f8f9fa; border-radius: 10px; border-left: 3px solid #74b9ff;">
-            <div style="font-size: 10px; color: #666; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">
-              ${description.startsWith("http") ? "Website" : "Description"}
-            </div>
-            <div style="font-size: 13px; color: #2d3436; word-break: break-all;">
-              ${
-                description.startsWith("http")
-                  ? `<a href="${description}" target="_blank" style="color: #667eea; text-decoration: none;">🔗 ${description}</a>`
-                  : description
-              }
-            </div>
-          </div>
-        </div>`
-            : ""
+        /* Animations */
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-
-        <button style="
-          width: 100%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          padding: 14px;
-          border-radius: 10px;
-          font-weight: 600;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        "
-        id="view-details-btn">
-          📊 View Full Details
-        </button>
-      </div>
+        @keyframes zoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-zoomIn {
+          animation: zoomIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother transition */
+        }
+      `}</style>
     </div>
-  `;
+  );
+};
 
-  // Click button close
-  container.querySelector("#close-popup")?.addEventListener("click", () => {
-    containerWrapper.remove();
-  });
-
-  // Click outside to close
-  containerWrapper.addEventListener("click", (e) => {
-    if (e.target === containerWrapper) {
-      containerWrapper.remove();
-    }
-  });
-
-  // View details click
-  container
-    .querySelector("#view-details-btn")
-    ?.addEventListener("click", () => {
-      onViewClick?.();
-    });
-
-  return containerWrapper as HTMLDivElement;
-}
-
-function createInfoCard(
-  label: string,
-  value: any,
-  unit: string,
-  color: string,
-  emoji: string = "",
-  fullWidth: boolean = false
-): string {
-  const displayValue = value ?? "-";
-  return `
-    <div style="
-      background: linear-gradient(135deg, ${color}15 0%, ${color}25 100%);
-      border-left: 3px solid ${color};
-      padding: 12px;
-      border-radius: 8px;
-      ${fullWidth ? "grid-column: 1 / -1;" : ""}
-    ">
-      <div style="
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        color: #666;
-        font-weight: 500;
-        margin-bottom: 6px;
-      ">
-        ${emoji ? `<span style="font-size: 14px;">${emoji}</span>` : ""}
-        <span>${label}</span>
-      </div>
-      <div style="font-size: 20px; font-weight: 700; color: #2d3436;">
-        ${displayValue}<span style="font-size: 13px; font-weight: 500; color: #636e72; margin-left: 4px;">${unit}</span>
-      </div>
-    </div>
-  `;
-}
+export default BuildingPopup;
