@@ -46,6 +46,9 @@ from components.ingest_strategy.strategies import (
     BinaryIngestStrategy,
 )
 
+# Config
+from pymongo import MongoClient, errors
+
 # Tools
 from components.interfaces import Tool
 
@@ -293,3 +296,49 @@ class DatabaseManager:
                 raise ValueError(f"Unknown DB_PROVIDER: {provider}")
         
         return cls._instance
+
+
+class ConfigManager:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ConfigManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        
+        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+        db_name = os.getenv("MONGO_DB_NAME", "ai_service")
+        
+        try:
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=2000)
+            self.db = self.client[db_name]
+            self.collection = self.db["camera_config"]
+            self.client.server_info()
+            print(f"ConfigManager connected to MongoDB: {db_name}.traffic_streams")
+        except Exception as e:
+            print(f"ConfigManager: Failed to connect to MongoDB. Error: {e}")
+            self.collection = None
+
+        self._initialized = True
+
+    def get_all_streams(self) -> List[Dict]:
+        if self.collection is None:
+            return []
+        return list(self.collection.find({}, {"_id": 0}))
+
+    def upsert_stream(self, stream_config: Dict):
+        if self.collection is None:
+            return
+        stream_id = stream_config.get("stream_id")
+        if not stream_id:
+            return
+        self.collection.update_one(
+            {"stream_id": stream_id}, 
+            {"$set": stream_config}, 
+            upsert=True
+        )
