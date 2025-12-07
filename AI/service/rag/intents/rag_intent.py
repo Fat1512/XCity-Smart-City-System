@@ -16,10 +16,13 @@
 from typing import Any, Dict, List
 
 from .base_intent import BaseIntent
-
+from components.manager import RerankerManager
 
 class RagIntent(BaseIntent):
     name = "RAG_CHAT"
+
+    def __init__(self):
+        self.reranker_manager = RerankerManager()
 
     def handles(self, intent: str) -> bool:
         return True
@@ -36,7 +39,16 @@ class RagIntent(BaseIntent):
     ) -> Dict[str, Any]:
         service.logger = service.__dict__.get("logger", None)
 
-        context_chunks = service.retrieve_context(query, n_results=3)
+        initial_chunks = service.retrieve_context(query, n_results=10)
+
+        if initial_chunks:
+            context_chunks = self.reranker_manager.rerank(
+                query=query, 
+                documents=initial_chunks, 
+                top_k=3
+            )
+        else:
+            context_chunks = []
 
         is_valid, failure_answer = service.rag_guardrails.check_retrieval(
             context_chunks
