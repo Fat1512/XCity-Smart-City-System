@@ -46,6 +46,12 @@ class Embedding(ABC):
         pass
 
 
+class Reranker(ABC):
+    @abstractmethod
+    def rerank(self, query: str, documents: List[str], top_k: int = 3) -> List[str]:
+        pass
+
+
 class BaseIngestStrategy(ABC):
     @abstractmethod
     def get_supported_extensions(self) -> list[str]:
