@@ -13,21 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from .base_intent import BaseIntent
-from .route_intent import RouteIntent
+# from .base_intent import BaseIntent
+# from .route_intent import RouteIntent
 from .traffic_intent import TrafficIntent
 from .greeting_intent import GreetingIntent
 from .meta_intent import MetaIntent
-from .out_of_domain_intent import OutOfDomainIntent
+# from .out_of_domain_intent import OutOfDomainIntent
 from .rag_intent import RagIntent
 
 
 def create_intent_handlers():
     return [
-        RouteIntent(),
+        # RouteIntent(),
         TrafficIntent(),
         GreetingIntent(),
         MetaIntent(),
         RagIntent(),
-        OutOfDomainIntent(),
+        # OutOfDomainIntent(),
     ]
