@@ -33,7 +33,11 @@ import type {
 import useCreateCamera from "./useCreateCamera";
 import useUpdateCamera from "./useUpdateCamera";
 import { useNavigate } from "react-router-dom";
-import { formatTime } from "../../utils/helper";
+import { extractAddress, formatTime } from "../../utils/helper";
+import CameraConfig from "./CameraConfig";
+import useUpdarteCameraConfig, {
+  type UpdateCameraConfigParams,
+} from "./useUpdarteCameraConfig";
 
 export interface CameraCreate {
   id?: string;
@@ -68,12 +72,44 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { isPending, createCamera } = useCreateCamera();
   const { isPending: isUpdatingCamera, updateCamera } = useUpdateCamera();
+  const { isPending: isUpdatingConfig, updateCameraConfig } =
+    useUpdarteCameraConfig();
   const camera = watch();
   const navigate = useNavigate();
+
+  const [currentVideo, setCurrentVideo] = useState<string>("");
+
+  const [points, setPoints] = useState<[number, number][]>([]);
+
+  const [realWidth, setRealWidth] = useState<number>();
+  const [realHeight, setRealHeight] = useState<number>();
+
   function handleOnChangeLocation(coords: [number, number]) {
     setValue("location.coordinates", coords, { shouldValidate: true });
   }
+  async function saveConfig() {
+    if (points.length !== 4) {
+      alert("Please mark exactly 4 points.");
+      return;
+    }
+    if (!realWidth || !realHeight) {
+      alert("Please fill Address + real dimensions.");
+      return;
+    }
 
+    const payload: UpdateCameraConfigParams = {
+      stream_id: camera.id!,
+      video_path: currentVideo,
+      address: extractAddress(camera.address!),
+      image_pts: points,
+      real_width: Number(realWidth),
+      real_height: Number(realHeight),
+      limit_fps: 5,
+    };
+    updateCameraConfig(payload, {
+      onError: (err) => toast.error("Lưu cấu hình thất bại: " + err.message),
+    });
+  }
   const onSubmit = (data: CameraCreate) => {
     if (!data.location?.coordinates) {
       alert("Vui lòng chọn vị trí thiết bị");
@@ -372,6 +408,19 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
           location={camera.location?.coordinates}
         />
       </div>
+
+      {camera.id && (
+        <CameraConfig
+          setCurrentVideo={setCurrentVideo}
+          currentVideo={currentVideo}
+          realHeight={realHeight}
+          setRealHeight={setRealHeight}
+          points={points}
+          setPoints={setPoints}
+          realWidth={realWidth}
+          setRealWidth={setRealWidth}
+        />
+      )}
     </div>
   );
 };

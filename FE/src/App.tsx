@@ -61,7 +61,8 @@ import AlertPage from "./page/AlertPage";
 import AlertReportPage from "./page/AlertReportPage";
 import AirQualityPage from "./page/AirQualityPage";
 import AirQualityReportPage from "./page/AirQualityReportPage";
-import AdminPage from "./page/AdminPage";
+import AdminPage from "./page/KnowledgeBasePage";
+import BuildingReport from "./feature/building/BuildingReport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +109,10 @@ const App = () => {
                     element={<AirQualityReportPage />}
                   />
                   <Route path="/report/alert" element={<AlertReportPage />} />
+                  <Route
+                    path="/report/infrastructure"
+                    element={<BuildingReport />}
+                  />
                   <Route
                     path="/report/traffic"
                     element={<TrafficStaticsPage />}
