@@ -135,7 +135,8 @@ class TrafficIntent(BaseIntent):
             stream_id = stream.get("stream_id")
             if stream_id in selected_stream_ids:
                 target_stream_ids.append(stream_id)
-                segment_ids = stream.get("segment_ids", [])
+                raw_segment_ids = stream.get("segment_ids", [])
+                segment_ids = [str(sid) for sid in raw_segment_ids]
                 target_segment_ids.extend(segment_ids)
                 logger.info(
                     f"  ✓ Using stream: {stream_id} ({stream.get('address')})"
