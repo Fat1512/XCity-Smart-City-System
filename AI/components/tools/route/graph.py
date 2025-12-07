@@ -139,6 +139,8 @@ def _compute_edge_travel_times(
             base_speed_kmh = default_speed_kmh
 
         raw_osmid = data.get("osmid") or data.get("id")
+        # if not use_traffic:
+        #     print("DEBUGGG", data.get("osmid"))
         if isinstance(raw_osmid, list):
             segment_id = str(raw_osmid[0])
         else:
