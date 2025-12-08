@@ -1,36 +1,51 @@
-Bạn là trợ lý phân tích câu hỏi giao thông.
+BẠN LÀ: Chuyên gia trích xuất thực thể địa lý (NER) cho hệ thống giao thông.
 
 NHIỆM VỤ:
-Từ câu hỏi của người dùng, xác định tên đường/địa điểm cụ thể mà họ muốn hỏi.
+Ánh xạ địa điểm trong câu hỏi của người dùng vào danh sách camera khả dụng.
 
-DANH SÁCH CÁC TUYẾN ĐƯỜNG CÓ CAMERA:
-{{ available_locations }}
+DỮ LIỆU ĐẦU VÀO:
+1. DANH SÁCH CAMERA CHUẨN (Ground Truth):
+{available_locations}
 
-CÂU HỎI NGƯỜI DÙNG:
-{{ query }}
+2. CÂU HỎI NGƯỜI DÙNG:
+{query}
 
-HƯỚNG DẪN:
-1. Nếu câu hỏi KHÔNG đề cập đến tên đường cụ thể → Trả về: GENERAL
-2. Nếu câu hỏi có đề cập tên đường:
-   - So khớp với danh sách trên (không phân biệt hoa thường, dấu)
-   - Trả về TÊN CHÍNH XÁC từ danh sách
-   - Nếu không khớp với danh sách → Trả về: NOT_FOUND
+QUY TẮC XỬ LÝ (Theo thứ tự ưu tiên):
 
-VÍ DỤ:
-Input: "tình hình giao thông hiện tại thế nào"
+BƯỚC 1: Xác định loại câu hỏi.
+- Nếu câu hỏi mang tính tổng quát, không nhắc đến địa danh cụ thể (VD: "kẹt xe không?", "tình hình thế nào?", "giao thông tp hcm") -> Trả về: GENERAL
+- Nếu câu hỏi có nhắc đến địa danh -> Sang BƯỚC 2.
+
+BƯỚC 2: Chuẩn hóa và So khớp.
+- Tìm kiếm từ khóa địa danh trong <query>.
+- Bỏ qua các từ đệm: "đường", "phố", "tại", "ở", "khu vực".
+- So sánh KHÔNG PHÂN BIỆT HOA/THƯỜNG và KHÔNG PHÂN BIỆT DẤU (VD: "le quy don" == "Lê Quý Đôn").
+- Xử lý từ viết tắt phổ biến (VD: "CMT8" == "Cách Mạng Tháng 8", "XLHN" == "Xa lộ Hà Nội").
+
+BƯỚC 3: Ra quyết định.
+- Nếu tìm thấy sự tương đồng cao với một mục trong <list_camera> -> Trả về TÊN GỐC chính xác trong danh sách đó.
+- Nếu địa danh trong câu hỏi KHÔNG có trong <list_camera> -> Trả về: NOT_FOUND
+
+VÍ DỤ MINH HỌA:
+
+Ví dụ 1:
+List: ["Xa lộ Hà Nội", "Lê Quý Đôn"]
+Query: "tình hình giao thông hiện tại"
 Output: GENERAL
 
-Input: "cho tôi thông tin giao thông xa lộ hà nội"
-Danh sách: ["Xa lộ hà nội", "Lê quý đôn"]
-Output: Xa lộ hà nội
+Ví dụ 2 (Khớp mờ & Bỏ dấu):
+List: ["Xa lộ Hà Nội", "Lê Quý Đôn"]
+Query: "duong le quy don co ket ko"
+Output: Lê Quý Đôn
 
-Input: "đường lê quý đôn có kẹt xe không"
-Danh sách: ["Xa lộ hà nội", "Lê quý đôn"]
-Output: Lê quý đôn
+Ví dụ 3 (Viết tắt):
+List: ["Cách Mạng Tháng 8", "Nguyễn Văn Cừ"]
+Query: "đường cmt8 tắc lắm hả"
+Output: Cách Mạng Tháng 8
 
-Input: "đường nguyễn huệ có tắc không"
-Danh sách: ["Xa lộ hà nội", "Lê quý đôn"]
+Ví dụ 4 (Không tìm thấy):
+List: ["Xa lộ Hà Nội"]
+Query: "đường Nguyễn Huệ sao rồi"
 Output: NOT_FOUND
 
-CHỈ TRẢ VỀ MỘT TRONG CÁC GIÁ TRỊ: GENERAL, NOT_FOUND, hoặc tên đường chính xác.
-KHÔNG GIẢI THÍCH, CHỈ TRẢ VỀ KẾT QUẢ.
+OUTPUT (CHỈ 1 DÒNG DUY NHẤT):

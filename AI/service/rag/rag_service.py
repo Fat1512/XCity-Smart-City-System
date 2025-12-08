@@ -21,8 +21,10 @@ import os
 import json
 import re
 
-from components.manager import EmbeddingManager
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from components.manager import EmbeddingManager
+from components.manager import IngestStrategyManager
 from components.manager import ReaderManager
 from components.manager import DatabaseManager
 from components.manager import PromptManager
@@ -56,6 +58,8 @@ class MiniRagService:
         self.rag_prompts = PromptManager()
         self.rag_llm = GenerationManager()
 
+        self.ingest_manager = IngestStrategyManager()
+
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -78,18 +82,18 @@ class MiniRagService:
     #             return json.load(f)
     #     return []
 
-    def parse_two_coord_pairs(self, text: str):
-        matches = COORD_PAIR_RE.findall(text)
-        if len(matches) < 2:
-            return None
-        try:
-            a = matches[0]
-            b = matches[1]
-            c1 = (float(a[0]), float(a[1]))
-            c2 = (float(b[0]), float(b[1]))
-            return c1, c2
-        except Exception:
-            return None
+    # def parse_two_coord_pairs(self, text: str):
+    #     matches = COORD_PAIR_RE.findall(text)
+    #     if len(matches) < 2:
+    #         return None
+    #     try:
+    #         a = matches[0]
+    #         b = matches[1]
+    #         c1 = (float(a[0]), float(a[1]))
+    #         c2 = (float(b[0]), float(b[1]))
+    #         return c1, c2
+    #     except Exception:
+    #         return None
 
 
     def chat(self, query: str, conversation_id: str = None):
@@ -101,7 +105,7 @@ class MiniRagService:
             logger.info(f"Starting new conversation: {conversation_id}")
 
         history_list = self.history_service.load_history(conversation_id)
-        K_TURNS = int(os.getenv("K_TURNS", 5))
+        K_TURNS = int(os.getenv("K_TURNS", 3))
         recent_history_list = history_list[-K_TURNS:]
 
         history_string = ""
@@ -111,10 +115,10 @@ class MiniRagService:
         intent, router_tokens = self.rag_guardrails.route_intent(query)
         logger.info(f"Routed intent: {intent}")
 
-        coord_pairs = self.parse_two_coord_pairs(query)
-        if coord_pairs and intent != "ROUTE":
-            logger.info("Detected coordinate pairs in query, overriding intent to ROUTE")
-            intent = "ROUTE"
+        # coord_pairs = self.parse_two_coord_pairs(query)
+        # if coord_pairs and intent != "ROUTE":
+        #     logger.info("Detected coordinate pairs in query, overriding intent to ROUTE")
+        #     intent = "ROUTE"
 
         response_payload = None
         for handler in self.intent_handlers:
@@ -131,9 +135,7 @@ class MiniRagService:
                 break
         
         if not response_payload:
-            answer = "Hiện tại intent này chưa được hỗ trợ."
-            history_list.append({"query": query, "answer": answer})
-            self.history_service.save_history(conversation_id, history_list)
+            answer = "Intent not supported."
             return {"answer": answer, "conversation_id": conversation_id}
 
         raw_answer = response_payload.get("answer", "")
@@ -151,9 +153,24 @@ class MiniRagService:
         return response_payload
 
     def ingest_file(self, file_path: str, filename: str) -> Dict[str, Any]:
-        text, error = self.reader_manager.read_file(file_path)
-        if error:
-            return {"error": error, "filename": filename}
+        strategy = self.ingest_manager.get_strategy(filename)
+        
+        if not strategy:
+            return {"error": f"No strategy found for file: {filename}", "filename": filename}
+
+        try:
+            if not strategy.can_handle(file_path):
+                return {"error": "Strategy mismatch", "filename": filename}
+            
+            from components.manager import ReaderManager
+            reader = ReaderManager()
+            text, error = reader.read_file(file_path)
+            
+            if error:
+                 return {"error": error, "filename": filename}
+                 
+        except Exception as e:
+            return {"error": str(e), "filename": filename}
 
         return self._process_and_store_text(text, filename, extra_metadata=None)
 
@@ -208,14 +225,25 @@ class MiniRagService:
             "chunks_added": len(chunks),
         }
 
-    def retrieve_context(self, query: str, n_results: int = 3) -> List[str]:
+    def retrieve_context(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         query_vector = self.embedder.vectorize_single(query)
         results = self.db.query(
             collection_name=self.collection_name,
             query_embeddings=[query_vector],
             n_results=n_results,
         )
-        return results.get("documents", [[]])[0]
+        
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        
+        combined_results = []
+        for doc, meta in zip(documents, metadatas):
+            combined_results.append({
+                "text": doc,
+                "metadata": meta
+            })
+            
+        return combined_results
 
     def list_documents(self) -> List[str]:
         logger.info("Listing unique documents...")
@@ -311,7 +339,7 @@ class MiniRagService:
             for filename, pub_date in document_dates.items():
                 if pub_date < cutoff_dt:
                     logger.info(
-                        f"🗑️ Deleting stale file: {filename} (Published: {pub_date.isoformat()})"
+                        f"Deleting stale file: {filename} (Published: {pub_date.isoformat()})"
                     )
                     self.delete_document(filename)
                     deleted_count += 1

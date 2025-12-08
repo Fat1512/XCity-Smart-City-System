@@ -13,24 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from typing import Any, Dict, List, TYPE_CHECKING
-if TYPE_CHECKING:
-    from service.rag.rag_service import MiniRagService
+from .web_search_tool import WebSearchTool
 
-class BaseIntent:
-    name: str = ""
-
-    def handles(self, intent: str) -> bool:
-        return intent == self.name
-
-    def handle(
-        self,
-        query: str,
-        intent: str,
-        service: "MiniRagService",
-        history_string: str,
-        history_list: List[Dict[str, Any]],
-        conversation_id: str,
-        router_tokens: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        raise NotImplementedError
+__all__ = ["WebSearchTool"]
