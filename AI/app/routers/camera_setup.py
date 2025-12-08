@@ -24,9 +24,11 @@ from pydantic import BaseModel
 from typing import List
 
 from components.manager import ConfigManager
+from service.map_service import MapService
 
 router = APIRouter(tags=["Camera Setup"])
 config_manager = ConfigManager()
+map_service = MapService()
 
 class CameraConfigPayload(BaseModel):
     stream_id: str
@@ -37,6 +39,12 @@ class CameraConfigPayload(BaseModel):
     real_height: float
     limit_fps: int = 5
     classes: List[int] = [2, 3, 5, 7]
+    segment_ids: List[str] = []
+
+class GeoLocationPayload(BaseModel):
+    lat: float
+    lon: float
+    radius: int = 50
 
 @router.get("/setup/videos")
 def list_videos():
@@ -86,11 +94,29 @@ def save_camera_config(payload: CameraConfigPayload):
         "classes": payload.classes,
         "conf": 0.35,
         "tracker_cfg": "bytetrack.yaml",
-        "segment_ids": [str(uuid.uuid4().int)[:10]] 
+        "segment_ids": payload.segment_ids
     }
 
     try:
         config_manager.upsert_stream(config_data)
-        return {"status": "success", "message": "Configuration saved", "config": config_data}
+        return {
+            "status": "success", 
+            "message": "Configuration saved", 
+            "config": config_data
+        }
     except Exception as e:
         raise HTTPException(500, f"Failed to save config: {str(e)}")
+
+
+@router.post("/setup/segments")
+def get_segments_from_coords(payload: GeoLocationPayload):
+    try:
+        segments = map_service.get_nearby_segments(payload.lat, payload.lon, payload.radius)
+        return {
+            "status": "success",
+            "center": {"lat": payload.lat, "lon": payload.lon},
+            "count": len(segments),
+            "segments": segments
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
