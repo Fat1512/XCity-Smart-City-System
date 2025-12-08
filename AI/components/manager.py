@@ -52,9 +52,46 @@ from pymongo import MongoClient, errors
 # Tools
 from components.interfaces import Tool
 
+# Reranker
+from components.interfaces import Reranker
+from components.rerank.reranker_bge import BgeReranker
+from components.rerank.reranker_jina import JinaReranker
+
 from components.logging.logger import setup_logger
 
 logger = setup_logger("manager")
+
+
+class RerankerManager:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(RerankerManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        
+        provider = os.getenv("RERANKER_PROVIDER", "bge").lower()
+        self.reranker: Reranker = None
+
+        if provider == "bge":
+            print("Initializing RerankerManager with BgeReranker")
+            self.reranker = BgeReranker()
+        elif provider == "jina":
+            print("Initializing RerankerManager with JinaReranker")
+            self.reranker = JinaReranker()
+        else:
+            print(f"Unknown RERANKER_PROVIDER: {provider}, fall back to JinaReranker")
+            self.reranker = JinaReranker()
+        
+        self._initialized = True
+
+    def rerank(self, query: str, documents: List[str], top_k: int = 3, threshold: float = None) -> List[str]:
+        return self.reranker.rerank(query, documents, top_k, threshold)
 
 class ToolManager:
     _instance = None
