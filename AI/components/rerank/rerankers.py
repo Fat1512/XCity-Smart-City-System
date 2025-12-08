@@ -24,17 +24,32 @@ class BaseCrossEncoderReranker(Reranker):
         print(f"Loading Reranker model: {model_name} on {device}...")
         self.model = CrossEncoder(model_name, device=device, trust_remote_code=True)
 
-    def rerank(self, query: str, documents: List[str], top_k: int = 3) -> List[str]:
+    def rerank(self, query: str, documents: List[str], top_k: int = 3, threshold: float = None) -> List[str]:
         if not documents:
             return []
         
         pairs = [[query, doc] for doc in documents]
-        
         scores = self.model.predict(pairs)
-        
         doc_scores = list(zip(documents, scores))
         
+        if threshold is not None:
+            filtered_docs = []
+            for doc, score in doc_scores:
+                if score >= threshold:
+                    filtered_docs.append((doc, score))
+                else:
+                    print(f"Excluded (Score: {score:.4f}): {doc[:50]}...")
+                    pass
+            doc_scores = filtered_docs
+
+        if not doc_scores:
+            return []
+
         doc_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # print("DEBUG Ranked doc")
+        # for i in doc_scores:
+        #     print(i)
         
         ranked_docs = [doc for doc, score in doc_scores[:top_k]]
         

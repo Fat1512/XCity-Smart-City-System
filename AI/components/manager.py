@@ -90,8 +90,8 @@ class RerankerManager:
         
         self._initialized = True
 
-    def rerank(self, query: str, documents: List[str], top_k: int = 3) -> List[str]:
-        return self.reranker.rerank(query, documents, top_k)
+    def rerank(self, query: str, documents: List[str], top_k: int = 3, threshold: float = None) -> List[str]:
+        return self.reranker.rerank(query, documents, top_k, threshold)
 
 class ToolManager:
     _instance = None

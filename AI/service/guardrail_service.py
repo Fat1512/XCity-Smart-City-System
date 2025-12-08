@@ -39,11 +39,6 @@ class RAGGuardrailService:
                 return "GREETING", router_tokens
             if "META_QUERY" in intent:
                 return "META_QUERY", router_tokens
-            if "OUT_OF_DOMAIN" in intent:
-                print(f"Guardrail triggered: Out-of-domain query detected. Query: '{query}'")
-                return "OUT_OF_DOMAIN", router_tokens
-            if "ROUTE" in intent:
-                return "ROUTE", router_tokens
             if "TRAFFIC" in intent:
                 return "TRAFFIC", router_tokens
             
@@ -59,6 +54,7 @@ class RAGGuardrailService:
             return False, answer
             
         return True, ""
+
     def check_answer_quality(self, query: str, answer: str) -> Tuple[bool, str]:
         try:
             validation_prompt = self.prompts.load(
@@ -66,6 +62,9 @@ class RAGGuardrailService:
                 query=query, 
                 answer=answer
             )
+            print("DEBUGG")
+            print(query)
+            print(answer)
 
             response = self.llm.generate(validation_prompt)
             result = response.get("text", "").strip().upper()

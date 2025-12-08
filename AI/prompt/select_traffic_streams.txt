@@ -1,33 +1,18 @@
-NHIỆM VỤ: Chọn camera giao thông phù hợp với câu hỏi.
+NHIỆM VỤ: Trích xuất ID camera từ danh sách dựa trên địa điểm trong câu hỏi.
 
-CÂU HỎI: {query}
-
-DANH SÁCH CAMERA:
+DANH SÁCH CAMERA HIỆN CÓ:
 {streams_list}
 
-HƯỚNG DẪN:
-- Nếu câu hỏi KHÔNG chỉ định địa điểm cụ thể → trả về: ALL
-- Nếu câu hỏi có TÊN ĐƯỜNG/ĐỊA ĐIỂM → tìm stream_id có địa chỉ khớp → trả về stream_id đó
-- Nếu địa điểm KHÔNG CÓ trong danh sách → trả về: NONE
-- So sánh tên đường LINH HOẠT (bỏ dấu, hoa/thường): "Le quy don" = "Lê Quý Đôn"
+QUY TẮC KHỚP LỆNH:
+1. Tìm kiếm tên đường/địa điểm trong câu hỏi (bỏ qua dấu, chữ hoa thường).
+2. So sánh với trường "address" hoặc "name" của camera.
+3. Độ chính xác phải cao (Ví dụ: "Lê Lợi" không được khớp với "Lê Lai").
 
-CHỈ TRẢ VỀ MỘT TRONG CÁC GIÁ TRỊ SAU (KHÔNG GIẢI THÍCH):
-- ALL
-- NONE  
-- stream_id (VD: cam01)
-- stream_id1,stream_id2 (nếu nhiều camera)
+LOGIC TRẢ VỀ:
+- Nếu câu hỏi không nhắc đến địa điểm cụ thể (VD: "Kẹt xe không?", "Giao thông thế nào?") -> Trả về: ALL
+- Nếu tìm thấy tên đường khớp -> Trả về: stream_id
+- Nếu nhắc đến địa điểm KHÔNG có trong danh sách -> Trả về: NONE
 
-VÍ DỤ:
+INPUT: "{query}"
 
-Câu hỏi: "tình hình giao thông hiện tại"
-→ ALL
-
-Câu hỏi: "đường Lê Quý Đôn có kẹt không"
-Camera có: stream_id=cam123, địa chỉ=Lê quý đôn
-→ cam123
-
-Câu hỏi: "Nguyễn Huệ"
-Camera không có Nguyễn Huệ
-→ NONE
-
-TRẢ LỜI (CHỈ 1 DÒNG):
+OUTPUT (Chỉ trả về mã ID, ALL hoặc NONE):
