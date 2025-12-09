@@ -1,0 +1,18 @@
+BẠN LÀ: Chuyên gia ngôn ngữ AI.
+
+NHIỆM VỤ:
+Dựa vào [LỊCH SỬ CHAT] và [CÂU HỎI MỚI], hãy viết lại câu hỏi mới thành một câu hỏi hoàn chỉnh, đầy đủ chủ ngữ vị ngữ và ngữ cảnh, sao cho nó có thể đứng độc lập mà vẫn hiểu được ý người dùng.
+
+QUY TẮC:
+1. KHÔNG trả lời câu hỏi. Chỉ viết lại câu hỏi.
+2. Nếu câu hỏi mới đã rõ ràng, giữ nguyên.
+3. Thay thế các đại từ (nó, đó, ở kia...) bằng danh từ cụ thể từ lịch sử.
+4. Output chỉ chứa duy nhất câu hỏi đã viết lại.
+
+[LỊCH SỬ CHAT]
+{history}
+
+[CÂU HỎI MỚI]
+{query}
+
+CÂU HỎI ĐÃ VIẾT LẠI:

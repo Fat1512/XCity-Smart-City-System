@@ -93,11 +93,12 @@ class RouteTool(Tool):
 
             no_traffic_nodes = nx.shortest_path(G_local, start_node, end_node, weight="travel_time")
 
-            no_traffic_coords, no_traffic_eta_s = _route_nodes_to_coords_and_eta(
+            no_traffic_coords, no_traffic_eta_s, no_traffic_ids = _route_nodes_to_coords_and_eta(
                 G_local,
                 no_traffic_nodes,
                 default_speed_kmh=self.DEFAULT_SPEED_KMH,
             )
+            print("No traffic id:", no_traffic_ids)
         except nx.NetworkXNoPath:
             no_traffic_nodes = None
             no_traffic_coords = None
@@ -130,11 +131,12 @@ class RouteTool(Tool):
             return {"error": f"Routing failed: {str(e)}"}
 
         try:
-            current_coords, current_eta_s = _route_nodes_to_coords_and_eta(
+            current_coords, current_eta_s, current_ids = _route_nodes_to_coords_and_eta(
                 G_local,
                 current_nodes,
                 default_speed_kmh=self.DEFAULT_SPEED_KMH,
             )
+            print("current id:", current_ids)
         except Exception as exc:
             logger.error("Error building route geometry: %s", exc)
             return {"error": "Failed to build route geometry"}

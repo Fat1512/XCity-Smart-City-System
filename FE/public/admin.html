@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Knowledge Base Manager</h1>
+                <p class="text-gray-500 mt-1">Manage S3 Documents, RSS Feeds & Watchers</p>
+            </div>
+            <div id="connectionStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
+                Checking API...
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-orange-100 text-orange-600 rounded-lg">
+                            <i class="fa-solid fa-rss"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">RSS Watcher</h3>
+                            <p class="text-xs text-gray-500">Auto-fetch news</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-rss" class="sr-only peer" onchange="toggleWatcher('rss')">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500">
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                            <i class="fa-brands fa-aws"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">S3 Watcher</h3>
+                            <p class="text-xs text-gray-500">Sync S3 Bucket</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-s3" class="sr-only peer" onchange="toggleWatcher('s3')">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                        </div>
+                    </label>
+                </div>
+                <div class="mb-6 p-4 bg-gray-50 rounded border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700">Retention Policy</h3>
+                        <p class="text-xs text-gray-500">Only fetch & keep articles newer than X days.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="rssMaxAgeInput" min="1"
+                            class="w-20 border border-gray-300 rounded px-2 py-1 text-sm text-center" value="7">
+                        <span class="text-sm text-gray-600">days</span>
+                        <button onclick="updateRssMaxAge()"
+                            class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded font-medium transition text-gray-700 border border-gray-300">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Manage RSS Feeds</h2>
+
+            <div class="flex gap-3 mb-6">
+                <input type="text" id="rssUrlInput" placeholder="https://example.com/feed.xml"
+                    class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+                <button onclick="addRssUrl()" id="btnAddRss"
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add Feed
+                </button>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg border border-gray-100 p-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Active Feeds</h3>
+                <ul id="rssList" class="space-y-2">
+                    <li class="text-sm text-gray-400 italic">Loading feeds...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Upload Document to S3</h2>
+            <div class="flex gap-4 items-center">
+                <input type="file" id="fileInput" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100" />
+
+                <button onclick="uploadFile()" id="uploadBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                </button>
+            </div>
+            <p id="uploadStatus" class="mt-2 text-sm text-gray-500"></p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-800">Indexed Documents</h2>
+                <button onclick="fetchDocuments()" class="text-gray-500 hover:text-blue-600">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600">
+                    <thead class="bg-gray-50 text-gray-700 uppercase">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Filename</th>
+                            <th scope="col" class="px-6 py-3">Source</th>
+                            <th scope="col" class="px-6 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center py-4">Loading documents...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder để Python replace. Nếu chạy html trực tiếp thì fallback về localhost
+        const API_BASE = "http://localhost:5001/api/v1";
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            // Xác định URL thực tế
+            if (API_BASE.includes("PLACEHOLDER")) {
+                console.warn("Chạy local mode (chưa qua server render), dùng localhost:8000");
+                window.API_BASE_REAL = "http://localhost:8000/api/v1";
+            } else {
+                window.API_BASE_REAL = API_BASE;
+            }
+
+            checkHealth();
+            fetchWatcherStatus();
+            fetchRssUrls(); // [NEW] Fetch RSS list
+            fetchDocuments();
+        });
+
+        // 1. Check API Health
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/watcher/status`);
+                if (res.ok) {
+                    document.getElementById('connectionStatus').className = "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700";
+                    document.getElementById('connectionStatus').innerText = "Online";
+                } else {
+                    throw new Error("API Error");
+                }
+            } catch (e) {
+                document.getElementById('connectionStatus').className = "px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700";
+                document.getElementById('connectionStatus').innerText = "Offline";
+            }
+        }
+
+        // 2. Fetch & Toggle Watchers
+        async function fetchWatcherStatus() {
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/watcher/status`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('toggle-rss').checked = data.watchers.rss || false;
+                    document.getElementById('toggle-s3').checked = data.watchers.s3 || false;
+                }
+            } catch (error) {
+                console.error("Error fetching watcher status", error);
+            }
+        }
+
+        async function toggleWatcher(watcherName) {
+            const toggleEl = document.getElementById(`toggle-${watcherName}`);
+            const isEnabled = toggleEl.checked;
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/watcher/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ watcher: watcherName, enabled: isEnabled })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(`Error: ${err.detail}`);
+                    toggleEl.checked = !isEnabled;
+                }
+            } catch (error) {
+                console.error("Error toggling watcher", error);
+                toggleEl.checked = !isEnabled;
+                alert("Network error while toggling watcher");
+            }
+        }
+
+        // --- [NEW] RSS MANAGEMENT FUNCTIONS ---
+
+        async function fetchRssUrls() {
+            const listEl = document.getElementById('rssList');
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rss/urls`);
+                const data = await res.json();
+
+                listEl.innerHTML = "";
+                if (!data.urls || data.urls.length === 0) {
+                    listEl.innerHTML = `<li class="text-sm text-gray-400 italic">No RSS feeds configured.</li>`;
+                    return;
+                }
+
+                data.urls.forEach(url => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center bg-white border border-gray-200 p-2 rounded hover:shadow-sm transition";
+                    li.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <i class="fa-solid fa-rss text-orange-400 text-xs"></i>
+                            <span class="text-sm text-gray-700 truncate" title="${url}">${url}</span>
+                        </div>
+                        <button onclick="removeRssUrl('${url}')" class="text-gray-400 hover:text-red-500 px-2">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    listEl.appendChild(li);
+                });
+
+            } catch (error) {
+                console.error("Error fetching RSS URLs", error);
+                listEl.innerHTML = `<li class="text-sm text-red-500">Failed to load RSS feeds.</li>`;
+            }
+        }
+
+        async function addRssUrl() {
+            const input = document.getElementById('rssUrlInput');
+            const url = input.value.trim();
+            const btn = document.getElementById('btnAddRss');
+
+            if (!url) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Adding...`;
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rss/urls`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (res.ok) {
+                    input.value = ""; // Clear input
+                    fetchRssUrls(); // Refresh list
+                } else {
+                    const err = await res.json();
+                    alert(`Failed to add URL: ${err.detail}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-plus"></i> Add Feed`;
+            }
+        }
+
+        async function removeRssUrl(url) {
+            if (!confirm(`Remove this feed? \n${url}`)) return;
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rss/urls`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (res.ok) {
+                    fetchRssUrls();
+                } else {
+                    const err = await res.json();
+                    alert(`Failed to remove URL: ${err.detail}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // -------------------------------------
+
+        // 3. Upload File to S3
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const statusEl = document.getElementById('uploadStatus');
+            const btn = document.getElementById('uploadBtn');
+
+            if (!file) {
+                alert("Please select a file first.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-4 w-4 mr-2"></div> Uploading...`;
+            statusEl.innerText = "";
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rag/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    statusEl.innerText = `Success: Uploaded ${data.filename} to S3. Waiting for Watcher...`;
+                    statusEl.className = "mt-2 text-sm text-green-600";
+                    fileInput.value = "";
+                    setTimeout(fetchDocuments, 2000);
+                } else {
+                    throw new Error(data.detail || "Upload failed");
+                }
+            } catch (error) {
+                statusEl.innerText = `Error: ${error.message}`;
+                statusEl.className = "mt-2 text-sm text-red-600";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Upload`;
+            }
+        }
+
+        // 4. List Documents
+        async function fetchDocuments() {
+            const tbody = document.getElementById('docTableBody');
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rag/documents`);
+                const data = await res.json();
+
+                tbody.innerHTML = "";
+
+                if (!data.documents || data.documents.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-400">No documents found. Upload one to start.</td></tr>`;
+                    return;
+                }
+
+                data.documents.forEach(doc => {
+                    // Xử lý filename an toàn
+                    let filename = "Unknown";
+                    let meta = {};
+
+                    if (typeof doc === 'string') {
+                        filename = doc;
+                    } else {
+                        filename = doc.filename || doc.id || doc.name || "Unknown";
+                        meta = doc.metadata || {};
+                    }
+
+                    // Hiển thị nguồn
+                    const isS3 = meta.s3_key ? true : false;
+                    const sourceLabel = isS3
+                        ? `<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">S3 Bucket</span>`
+                        : (meta.source_url
+                            ? `<span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">RSS/Web</span>`
+                            : `<span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">Manual/Other</span>`);
+
+                    // Xóa dùng API S3
+                    const deleteFn = 'deleteS3Document';
+
+                    const row = `
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">${filename}</td>
+                            <td class="px-6 py-4">${sourceLabel}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="${deleteFn}('${filename}')" class="text-red-500 hover:text-red-700 transition flex items-center gap-1 ml-auto">
+                                    <i class="fa-solid fa-trash"></i> Delete (S3)
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+            } catch (error) {
+                console.error("Error listing docs", error);
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">Failed to load documents.</td></tr>`;
+            }
+        }
+
+        // 5. Delete Document via S3 API
+        async function deleteS3Document(filename) {
+            if (!confirm(`Confirm DELETE "${filename}" via S3 API?\nThis will remove the file from S3 Bucket and trigger a DB sync.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rag/s3/document`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: filename })
+                });
+
+                if (res.ok) {
+                    alert("Deleted command sent to S3. Watcher will sync shortly.");
+                    fetchDocuments();
+                } else {
+                    const err = await res.json();
+                    alert(`Failed to delete via S3 API: ${err.detail}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+        async function fetchWatcherStatus() {
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/watcher/status`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('toggle-rss').checked = data.watchers.rss || false;
+                    document.getElementById('toggle-s3').checked = data.watchers.s3 || false;
+
+                    // [NEW] Cập nhật ô input ngày nếu backend trả về
+                    if (data.rss_config && data.rss_config.max_age_days) {
+                        document.getElementById('rssMaxAgeInput').value = data.rss_config.max_age_days;
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching watcher status", error);
+            }
+        }
+        async function updateRssMaxAge() {
+            const daysInput = document.getElementById('rssMaxAgeInput');
+            const days = parseInt(daysInput.value);
+
+            if (!days || days < 1) {
+                alert("Please enter a valid number of days (> 0)");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${window.API_BASE_REAL}/rss/config/age`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days: days })
+                });
+
+                if (res.ok) {
+                    alert("Updated! Old files will be removed on next watcher cycle.");
+                } else {
+                    const err = await res.json();
+                    alert("Failed to update: " + err.detail);
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+    </script>
+</body>
+
+</html>

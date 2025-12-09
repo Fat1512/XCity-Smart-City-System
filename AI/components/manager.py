@@ -46,12 +46,52 @@ from components.ingest_strategy.strategies import (
     BinaryIngestStrategy,
 )
 
+# Config
+from pymongo import MongoClient, errors
+
 # Tools
 from components.interfaces import Tool
+
+# Reranker
+from components.interfaces import Reranker
+from components.rerank.reranker_bge import BgeReranker
+from components.rerank.reranker_jina import JinaReranker
 
 from components.logging.logger import setup_logger
 
 logger = setup_logger("manager")
+
+
+class RerankerManager:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(RerankerManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        
+        provider = os.getenv("RERANKER_PROVIDER", "bge").lower()
+        self.reranker: Reranker = None
+
+        if provider == "bge":
+            print("Initializing RerankerManager with BgeReranker")
+            self.reranker = BgeReranker()
+        elif provider == "jina":
+            print("Initializing RerankerManager with JinaReranker")
+            self.reranker = JinaReranker()
+        else:
+            print(f"Unknown RERANKER_PROVIDER: {provider}, fall back to JinaReranker")
+            self.reranker = JinaReranker()
+        
+        self._initialized = True
+
+    def rerank(self, query: str, documents: List[str], top_k: int = 3, threshold: float = None) -> List[str]:
+        return self.reranker.rerank(query, documents, top_k, threshold)
 
 class ToolManager:
     _instance = None
@@ -293,3 +333,48 @@ class DatabaseManager:
                 raise ValueError(f"Unknown DB_PROVIDER: {provider}")
         
         return cls._instance
+
+
+class ConfigManager:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ConfigManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        
+        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")       
+        
+        try:
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=2000)
+            self.db = self.client[db_name]
+            self.collection = self.db["camera_config"]
+            self.client.server_info()
+            print(f"ConfigManager connected to MongoDB: {db_name}.traffic_streams")
+        except Exception as e:
+            print(f"ConfigManager: Failed to connect to MongoDB. Error: {e}")
+            self.collection = None
+
+        self._initialized = True
+
+    def get_all_streams(self) -> List[Dict]:
+        if self.collection is None:
+            return []
+        return list(self.collection.find({}, {"_id": 0}))
+
+    def upsert_stream(self, stream_config: Dict):
+        if self.collection is None:
+            return
+        stream_id = stream_config.get("stream_id")
+        if not stream_id:
+            return
+        self.collection.update_one(
+            {"stream_id": stream_id}, 
+            {"$set": stream_config}, 
+            upsert=True
+        )

@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # -----------------------------------------------------------------------------
-from typing import Any, Dict, List
-
+from typing import Any, Dict, List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from service.rag.rag_service import MiniRagService
 
 class BaseIntent:
     name: str = ""
@@ -26,7 +27,7 @@ class BaseIntent:
         self,
         query: str,
         intent: str,
-        service,
+        service: "MiniRagService",
         history_string: str,
         history_list: List[Dict[str, Any]],
         conversation_id: str,

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { FaSave, FaMapMarkerAlt, FaInfoCircle } from "react-icons/fa";
 import { IoBusiness } from "react-icons/io5";
@@ -33,7 +33,12 @@ import type {
 import useCreateCamera from "./useCreateCamera";
 import useUpdateCamera from "./useUpdateCamera";
 import { useNavigate } from "react-router-dom";
-import { formatTime } from "../../utils/helper";
+import { extractAddress, formatTime } from "../../utils/helper";
+import CameraConfig from "./CameraConfig";
+import useUpdarteCameraConfig, {
+  type UpdateCameraConfigParams,
+} from "./useUpdarteCameraConfig";
+import useGetSegment from "./useGetSegment";
 
 export interface CameraCreate {
   id?: string;
@@ -51,9 +56,10 @@ export interface CameraCreate {
 
 interface CameraProps {
   cameraProps?: CameraCreate;
+  cameraConfig?: any;
 }
 
-const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
+const CameraAdmin = ({ cameraProps = {}, cameraConfig }: CameraProps) => {
   const {
     register,
     handleSubmit,
@@ -68,12 +74,60 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { isPending, createCamera } = useCreateCamera();
   const { isPending: isUpdatingCamera, updateCamera } = useUpdateCamera();
+  const { isPending: isUpdatingConfig, updateCameraConfig } =
+    useUpdarteCameraConfig();
   const camera = watch();
   const navigate = useNavigate();
+
+  const [currentVideo, setCurrentVideo] = useState<string>(
+    cameraConfig?.videoPath || ""
+  );
+  const { isPending: isLoadingSegment, getSegment } = useGetSegment();
+
+  const [points, setPoints] = useState<[number, number][]>(
+    cameraConfig?.imagePts || []
+  );
+
+  const [realWidth, setRealWidth] = useState<number>();
+  const [realHeight, setRealHeight] = useState<number>();
+  const segmentsId = useRef<string[]>(cameraConfig?.segmentIds || []);
   function handleOnChangeLocation(coords: [number, number]) {
     setValue("location.coordinates", coords, { shouldValidate: true });
+    if (camera.id)
+      getSegment(
+        { lat: coords[1], lon: coords[0] },
+        {
+          onSuccess: (data) => {
+            console.log("Segment data:", data.segments);
+            segmentsId.current = data.segments.map((item) => item.segment_id);
+          },
+        }
+      );
   }
+  async function saveConfig() {
+    if (points.length !== 4) {
+      alert("Please mark exactly 4 points.");
+      return;
+    }
+    if (!realWidth || !realHeight) {
+      alert("Please fill Address + real dimensions.");
+      return;
+    }
 
+    const payload: UpdateCameraConfigParams = {
+      stream_id: camera.id!,
+      video_path: currentVideo,
+      address: extractAddress(camera.address!),
+      image_pts: points,
+      real_width: Number(realWidth),
+      real_height: Number(realHeight),
+      limit_fps: 5,
+      segment_ids: segmentsId.current,
+    };
+    updateCameraConfig(payload, {
+      onError: (err) => toast.error("Lưu cấu hình thất bại: " + err.message),
+    });
+  }
   const onSubmit = (data: CameraCreate) => {
     if (!data.location?.coordinates) {
       alert("Vui lòng chọn vị trí thiết bị");
@@ -99,32 +153,33 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
       onSuccess: () => toast.success("Cập camera thành công"),
       onError: (err) => toast.error(err.message),
     });
+    saveConfig();
   };
 
   return (
     <div className="p-6 bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-        {camera.id && (
+      {camera.id && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
           <div className="flex items-center gap-2 text-lg">
             <span className="font-bold w-24">ID:</span>
             <span className="font-mono font-semibold">{camera.id}</span>
           </div>
-        )}
 
-        {camera.dateCreated && (
-          <div className="flex items-center gap-2 text-lg">
-            <span className="font-bold w-24">Ngày tạo:</span>
-            <span>{formatTime(camera.dateCreated)}</span>
-          </div>
-        )}
+          {camera.dateCreated && (
+            <div className="flex items-center gap-2 text-lg">
+              <span className="font-bold w-24">Ngày tạo:</span>
+              <span>{formatTime(camera.dateCreated)}</span>
+            </div>
+          )}
 
-        {camera.dateModified && (
-          <div className="flex items-center gap-2 text-lg">
-            <span className="font-bold w-24">Ngày sửa:</span>
-            <span>{formatTime(camera.dateModified)}</span>
-          </div>
-        )}
-      </div>
+          {camera.dateModified && (
+            <div className="flex items-center gap-2 text-lg">
+              <span className="font-bold w-24">Ngày sửa:</span>
+              <span>{formatTime(camera.dateModified)}</span>
+            </div>
+          )}
+        </div>
+      )}
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 overflow-hidden">
           <div className="bg-linear-to-r from-indigo-600 to-blue-600 p-6">
@@ -144,7 +199,7 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
                 onClick={handleSubmit(onSubmit)}
                 className="flex cursor-pointer items-center gap-2 bg-white hover:bg-indigo-50 text-indigo-600 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {isPending || isUpdatingCamera ? (
+                {isPending || isLoadingSegment || isUpdatingCamera ? (
                   <MiniSpinner />
                 ) : (
                   <>
@@ -342,8 +397,14 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
                   onClick={() => setModalOpen(true)}
                   className="flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium px-4 py-2 rounded-lg transition-all duration-300"
                 >
-                  <FaMapMarkerAlt />
-                  <span>Thay đổi</span>
+                  {isLoadingSegment ? (
+                    <MiniSpinner />
+                  ) : (
+                    <>
+                      <FaMapMarkerAlt />
+                      <span>Thay đổi</span>
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -372,6 +433,19 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
           location={camera.location?.coordinates}
         />
       </div>
+
+      {camera.id && (
+        <CameraConfig
+          setCurrentVideo={setCurrentVideo}
+          currentVideo={currentVideo}
+          realHeight={realHeight}
+          setRealHeight={setRealHeight}
+          points={points}
+          setPoints={setPoints}
+          realWidth={realWidth}
+          setRealWidth={setRealWidth}
+        />
+      )}
     </div>
   );
 };

@@ -57,7 +57,7 @@ export default function Map({ buildings }: MapProps) {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: "mapbox://styles/mapbox/outdoors-v12",
       center: [DEFAULT_LNG, DEFAULT_LAT],
       zoom,
       pitch: 60,

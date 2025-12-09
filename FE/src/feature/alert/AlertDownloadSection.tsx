@@ -17,7 +17,6 @@
 import { FORMAT } from "../../utils/appConstant";
 import useDownLoadAlert from "./useDownLoadAlert";
 import type { Alert } from "./AlertDetail";
-import License from "../../ui/License";
 interface AlertDownloadSectionProps {
   type: string;
 }

@@ -18,10 +18,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CameraCreate } from "./CameraAdmin";
 import { updateCamera as updateCameraAPI } from "../../service/cameraService";
 import type { Response } from "../../types";
+import { useParams } from "react-router-dom";
 
 export default function useUpdateCamera() {
   const queryClient = useQueryClient();
-
+  const { cameraId } = useParams();
   const { isPending, mutate: updateCamera } = useMutation<
     Response,
     Error,
@@ -31,6 +32,9 @@ export default function useUpdateCamera() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["cameras"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["camera", cameraId],
       });
     },
   });

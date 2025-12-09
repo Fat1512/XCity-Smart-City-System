@@ -14,11 +14,11 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 import MiniSpinner from "../../ui/MiniSpinner";
-import useGetDevices from "../air-quality-observed/useGetDevices";
 import SensorMap from "./SensorMap";
+import useGetDeviceWithAQ from "./useGetDeviceWithAQ";
 
 const SensorWrapper = () => {
-  const { isLoading, devices } = useGetDevices();
+  const { isLoading, devices } = useGetDeviceWithAQ();
   if (isLoading) return <MiniSpinner />;
   return <SensorMap sensorLocations={devices} />;
 };

@@ -14,10 +14,10 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 import type { RoutingParams } from "../feature/map/useRoutePath";
+import type { SegmentParams } from "../feature/traffic-monitor/useGetSegment";
 import type { TrafficStaticsParams } from "../feature/traffic-monitor/useGetStaticsTraffic";
 import type { TrafficDownloadParams } from "../feature/traffic-monitor/useTrafficDownLoad";
 import { AI_REQUEST, API } from "../utils/axiosConfig";
-import { AI_URL } from "../utils/Url";
 
 export async function getTrafficDailyStatics({
   cameraId,
@@ -55,6 +55,19 @@ export async function getRoute({ start, end }: RoutingParams) {
     const res = await AI_REQUEST.post(`/route`, {
       start,
       end,
+    });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
+export async function getSegmentId({ lat, lon }: SegmentParams) {
+  try {
+    const res = await AI_REQUEST.post(`/setup/segments`, {
+      lat,
+      lon,
     });
     return res.data;
   } catch (error: any) {
