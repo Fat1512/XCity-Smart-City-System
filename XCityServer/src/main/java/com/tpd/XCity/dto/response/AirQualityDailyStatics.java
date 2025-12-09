@@ -41,9 +41,8 @@ public class AirQualityDailyStatics {
     @NoArgsConstructor
     @Builder
     public static class AirQualityDailyValue {
-
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime hour;
+        
+        private Instant hour;
         private Double avgPm1;
         private Double avgPm10;
         private Double avgPm25;
