@@ -55,9 +55,10 @@ export interface CameraCreate {
 
 interface CameraProps {
   cameraProps?: CameraCreate;
+  cameraConfig?: any;
 }
 
-const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
+const CameraAdmin = ({ cameraProps = {}, cameraConfig }: CameraProps) => {
   const {
     register,
     handleSubmit,
@@ -77,9 +78,13 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
   const camera = watch();
   const navigate = useNavigate();
 
-  const [currentVideo, setCurrentVideo] = useState<string>("");
+  const [currentVideo, setCurrentVideo] = useState<string>(
+    cameraConfig?.videoPath || ""
+  );
 
-  const [points, setPoints] = useState<[number, number][]>([]);
+  const [points, setPoints] = useState<[number, number][]>(
+    cameraConfig?.imagePts || []
+  );
 
   const [realWidth, setRealWidth] = useState<number>();
   const [realHeight, setRealHeight] = useState<number>();
@@ -135,6 +140,7 @@ const CameraAdmin = ({ cameraProps = {} }: CameraProps) => {
       onSuccess: () => toast.success("Cập camera thành công"),
       onError: (err) => toast.error(err.message),
     });
+    saveConfig();
   };
 
   return (

@@ -84,7 +84,7 @@ export async function updateCameraConfig(
 ) {
   try {
     const res = await AI_REQUEST.post(`/setup/save`, {
-      cameraConfig,
+      ...cameraConfig,
     });
     return res.data;
   } catch (error: any) {

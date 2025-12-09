@@ -25,6 +25,8 @@ import java.util.List;
 public interface DeviceService {
     MessageResponse createDevice(DeviceCreateRequest request);
 
+    List<DeviceMapWithAQResponse> getDeviceMap();
+
     MessageResponse startSensor(String id);
 
     MessageResponse stopSensor(String id);

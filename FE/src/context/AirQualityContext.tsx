@@ -83,8 +83,10 @@ export const AirQualityProvider = ({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
       onConnect: () => {
+        console.log("Connected to Air Quality WebSocket");
         setConnected(true);
         client.subscribe("/topic/air-quality", (msg) => {
+          console.log("Received Air Quality message", msg);
           if (!msg.body) return;
           const json = JSON.parse(msg.body);
           const sensorId = json.refDevice;
@@ -114,6 +116,7 @@ export const AirQualityProvider = ({
         });
       },
       onWebSocketClose: () => {
+        console.log("Disconnected from Air Quality WebSocket");
         setConnected(false);
         setActive(false);
       },

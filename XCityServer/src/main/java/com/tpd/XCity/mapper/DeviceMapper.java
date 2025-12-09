@@ -20,11 +20,10 @@ package com.tpd.XCity.mapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.tpd.XCity.dto.request.BuildingUpdateRequest;
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
 import com.tpd.XCity.dto.response.DeviceLocation;
+import com.tpd.XCity.dto.response.DeviceMapWithAQResponse;
 import com.tpd.XCity.dto.response.DeviceResponse;
-import com.tpd.XCity.entity.building.Building;
 import com.tpd.XCity.entity.device.Device;
 import org.mapstruct.*;
 
@@ -35,7 +34,10 @@ public interface DeviceMapper {
 
     Device convertToEntity(DeviceCreateRequest request);
 
+    DeviceMapWithAQResponse convertToDeviceMapWithAQ(Device device);
+
     DeviceResponse convertToResponse(Device device);
+
     DeviceLocation convertToDeviceLocation(Device device);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

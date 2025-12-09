@@ -17,7 +17,6 @@ import type { RoutingParams } from "../feature/map/useRoutePath";
 import type { TrafficStaticsParams } from "../feature/traffic-monitor/useGetStaticsTraffic";
 import type { TrafficDownloadParams } from "../feature/traffic-monitor/useTrafficDownLoad";
 import { AI_REQUEST, API } from "../utils/axiosConfig";
-import { AI_URL } from "../utils/Url";
 
 export async function getTrafficDailyStatics({
   cameraId,

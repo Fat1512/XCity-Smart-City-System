@@ -27,8 +27,17 @@ export interface SensorLocation {
   location: Location;
   address: Address;
   name: string;
+  airQualityLatest: AirQualityData;
 }
 
+interface AirQualityData {
+  pm25: number;
+  pm1: number;
+  co2: number;
+  o3: number;
+  temperature?: number;
+  dateObserved: string;
+}
 interface SensorMapProps {
   sensorLocations: SensorLocation[];
 }
@@ -108,8 +117,10 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
     if (!mapRef.current) return;
 
     const features = sensorLocations.map((sensor) => {
-      const sensorData = dataPoints[sensor.id];
+      const sensorData = dataPoints[sensor.id] || [sensor.airQualityLatest];
+
       const latestData = sensorData?.[sensorData.length - 1];
+
       const pm25 = latestData?.pm25 ?? null;
       const coords: [number, number] = [
         sensor.location.coordinates[0],
@@ -148,7 +159,6 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
-      // Add source and layer for circles
       map.addSource("sensor-circles", {
         type: "geojson",
         data: {
@@ -179,8 +189,9 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
       });
 
       sensorLocations.forEach((sensor) => {
-        const sensorData = dataPoints[sensor.id];
+        const sensorData = dataPoints[sensor.id] || [sensor.airQualityLatest];
         const latestData = sensorData?.[sensorData.length - 1];
+
         const pm25 = latestData?.pm25 ?? null;
 
         const el = document.createElement("div");
@@ -231,12 +242,13 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
   }, [sensorLocations]);
 
   useEffect(() => {
-    // Update circles when data changes
     updateCircles();
 
     Object.entries(markersRef.current).forEach(([id, marker]) => {
-      const sensorData = dataPoints[id];
-      console.log(id, dataPoints);
+      const sensorData = dataPoints[id] || [
+        sensorLocations.find((s) => s.id === id)?.airQualityLatest,
+      ];
+      console.log(dataPoints);
       const latestData = sensorData?.[sensorData.length - 1];
       const pm25 = latestData?.pm25 ?? null;
 
@@ -245,7 +257,6 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
         el.style.backgroundColor = getAirQualityColor(pm25);
         el.textContent = pm25 !== null ? pm25.toFixed(0) : "?";
 
-        // Update click handler
         el.onclick = () => {
           const location = sensorLocations.find((l) => l.id === id);
           if (location) {

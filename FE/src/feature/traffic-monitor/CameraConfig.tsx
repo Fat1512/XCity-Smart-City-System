@@ -26,15 +26,13 @@ export default function CameraConfig({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [videos, setVideos] = useState<string[]>([]);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
-
+  console.log(videos);
   async function fetchVideos() {
     try {
       const res = await fetch(`${AI_URL}/setup/videos`);
       const data = await res.json();
       setVideos(data.videos || []);
-    } catch (err) {
-      alert("API error: " + err);
-    }
+    } catch (err) {}
   }
 
   async function loadSnapshot(path: string) {
@@ -127,6 +125,25 @@ export default function CameraConfig({
 
   useEffect(() => {
     fetchVideos();
+    if (currentVideo) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.drawImage(img, 0, 0);
+
+        setBgImage(img);
+      };
+
+      img.src = `${AI_URL}/setup/snapshot?video_path=${encodeURIComponent(
+        currentVideo || ""
+      )}`;
+    }
   }, []);
 
   return (
