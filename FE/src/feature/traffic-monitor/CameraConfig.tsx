@@ -26,7 +26,6 @@ export default function CameraConfig({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [videos, setVideos] = useState<string[]>([]);
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
-  console.log(videos);
   async function fetchVideos() {
     try {
       const res = await fetch(`${AI_URL}/setup/videos`);

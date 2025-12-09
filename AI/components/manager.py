@@ -349,7 +349,7 @@ class ConfigManager:
             return
         
         uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-        db_name = os.getenv("MONGO_DB_NAME", "ai_service")
+       
         
         try:
             self.client = MongoClient(uri, serverSelectionTimeoutMS=2000)

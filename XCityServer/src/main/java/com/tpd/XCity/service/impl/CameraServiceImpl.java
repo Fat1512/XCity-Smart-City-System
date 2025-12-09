@@ -106,6 +106,9 @@ public class CameraServiceImpl implements CameraService {
         orionService.createEntity(cameraMapper.toOrion(camera), DEVICE_CONTEXT);
 
         cameraRepository.save(camera);
+        cameraConfigRepository.save(CameraConfig.builder()
+                .streamId(camera.getId())
+                .build());
 
         return MessageResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_CREATED.name())

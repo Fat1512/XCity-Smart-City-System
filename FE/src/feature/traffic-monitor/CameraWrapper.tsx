@@ -20,7 +20,7 @@ import useGetCamera from "./useGetCamera";
 const CameraWrapper = () => {
   const { isLoading, camera } = useGetCamera();
   if (isLoading) return <MiniSpinner />;
-  const { cameraConfig, ...rest } = camera;
+  const { cameraConfig, ...rest } = camera || {};
   const cameraCreate: CameraCreate = rest;
   return <CameraAdmin cameraProps={cameraCreate} cameraConfig={cameraConfig} />;
 };

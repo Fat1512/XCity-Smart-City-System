@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { updateCameraConfig as updateCameraConfigAPI } from "../../service/cameraService";
 import type { Response } from "../../types";
@@ -25,6 +25,7 @@ export interface UpdateCameraConfigParams {
   real_width: number;
   real_height: number;
   limit_fps: number;
+  segment_ids: string[];
 }
 
 export default function useUpdarteCameraConfig() {
