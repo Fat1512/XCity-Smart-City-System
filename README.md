@@ -198,8 +198,8 @@ PMNM/
 ### 2️⃣ Clone repo
 
 ```bash
-git clone https://github.com/Fat1512/PMNM.git
-cd PMNM
+git clone https://github.com/Fat1512/XCity-Smart-City-System.git
+cd XCity-Smart-City-System
 ```
 
 ### 3️⃣ Chạy từng thành phần (quickstart)
@@ -437,7 +437,7 @@ curl -X POST "http://localhost:1026/ngsi-ld/v1/subscriptions" \
             },
             "status": "ok"
         },
-        "jsonldContext": "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
+        "@context": "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
 }'
 ```
 
