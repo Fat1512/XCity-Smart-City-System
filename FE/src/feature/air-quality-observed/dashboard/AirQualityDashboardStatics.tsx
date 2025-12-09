@@ -25,6 +25,7 @@ import AirQualityChartNonData from "./AirQualityChartNonData";
 import DownloadSection from "./DownloadSection";
 import AirQualityStaticChart from "./AirQualityStaticChart";
 import MetadataAccordion from "../../../ui/MetadataAccordion";
+import { epochSecondsToDateTime } from "../../../utils/helper";
 
 interface SensorValues {
   pm25: number | null;
@@ -160,7 +161,8 @@ const AirQualityDashboard4Charts = () => {
           ? {
               ...sensor,
               dataPoints: statics.dataPoints.map((s: any) => ({
-                dateObserved: timeUnit === "hour" ? s.hour : s.day,
+                dateObserved:
+                  timeUnit === "hour" ? epochSecondsToDateTime(s.hour) : s.day,
                 pm25: s.avgPm25 ?? 0,
                 pm1: s.avgPm1 ?? 0,
                 pm10: s.avgPm10 ?? 0,
