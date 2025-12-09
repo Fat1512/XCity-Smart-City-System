@@ -41,6 +41,16 @@ export async function getDevicesMap() {
     );
   }
 }
+export async function getDevicesWithAQ() {
+  try {
+    const res = await AUTH_REQUEST.get(`/devices-aq`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
 
 export async function getDevices({ page, size, kw }: DeviceParams) {
   try {

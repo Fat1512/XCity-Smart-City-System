@@ -20,13 +20,13 @@ package com.tpd.XCity.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
-import com.tpd.XCity.dto.request.DeviceIoTAgent;
 import com.tpd.XCity.dto.response.*;
-import com.tpd.XCity.entity.building.Building;
+import com.tpd.XCity.entity.air.AirQualityObserved;
 import com.tpd.XCity.entity.device.Device;
 import com.tpd.XCity.entity.device.DeviceStatus;
 import com.tpd.XCity.exception.ResourceNotFoundExeption;
 import com.tpd.XCity.mapper.DeviceMapper;
+import com.tpd.XCity.repository.AirQualityObservedRepository;
 import com.tpd.XCity.repository.DeviceRepository;
 import com.tpd.XCity.service.DeviceService;
 import com.tpd.XCity.service.OrionService;
@@ -34,7 +34,6 @@ import com.tpd.XCity.utils.APIResponseMessage;
 import com.tpd.XCity.utils.Helper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,7 +42,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -56,6 +55,7 @@ import static com.tpd.XCity.utils.Helper.*;
 @Slf4j
 public class DeviceServiceImpl implements DeviceService {
     private final DeviceRepository deviceRepository;
+    private final AirQualityObservedRepository airQualityObservedRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final OrionService orionService;
@@ -81,6 +81,33 @@ public class DeviceServiceImpl implements DeviceService {
                 .message("Successfully create device")
                 .status(HttpStatus.CREATED)
                 .build();
+    }
+
+    @Override
+    public List<DeviceMapWithAQResponse> getDeviceMap() {
+        List<Device> devices = deviceRepository.findAll();
+        List<DeviceMapWithAQResponse> deviceMapWithAQResponses = new ArrayList<>();
+        for (Device device : devices) {
+            DeviceMapWithAQResponse deviceMapWithAQResponse = deviceMapper.convertToDeviceMapWithAQ(device);
+
+            AirQualityObserved airQualityObserved = airQualityObservedRepository
+                    .findFirstByRefDeviceOrderByDateObservedAsc(device.getId())
+                    .orElse(new AirQualityObserved());
+
+            deviceMapWithAQResponse.setAirQualityLatest(DeviceMapWithAQResponse.AirQualityLatest.builder()
+                    .so2(airQualityObserved.getSo2())
+                    .co2(airQualityObserved.getCo2())
+                    .o3(airQualityObserved.getO3())
+                    .pm1(airQualityObserved.getPm1())
+                    .pm25(airQualityObserved.getPm25())
+                    .id(airQualityObserved.getId())
+                    .dateObserved(airQualityObserved.getDateObserved())
+                    .build());
+
+            deviceMapWithAQResponses.add(deviceMapWithAQResponse);
+        }
+        return deviceMapWithAQResponses;
+
     }
 
     @Override

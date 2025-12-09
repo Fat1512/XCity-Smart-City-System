@@ -20,7 +20,10 @@ package com.tpd.XCity.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tpd.XCity.entity.Address;
 import com.tpd.XCity.entity.building.Location;
+import com.tpd.XCity.entity.device.CameraConfig;
 import com.tpd.XCity.entity.device.CameraUsage;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -28,6 +31,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 public class CameraResponse {
@@ -45,4 +50,24 @@ public class CameraResponse {
     private Location location;
     private boolean on;
     private String type = "Camera";
+    private CameraConfigResponse cameraConfig;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CameraConfigResponse {
+
+        private String id;
+        private String streamId;
+        private String address;
+        private List<String> classes;
+        private double conf;
+        private List<List<Integer>> imagePts;
+        private int limitFps;
+        private List<String> segmentIds;
+        private String trackerCfg;
+        private String videoPath;
+        private List<List<Integer>> worldPts;
+    }
 }

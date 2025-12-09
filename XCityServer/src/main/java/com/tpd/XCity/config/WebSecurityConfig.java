@@ -83,6 +83,7 @@ public class WebSecurityConfig {
                                 "/api/v1/devices",
                                 "/api/v1/traffic/daily-statics/{cameraId}",
                                 "/api/v1/auth/register",
+                                "/api/v1/devices-aq",
                                 "/api/v1/ws/**").permitAll()
 
                         .anyRequest().authenticated()

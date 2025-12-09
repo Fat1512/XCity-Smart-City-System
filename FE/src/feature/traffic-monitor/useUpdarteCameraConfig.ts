@@ -15,28 +15,26 @@
 // -----------------------------------------------------------------------------
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { CameraCreate } from "./CameraAdmin";
-import { updateCamera as updateCameraAPI } from "../../service/cameraService";
+import { updateCameraConfig as updateCameraConfigAPI } from "../../service/cameraService";
 import type { Response } from "../../types";
-import { useParams } from "react-router-dom";
+export interface UpdateCameraConfigParams {
+  stream_id: string;
+  video_path: string;
+  address: string;
+  image_pts: [number, number][];
+  real_width: number;
+  real_height: number;
+  limit_fps: number;
+  segment_ids: string[];
+}
 
-export default function useUpdateCamera() {
-  const queryClient = useQueryClient();
-  const { cameraId } = useParams();
-  const { isPending, mutate: updateCamera } = useMutation<
+export default function useUpdarteCameraConfig() {
+  const { isPending, mutate: updateCameraConfig } = useMutation<
     Response,
     Error,
-    CameraCreate
+    UpdateCameraConfigParams
   >({
-    mutationFn: (camera) => updateCameraAPI(camera),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["cameras"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["camera", cameraId],
-      });
-    },
+    mutationFn: (camera) => updateCameraConfigAPI(camera),
   });
-  return { isPending, updateCamera };
+  return { isPending, updateCameraConfig };
 }

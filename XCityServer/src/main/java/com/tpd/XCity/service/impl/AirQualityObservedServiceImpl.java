@@ -80,7 +80,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         airQualityObserved.setId(UUID.randomUUID().toString());
         airQualityObserved.setRefDevice(id);
         airQualityObserved.setDateObserved(dateObserved);
-        airQualityObservedRepository.save(airQualityObserved);
+//        airQualityObservedRepository.save(airQualityObserved);
 
         messagingTemplate.convertAndSend("/topic/air-quality",
                 airQualityObservedMapper.convertToResponse(airQualityObserved));
@@ -124,11 +124,20 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
     @Override
     public AirQualityDailyStatics getStatics(String sensorId, String date) {
         LocalDate localDate = LocalDate.parse(date);
+
         ZoneId zoneVN = ZoneId.of("Asia/Ho_Chi_Minh");
 
-        Instant start = localDate.atStartOfDay(zoneVN).toInstant();
+        Instant start = localDate
+                .atStartOfDay(zoneVN)
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toInstant();
 
-        Instant end = localDate.atTime(LocalTime.MAX).atZone(zoneVN).toInstant();
+        Instant end = localDate
+                .atTime(LocalTime.MAX)
+                .atZone(zoneVN)
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toInstant();
+
 
         List<AirQualityDailyStatics.AirQualityDailyValue> values =
                 airQualityObservedRepository.getAirQualityByHourRange(sensorId, start, end);

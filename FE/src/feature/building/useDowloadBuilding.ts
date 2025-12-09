@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import MiniSpinner from "../../ui/MiniSpinner";
-import SensorMap from "./SensorMap";
-import useGetDeviceWithAQ from "./useGetDeviceWithAQ";
+import { useMutation } from "@tanstack/react-query";
 
-const SensorWrapper = () => {
-  const { isLoading, devices } = useGetDeviceWithAQ();
-  if (isLoading) return <MiniSpinner />;
-  return <SensorMap sensorLocations={devices} />;
-};
+import { getBuildingMap } from "../../service/buildingService";
+import type { Building } from "./AdminBuilding";
 
-export default SensorWrapper;
+export default function useDowloadBuilding() {
+  const { isPending, mutate: download } = useMutation<Building[], Error, {}>({
+    mutationFn: () => getBuildingMap(),
+  });
+  return { isPending, download };
+}

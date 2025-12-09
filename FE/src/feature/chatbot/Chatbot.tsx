@@ -13,26 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { X, Send } from "lucide-react";
 import useChatAI from "./useChatAI";
 
 export interface MessageChatAI {
-  text: string;
+  answer?: string;
+  text?: string;
   role: "user" | "bot";
   meta?: string;
   toolResult?: any;
-  trafficStats?: any;
-  trafficImages?: Array<{
+  traffic_stats?: any;
+  traffic_images?: Array<{
     stream_id: string;
     mime_type: string;
     image_base64: string;
   }>;
-  conversationId?: string | null;
+  sources?: Source[];
+  conversation_id?: string | null;
+}
+interface Source {
+  title: string;
+  type: string;
+  url: string;
 }
 
 const INITIAL_BOT_MESSAGE: MessageChatAI = {
-  text: "Xin chào, tôi có thể:\n- Tính đường (có/không kẹt xe) giữa hai tọa độ.\n- Mô tả tình trạng giao thông hiện tại (và gửi kèm hình).",
+  text: "Tôi là trợ lý thông minh của thành phố, giúp bạn tiếp cận mọi thông tin đô thị một cách nhanh chóng và chính xác.",
   role: "bot",
 };
 export default function Chatbot() {
@@ -62,11 +69,18 @@ export default function Chatbot() {
           answer,
           traffic_stats,
           traffic_images,
+          sources,
         }) => {
-          setConversationId(conversation_id);
+          setConversationId(conversation_id!);
           setMessages((prev) => [
             ...prev,
-            { role: "bot", text: answer, traffic_stats, traffic_images },
+            {
+              role: "bot",
+              text: answer,
+              traffic_stats,
+              traffic_images,
+              sources,
+            },
           ]);
           setInput("");
         },
@@ -150,7 +164,7 @@ export default function Chatbot() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-gray-800 bg-linear-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
+                <h2 className="text-sm font-bold bg-linear-to-r from-violet-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">
                   Smart Assistant
                 </h2>
                 <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -194,17 +208,6 @@ export default function Chatbot() {
                   </details>
                 )}
 
-                {msg.trafficStats && (
-                  <details className="mt-2 text-xs text-gray-600 ml-2">
-                    <summary className="cursor-pointer hover:text-gray-800">
-                      Traffic stats
-                    </summary>
-                    <pre className="mt-2 p-2 bg-gray-100 rounded border border-gray-200 overflow-x-auto text-[10px] text-gray-700">
-                      {JSON.stringify(msg.trafficStats, null, 2)}
-                    </pre>
-                  </details>
-                )}
-
                 {msg.traffic_images && msg.traffic_images.length > 0 && (
                   <div className="mt-2 ml-2">
                     <div className="text-xs text-gray-600 mb-2">
@@ -221,6 +224,28 @@ export default function Chatbot() {
                       ))}
                     </div>
                   </div>
+                )}
+                {msg.sources && msg.sources.length > 0 && (
+                  <details className="mt-2 text-xs text-gray-600 ml-2">
+                    <summary className="cursor-pointer hover:text-gray-800">
+                      Nguồn tham khảo
+                    </summary>
+                    <ul className="mt-2 p-2 bg-gray-100 rounded border border-gray-200 space-y-1 text-[10px]">
+                      {msg.sources.map((src: Source, i) => (
+                        <li key={i} className="truncate">
+                          •{" "}
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {src.title || src.url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 )}
               </div>
             ))}
@@ -248,7 +273,7 @@ export default function Chatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nhập câu hỏi...&#10;VD: Tính đường từ 10.77,106.68 tới 10.78,106.70"
+              placeholder="Nhập câu hỏi..."
               className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
               rows={2}
               disabled={isPending}

@@ -13,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-
 import { FORMAT } from "../../utils/appConstant";
-import useDownLoadAlert from "./useDownLoadAlert";
-import type { Alert } from "./AlertDetail";
-interface AlertDownloadSectionProps {
-  type: string;
-}
-const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
+import { escapeCSV } from "../../utils/helper";
+import type { Building } from "./AdminBuilding";
+
+import useDowloadBuilding from "./useDowloadBuilding";
+
+const BuildingDownloadSection = () => {
   const downloadFile = (
     content: string,
     filename: string,
@@ -36,42 +35,47 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
-  const { isPending, download } = useDownLoadAlert();
+  const { isPending, download } = useDowloadBuilding();
   const downloadAsJSON = () => {
     download(
-      { type },
+      {},
       {
         onSuccess: (data) => {
           const content = JSON.stringify(data || [], null, 2);
-          downloadFile(content, "alert.json", "application/json;charset=utf-8");
+          downloadFile(
+            content,
+            "buildings.json",
+            "application/json;charset=utf-8"
+          );
         },
       }
     );
   };
+
   const downloadAsHTML = () => {
     download(
-      { type },
+      {},
       {
         onSuccess: (data) => {
           const list = data || [];
+
           const htmlRows = list
             .map(
-              (item: Alert) => `
-            <tr>
-              <td>${item.id ?? ""}</td>
-              <td>Alert</td>
-              <td>${item.name ?? ""}</td>
-              <td>${item.category ?? ""}</td>
-              <td>${item.subCategory ?? ""}</td>
-              <td>${item.address?.addressLocality ?? ""}</td>
-              <td>${item.address?.addressRegion ?? ""}</td>
-              <td>${item.address?.streetAddress ?? ""}</td>
-              <td>${item.location?.type ?? ""}</td>
-              <td>${item.location?.coordinates?.[0] ?? ""}</td>
-              <td>${item.location?.coordinates?.[1] ?? ""}</td>
-              <td>${item.dateIssued ?? ""}</td>
-              <td>${item.description ?? ""}</td>
-            </tr>`
+              (item: Building) => `
+              <tr>
+                <td>${item.id ?? ""}</td>
+                <td>${item.name ?? ""}</td>
+                <td>${item.category?.join(", ") ?? ""}</td>
+                <td>${item.address?.addressLocality ?? ""}</td>
+                <td>${item.address?.addressRegion ?? ""}</td>
+                <td>${item.address?.streetAddress ?? ""}</td>
+                <td>${item.location?.type ?? ""}</td>
+                <td>${item.location?.coordinates?.[0] ?? ""}</td>
+                <td>${item.location?.coordinates?.[1] ?? ""}</td>
+                <td>${item.dateCreated ?? ""}</td>
+                <td>${item.dateUpdated ?? ""}</td>
+                <td>${item.description ?? ""}</td>
+              </tr>`
             )
             .join("");
 
@@ -79,19 +83,18 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
           <table border="1">
             <thead>
               <tr>
-                <th>id_</th>
-                <th>type_</th>
-                <th>name_</th>
-                <th>category_</th>
-                <th>subCategory_</th>
-                <th>address_addressLocality_</th>
-                <th>address_addressRegion_</th>
-                <th>address_streetAddress_</th>
-                <th>location__type_</th>
-                <th>location__coordinates__0_</th>
-                <th>location__coordinates__1_</th>
-                <th>dateIssued_</th>
-                <th>description_</th>
+                <th>id</th>
+                <th>name</th>
+                <th>category</th>
+                <th>addressLocality</th>
+                <th>addressRegion</th>
+                <th>streetAddress</th>
+                <th>location.type</th>
+                <th>lng</th>
+                <th>lat</th>
+                <th>dateCreated</th>
+                <th>dateUpdated</th>
+                <th>description</th>
               </tr>
             </thead>
             <tbody>
@@ -100,56 +103,64 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
           </table>
         `;
 
-          downloadFile(htmlContent, "alert.html", "text/html;charset=utf-8");
+          downloadFile(
+            htmlContent,
+            "buildings.html",
+            "text/html;charset=utf-8"
+          );
         },
       }
     );
   };
+
   const downloadAsCSV = () => {
     const headers = [
-      "id_",
-      "type_",
-      "name_",
-      "category_",
-      "subCategory_",
-      "address_addressLocality_",
-      "address_addressRegion_",
-      "address_streetAddress_",
-      "location__type_",
-      "location__coordinates__0_",
-      "location__coordinates__1_",
-      "dateIssued_",
-      "description_",
+      "id",
+      "name",
+      "category",
+      "addressLocality",
+      "addressRegion",
+      "streetAddress",
+      "location.type",
+      "lng",
+      "lat",
+      "dateCreated",
+      "dateUpdated",
+      "description",
     ];
 
     const rows: string[] = [headers.join(",")];
 
     download(
-      { type },
+      {},
       {
         onSuccess: (data) => {
           const list = data || [];
 
-          list.forEach((item: Alert) => {
+          list.forEach((item: Building) => {
             const row = [
-              item.id,
-              "Alert",
-              item.name,
-              item.category,
-              item.subCategory,
-              item.address.addressLocality,
-              item.address.addressRegion,
-              `"${item.address.streetAddress}"`,
-              item.location.type,
-              item.location.coordinates[0],
-              item.location.coordinates[1],
-              item.dateIssued,
-              `"${item.description}"`,
+              escapeCSV(item.id),
+              escapeCSV(item.name),
+              escapeCSV(item.category?.join(", ") ?? ""),
+              escapeCSV(item.address?.addressLocality),
+              escapeCSV(item.address?.addressRegion),
+              escapeCSV(item.address?.streetAddress),
+              escapeCSV(item.location?.type),
+              escapeCSV(item.location?.coordinates?.[0]),
+              escapeCSV(item.location?.coordinates?.[1]),
+              escapeCSV(item.dateCreated),
+              escapeCSV(item.dateUpdated),
+              escapeCSV(item.description),
             ].join(",");
 
             rows.push(row);
           });
-          downloadFile(rows.join("\n"), `alert.csv`, "text/csv");
+
+          downloadFile(
+            rows.join("\n"),
+            "buildings.csv",
+            "text/csv;charset=utf-8"
+          );
         },
       }
     );
@@ -166,9 +177,6 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
       case "HTML":
         downloadAsHTML();
         break;
-      //   case "RDF":
-      //     downloadAsRDF();
-      //     break;
       default:
         console.warn("Unsupported format:", format);
     }
@@ -220,22 +228,8 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
           </button>
         ))}
       </div>
-      <p className="mt-3 text-xs text-gray-500 flex items-center gap-1">
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </p>
     </div>
   );
 };
-export default AlertDownloadSection;
+
+export default BuildingDownloadSection;

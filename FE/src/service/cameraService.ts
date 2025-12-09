@@ -14,8 +14,9 @@
 // limitations under the License.
 // -----------------------------------------------------------------------------
 import type { CameraCreate } from "../feature/traffic-monitor/CameraAdmin";
+import type { UpdateCameraConfigParams } from "../feature/traffic-monitor/useUpdarteCameraConfig";
 import type { PaginationParams } from "../types/PaginationParams";
-import { API, AUTH_REQUEST } from "../utils/axiosConfig";
+import { AI_REQUEST, API, AUTH_REQUEST } from "../utils/axiosConfig";
 interface CameraParams extends PaginationParams {
   kw?: string;
 }
@@ -71,6 +72,20 @@ export async function updateCamera(camera: CameraCreate) {
   try {
     const { id, on, dateCreated, dateModified, type, ...rest } = camera;
     const res = await AUTH_REQUEST.put(`/camera/${id}`, { ...rest });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || error.message || "Unknown error"
+    );
+  }
+}
+export async function updateCameraConfig(
+  cameraConfig: UpdateCameraConfigParams
+) {
+  try {
+    const res = await AI_REQUEST.post(`/setup/save`, {
+      ...cameraConfig,
+    });
     return res.data;
   } catch (error: any) {
     throw new Error(

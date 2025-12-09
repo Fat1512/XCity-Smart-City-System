@@ -43,11 +43,13 @@ export function TrafficMonitorContextProvider({ children }: Props) {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        console.log("WebSocket connected");
         setConnected(true);
         reconnectAttemptsRef.current = 0;
       };
 
       ws.onclose = (event) => {
+        console.warn("WebSocket closed:", event);
         setConnected(false);
 
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
@@ -62,7 +64,9 @@ export function TrafficMonitorContextProvider({ children }: Props) {
           }, delay);
         }
       };
-    } catch (error) {}
+    } catch (error) {
+      console.error("WebSocket connection error:", error);
+    }
   };
 
   useEffect(() => {

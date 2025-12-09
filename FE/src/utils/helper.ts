@@ -12,6 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import type { Address } from "../feature/air-quality-observed/AirQualityAdmin";
+
 // -----------------------------------------------------------------------------
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -131,4 +134,29 @@ export const mapToLabels = (dataMap, sourceList) => {
   });
 
   return result;
+};
+
+export const escapeCSV = (value: any) => {
+  if (value == null) return "";
+  let str = String(value);
+
+  str = str.replace(/"/g, '""');
+
+  if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+    return `"${str}"`;
+  }
+
+  return str;
+};
+export const extractAddress = (address: Address): string => {
+  if (!address) return "";
+  return [
+    address.streetNr,
+    address.streetAddress,
+    address.district,
+    address.addressLocality,
+    address.addressRegion,
+  ]
+    .filter(Boolean)
+    .join(", ");
 };

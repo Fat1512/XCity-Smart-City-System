@@ -64,7 +64,7 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
         TrafficFlowObserved trafficFlowObserved = objectMapper.convertValue(data, TrafficFlowObserved.class);
         trafficFlowObserved.setDateObserved(dateObserved);
 
-        trafficFlowObservedRepository.save(trafficFlowObserved);
+//        trafficFlowObservedRepository.save(trafficFlowObserved);
         log.info("Saved TrafficFlowObserved entity | cameraId: {} | dateObserved: {}",
                 trafficFlowObserved.getRefDevice(), trafficFlowObserved.getDateObserved());
     }

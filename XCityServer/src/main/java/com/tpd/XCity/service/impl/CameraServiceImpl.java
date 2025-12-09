@@ -22,11 +22,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpd.XCity.dto.request.CameraCreateRequest;
 import com.tpd.XCity.dto.response.*;
 import com.tpd.XCity.entity.device.Camera;
+import com.tpd.XCity.entity.device.CameraConfig;
 import com.tpd.XCity.entity.device.Device;
 import com.tpd.XCity.entity.device.DeviceStatus;
 import com.tpd.XCity.exception.ResourceNotFoundExeption;
 import com.tpd.XCity.mapper.CameraMapper;
 import com.tpd.XCity.mapper.DeviceMapper;
+import com.tpd.XCity.repository.CameraConfigRepository;
 import com.tpd.XCity.repository.CameraRepository;
 import com.tpd.XCity.repository.DeviceRepository;
 import com.tpd.XCity.service.CameraService;
@@ -55,6 +57,7 @@ import static com.tpd.XCity.utils.Helper.getURNId;
 @Slf4j
 public class CameraServiceImpl implements CameraService {
     private final CameraRepository cameraRepository;
+    private final CameraConfigRepository cameraConfigRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final OrionService orionService;
@@ -64,8 +67,26 @@ public class CameraServiceImpl implements CameraService {
     public CameraResponse getCamera(String id) {
         Camera camera = cameraRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundExeption("Not found camera"));
+        CameraResponse cameraResponse = cameraMapper.convertToResponse(camera);
 
-        return cameraMapper.convertToResponse(camera);
+        CameraConfig cameraConfig = cameraConfigRepository.findByStreamId(camera.getId())
+                .orElseThrow(() -> new ResourceNotFoundExeption("Not found camera config"));
+
+        cameraResponse.setCameraConfig(CameraResponse.CameraConfigResponse.builder()
+                .id(cameraConfig.getId())
+                .conf(cameraConfig.getConf())
+                .address(cameraConfig.getAddress())
+                .classes(cameraConfig.getClasses())
+                .limitFps(cameraConfig.getLimitFps())
+                .imagePts(cameraConfig.getImagePts())
+                .segmentIds(cameraConfig.getSegmentIds())
+                .streamId(cameraConfig.getStreamId())
+                .videoPath(cameraConfig.getVideoPath())
+                .trackerCfg(cameraConfig.getTrackerCfg())
+                .worldPts(cameraConfig.getWorldPts())
+                .build());
+
+        return cameraResponse;
     }
 
     @Override
@@ -85,6 +106,9 @@ public class CameraServiceImpl implements CameraService {
         orionService.createEntity(cameraMapper.toOrion(camera), DEVICE_CONTEXT);
 
         cameraRepository.save(camera);
+        cameraConfigRepository.save(CameraConfig.builder()
+                .streamId(camera.getId())
+                .build());
 
         return MessageResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_CREATED.name())

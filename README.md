@@ -198,8 +198,8 @@ PMNM/
 ### 2️⃣ Clone repo
 
 ```bash
-git clone https://github.com/Fat1512/PMNM.git
-cd PMNM
+git clone https://github.com/Fat1512/XCity-Smart-City-System.git
+cd XCity-Smart-City-System
 ```
 
 ### 3️⃣ Chạy từng thành phần (quickstart)
@@ -263,43 +263,47 @@ Thiết lập các biến môi trường cho AI service
 
 ```bash
 AI_HOST=localhost:5001
-ORION_URL = "http://localhost:1026"
 
 LLM_PROVIDER=openai
 OPENAI_MODEL=gpt-4o-mini
-OPENAI_API_KEY=your-openai-api-key
-
-#or use
+OPENAI_API_KEY=your_openai_api_key
 # LLM_PROVIDER=ollama
 # OLLAMA_MODEL=llama3.2:3b
 # OLLAMA_HOST=http://10.1.1.237:11434/
 
+ORION_URL = "http://localhost:1026"
 
 
-EMBEDDING_PROVIDER=sentence_transformer
-EMBEDDING_MODEL_NAME=bkai-foundation-models/vietnamese-bi-encoder
-#or use
 # EMBEDDING_PROVIDER=ollama
 # EMBEDDING_MODEL_NAME=nomic-embed-text:latest
+EMBEDDING_PROVIDER=sentence_transformer
+EMBEDDING_MODEL_NAME=bkai-foundation-models/vietnamese-bi-encoder
 
-REDIS_HOST=localhost
-REDIS_PORT=6739
-REDIS_USERNAME=your-username
-REDIS_PASSWORD=your-password
+# REDIS_HOST=localhost
+# REDIS_PORT=6739
+# REDIS_USERNAME=
+# REDIS_PASSWORD=
 
-AWS_ACCESS_KEY_ID=your-access-key-id
-AWS_SECRET_ACCESS_KEY=your-secret-access-key
-AWS_DEFAULT_REGION=your-region
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_DEFAULT_REGION=ap-southeast-2
 
 WATCHER_S3_BUCKET=tadel-media
 WATCHER_S3_PREFIX=rss/
 WATCHER_S3_INTERVAL=60
 
-# WATCHER_RSS_URLS=https://vnexpress.net/rss/thoi-su.rss
-WATCHER_RSS_INTERVAL=600
+WATCHER_RSS_URLS=https://vnexpress.net/rss/thoi-su.rss
+WATCHER_RSS_INTERVAL=60
 
 KNOWLEDGE_S3_ENABLED=true
 KNOWLEDGE_RSS_ENABLED=true
+
+# Config
+MONGO_URI=mongodb://tanle92:090224Tan@localhost:27017/xcity?authSource=admin
+
+# Reranker
+RERANKER_PROVIDER=jina
+RERANK_THRESHOLD=0.1
 10.1.1.237
 
 ```
@@ -310,52 +314,8 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-uvicorn run:app --host 0.0.0.0 --port 5001 --ws-max-size 20000000 //khởi chạy server
+uvicorn run:app --host 0.0.0.0 --port 5001 --ws-max-size 20000000
 
-```
-
-Giả lập camera
-
-1. Chuẩn bị sẵn 1 video về lưu lượng giao thông tại thư mục `AI/` (VD: video2.mp4)
-2. Sau khi khởi chạy thành công backend tạo 1 camera.
-3. Tạo một file JSON `streams.json` chứa mảng các định nghĩa luồng camera.  
-   Lưu file này dưới thư mục `AI/config` hoặc sử dụng đường dẫn tuyệt đối.
-
-Ví dụ `streams.json`:
-
-```json
-[
-  {
-    "stream_id": "urn:ngsi-ld:Camera:70027910-094d-4567-82bf-341ad3156f8e", //sử dụng id camera đã được tạo ra từ bước 2
-    "video_path": "video2.mp4",
-    "limit_fps": 5,
-    "image_pts": [
-      [6, 80],
-      [308, 4],
-      [635, 236],
-      [206, 353]
-    ],
-    "world_pts": [
-      [0, 0],
-      [15, 0],
-      [15, 15],
-      [0, 15]
-    ],
-    "classes": [2, 3, 5, 6],
-    "conf": 0.35,
-    "tracker_cfg": "bytetrack.yaml",
-    "yolo_weights": "yolo11n.pt",
-    "segment_ids": ["1328044064", "1265743180"]
-  }
-]
-```
-
-#### Lấy `image_pts` (4 điểm ánh xạ từ ảnh → bản đồ)
-
-Bạn có thể sử dụng script `point_marker` để chọn trực tiếp các điểm trên ảnh từ video.
-
-```bash
-python ./point_marker.py
 ```
 
 #### Tạo các Subscription cho server nhận các thay đổi từ Orion-ld
@@ -437,7 +397,7 @@ curl -X POST "http://localhost:1026/ngsi-ld/v1/subscriptions" \
             },
             "status": "ok"
         },
-        "jsonldContext": "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
+        "@context": "https://smart-data-models.github.io/dataModel.Transportation/context.jsonld"
 }'
 ```
 

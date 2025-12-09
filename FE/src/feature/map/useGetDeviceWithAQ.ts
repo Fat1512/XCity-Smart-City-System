@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // -----------------------------------------------------------------------------
-import MiniSpinner from "../../ui/MiniSpinner";
-import SensorMap from "./SensorMap";
-import useGetDeviceWithAQ from "./useGetDeviceWithAQ";
+import { useQuery } from "@tanstack/react-query";
+import { getDevicesWithAQ } from "../../service/deviceService";
+export default function useGetDeviceWithAQ() {
+  const { isLoading, data: devices } = useQuery({
+    queryKey: ["devices-aq"],
+    queryFn: async () => getDevicesWithAQ(),
+    staleTime: 0,
+  });
 
-const SensorWrapper = () => {
-  const { isLoading, devices } = useGetDeviceWithAQ();
-  if (isLoading) return <MiniSpinner />;
-  return <SensorMap sensorLocations={devices} />;
-};
-
-export default SensorWrapper;
+  return { isLoading, devices };
+}

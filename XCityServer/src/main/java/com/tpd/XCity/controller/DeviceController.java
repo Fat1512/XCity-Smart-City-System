@@ -18,10 +18,7 @@
 package com.tpd.XCity.controller;
 
 import com.tpd.XCity.dto.request.DeviceCreateRequest;
-import com.tpd.XCity.dto.response.DeviceLocation;
-import com.tpd.XCity.dto.response.DeviceResponse;
-import com.tpd.XCity.dto.response.MessageResponse;
-import com.tpd.XCity.dto.response.PageResponse;
+import com.tpd.XCity.dto.response.*;
 import com.tpd.XCity.service.DeviceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +51,12 @@ public class DeviceController {
     @GetMapping("/device/{id}")
     public ResponseEntity<DeviceResponse> getDevice(@PathVariable String id) {
         DeviceResponse pageResponse = deviceService.getDeviceById(id);
+        return ResponseEntity.ok(pageResponse);
+    }
+
+    @GetMapping("/devices-aq")
+    public ResponseEntity<List<DeviceMapWithAQResponse>> getAllDeviceWithAQ() {
+        List<DeviceMapWithAQResponse> pageResponse = deviceService.getDeviceMap();
         return ResponseEntity.ok(pageResponse);
     }
 
