@@ -59,7 +59,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         String id = (String) data.get("id");
         String notifiedAtStr = (String) data.getOrDefault("dateObserved", "");
 
-        if(notifiedAtStr.isEmpty() || id.isEmpty()) {
+        if (notifiedAtStr.isEmpty() || id.isEmpty()) {
             notifiedAtStr = (String) measurement.get("notifiedAt");
         }
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
@@ -80,7 +80,7 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
         airQualityObserved.setId(UUID.randomUUID().toString());
         airQualityObserved.setRefDevice(id);
         airQualityObserved.setDateObserved(dateObserved);
-//        airQualityObservedRepository.save(airQualityObserved);
+        airQualityObservedRepository.save(airQualityObserved);
 
         messagingTemplate.convertAndSend("/topic/air-quality",
                 airQualityObservedMapper.convertToResponse(airQualityObserved));
@@ -124,50 +124,44 @@ public class AirQualityObservedServiceImpl implements AirQualityObservedService 
     @Override
     public AirQualityDailyStatics getStatics(String sensorId, String date) {
         LocalDate localDate = LocalDate.parse(date);
-
         ZoneId zoneVN = ZoneId.of("Asia/Ho_Chi_Minh");
 
-        Instant start = localDate
-                .atStartOfDay(zoneVN)
-                .withZoneSameInstant(ZoneOffset.UTC)
-                .toInstant();
-
-        Instant end = localDate
-                .atTime(LocalTime.MAX)
-                .atZone(zoneVN)
-                .withZoneSameInstant(ZoneOffset.UTC)
-                .toInstant();
-
+        Instant start = localDate.atStartOfDay(zoneVN).toInstant();
+        Instant end = localDate.atTime(LocalTime.MAX).atZone(zoneVN).toInstant();
 
         List<AirQualityDailyStatics.AirQualityDailyValue> values =
                 airQualityObservedRepository.getAirQualityByHourRange(sensorId, start, end);
-
-
-        Map<LocalDateTime, AirQualityDailyStatics.AirQualityDailyValue> valueMap = new HashMap<>();
+        Map<Instant, AirQualityDailyStatics.AirQualityDailyValue> valueMap = new HashMap<>();
         for (var v : values) {
-            valueMap.put(v.getHour(), v);
+            Instant hourInstant = v.getHour();
+            valueMap.put(hourInstant, v);
         }
-
-
         List<AirQualityDailyStatics.AirQualityDailyValue> fullList = new ArrayList<>();
 
         for (int h = 0; h < 24; h++) {
-            LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
+            Instant hourInstant = localDate
+                    .atTime(h, 0)
+                    .atZone(zoneVN)
+                    .toInstant();
 
-            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(hourLocalDateTime);
+            AirQualityDailyStatics.AirQualityDailyValue value = valueMap.get(hourInstant);
+
             if (value == null) {
                 value = AirQualityDailyStatics.AirQualityDailyValue.builder()
-                        .hour(hourLocalDateTime)
+                        .hour(hourInstant)
                         .build();
             }
+
             fullList.add(value);
         }
 
         return AirQualityDailyStatics.builder()
                 .sensorId(sensorId)
-                .dataPoints(fullList.stream()
-                        .sorted(Comparator.comparing(AirQualityDailyStatics.AirQualityDailyValue::getHour))
-                        .collect(Collectors.toList()))
+                .dataPoints(
+                        fullList.stream()
+                                .sorted(Comparator.comparing(AirQualityDailyStatics.AirQualityDailyValue::getHour))
+                                .collect(Collectors.toList())
+                )
                 .build();
     }
 

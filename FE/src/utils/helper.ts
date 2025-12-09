@@ -160,3 +160,24 @@ export const extractAddress = (address: Address): string => {
     .filter(Boolean)
     .join(", ");
 };
+
+export function epochSecondsToDateTime(
+  epochSeconds: number,
+  timeZone: string = "Asia/Ho_Chi_Minh"
+): string {
+  const date = new Date(epochSeconds * 1000);
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  // "2025-12-09, 00:00:00" → "2025-12-09 00:00:00"
+  return formatter.format(date).replace(",", "");
+}
