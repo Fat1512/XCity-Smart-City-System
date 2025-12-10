@@ -57,7 +57,7 @@ export default function Map({ buildings }: MapProps) {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style: "mapbox://styles/mapbox/light-v11", // 🌞 Style ban ngày
       center: [DEFAULT_LNG, DEFAULT_LAT],
       zoom,
       pitch: 60,
@@ -69,19 +69,23 @@ export default function Map({ buildings }: MapProps) {
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
 
     map.on("load", () => {
+      // Terrain
       map.addSource("mapbox-dem", {
         type: "raster-dem",
         url: "mapbox://mapbox.mapbox-terrain-dem-v1",
         tileSize: 512,
         maxzoom: 14,
       });
+
       map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
 
+      // Find label layer to insert 3D building below labels
       const layers = map.getStyle().layers;
       const labelLayerId = layers?.find(
         (layer) => layer.type === "symbol" && layer.layout?.["text-field"]
       )?.id;
 
+      // 3D Buildings
       map.addLayer(
         {
           id: "3d-buildings",
@@ -91,10 +95,10 @@ export default function Map({ buildings }: MapProps) {
           type: "fill-extrusion",
           minzoom: 15,
           paint: {
-            "fill-extrusion-color": "#aaa",
+            "fill-extrusion-color": "#d4d4d4",
             "fill-extrusion-height": ["get", "height"],
             "fill-extrusion-base": ["get", "min_height"],
-            "fill-extrusion-opacity": 0.6,
+            "fill-extrusion-opacity": 0.85,
           },
         },
         labelLayerId
@@ -102,10 +106,10 @@ export default function Map({ buildings }: MapProps) {
 
       buildings.forEach((b) => {
         if (!b.location?.coordinates) return;
-        const [markerLng, markerLat] = b.location.coordinates;
+        const [lng, lat] = b.location.coordinates;
 
-        const marker = new mapboxgl.Marker({ color: "#ff4757" })
-          .setLngLat([markerLng, markerLat])
+        const marker = new mapboxgl.Marker({ color: "#e63946" })
+          .setLngLat([lng, lat])
           .addTo(map);
 
         marker.getElement().addEventListener("click", () => {
