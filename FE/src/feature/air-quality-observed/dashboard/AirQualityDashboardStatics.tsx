@@ -151,7 +151,7 @@ const AirQualityDashboard4Charts = () => {
 
   useEffect(() => {
     setSelectedSensors([]);
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedDate, viewMode]);
 
   useEffect(() => {
     if (!statics || selectedSensors.length === 0) return;
