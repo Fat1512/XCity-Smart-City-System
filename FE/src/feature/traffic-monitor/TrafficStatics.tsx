@@ -95,7 +95,8 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras = [] }) => {
 
     statics.dataPoints.forEach((point: any) => {
       const date = new Date(point.hour * 1000);
-      const hour = date.getUTCHours();
+      const hour = date.getHours();
+      console.log(hour);
       avgSpeed[hour] = point.avgSpeed ?? 0;
       intensity[hour] = point.totalIntensity ?? 0;
     });
