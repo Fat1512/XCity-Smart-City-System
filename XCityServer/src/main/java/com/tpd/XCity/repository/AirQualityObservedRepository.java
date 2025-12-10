@@ -30,7 +30,7 @@ import java.util.Optional;
 
 @Repository
 public interface AirQualityObservedRepository extends MongoRepository<AirQualityObserved, String> {
-    Optional<AirQualityObserved> findFirstByRefDeviceOrderByDateObservedAsc(String refDevice);
+    Optional<AirQualityObserved> findFirstByRefDeviceOrderByDateObservedDesc(String refDevice);
 
     @Aggregation(pipeline = {
             "{ $match: { " +

@@ -91,13 +91,16 @@ public class DeviceServiceImpl implements DeviceService {
             DeviceMapWithAQResponse deviceMapWithAQResponse = deviceMapper.convertToDeviceMapWithAQ(device);
 
             AirQualityObserved airQualityObserved = airQualityObservedRepository
-                    .findFirstByRefDeviceOrderByDateObservedAsc(device.getId())
+                    .findFirstByRefDeviceOrderByDateObservedDesc(device.getId())
                     .orElse(new AirQualityObserved());
 
             deviceMapWithAQResponse.setAirQualityLatest(DeviceMapWithAQResponse.AirQualityLatest.builder()
                     .so2(airQualityObserved.getSo2())
                     .co2(airQualityObserved.getCo2())
+                    .temperature(airQualityObserved.getTemperature())
                     .o3(airQualityObserved.getO3())
+                    .relativeHumidity(airQualityObserved.getRelativeHumidity())
+                    .pm10(airQualityObserved.getPm10())
                     .pm1(airQualityObserved.getPm1())
                     .pm25(airQualityObserved.getPm25())
                     .id(airQualityObserved.getId())
