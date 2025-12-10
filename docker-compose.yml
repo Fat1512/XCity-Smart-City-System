@@ -128,7 +128,7 @@ services:
       - "443:443"
     environment:
       - VITE_BASE_URL=/backend-service/xcity-service/api/v1
-      - VITE_AI_URL=https://holli-unable-nonsymbiotically.ngrok-free.dev/api/v1
+      - VITE_AI_URL=https://tadel.fatdevops.site/api/v1
       - VITE_CAMERA_AI_URL=wss://holli-unable-nonsymbiotically.ngrok-free.dev/ws/frontend
       - VITE_MAPBOX_TOKEN=${MAPBOX_TOKEN}
     volumes:
