@@ -70,7 +70,7 @@ public class CameraServiceImpl implements CameraService {
         CameraResponse cameraResponse = cameraMapper.convertToResponse(camera);
 
         CameraConfig cameraConfig = cameraConfigRepository.findByStreamId(camera.getId())
-                .orElseThrow(() -> new ResourceNotFoundExeption("Not found camera config"));
+                .orElse(new CameraConfig());
 
         cameraResponse.setCameraConfig(CameraResponse.CameraConfigResponse.builder()
                 .id(cameraConfig.getId())

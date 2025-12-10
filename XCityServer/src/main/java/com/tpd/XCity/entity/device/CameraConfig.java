@@ -42,7 +42,7 @@ public class CameraConfig {
     private List<String> classes;
     private double conf;
     @Field("image_pts")
-    private List<List<Integer>> imagePts;
+    private List<List<Double>> imagePts;
     @Field("limit_fps")
     private int limitFps;
     @Field("segment_ids")
@@ -52,5 +52,5 @@ public class CameraConfig {
     @Field("video_path")
     private String videoPath;
     @Field("world_pts")
-    private List<List<Integer>> worldPts;
+    private List<List<Double>> worldPts;
 }
