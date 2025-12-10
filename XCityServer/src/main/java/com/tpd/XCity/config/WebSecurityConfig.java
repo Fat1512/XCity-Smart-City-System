@@ -62,6 +62,7 @@ public class WebSecurityConfig {
                                 "/api/v1/traffic/notify",
                                 "/api/v1/traffic/download-statics/",
                                 "/api/v1/building/init",
+                                "/api/v1/ws/**",
                                 "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/air/monthly-statics",
