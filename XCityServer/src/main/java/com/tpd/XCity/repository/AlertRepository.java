@@ -35,24 +35,23 @@ import java.util.Map;
 public interface AlertRepository extends MongoRepository<Alert, String> {
     Page<Alert> findBySolved(boolean solved, Pageable pageable);
 
-    List<Alert> findByDateCreatedBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+    List<Alert> findByDateCreatedBetween(Instant start, Instant end, Pageable pageable);
 
     List<Alert> findAllBySolved(boolean isSolved);
 
 
     long countBySolvedAndDateCreatedBetween(boolean solved,
-                                            LocalDateTime start,
-                                            LocalDateTime end);
+                                            Instant start, Instant end);
 
     @Aggregation(pipeline = {
             "{ $match: { dateCreated: { $gte: ?0, $lte: ?1 } } }",
             "{ $group: { _id: '$category', count: { $sum: 1 } } }"
     })
-    List<Map<String, Object>> groupByCategory(LocalDateTime start, LocalDateTime end);
+    List<Map<String, Object>> groupByCategory(Instant start, Instant end);
 
     @Aggregation(pipeline = {
             "{ $match: { dateCreated: { $gte: ?0, $lte: ?1 } } }",
             "{ $group: { _id: '$subCategory', count: { $sum: 1 } } }"
     })
-    List<Map<String, Object>> groupBySubCategory(LocalDateTime start, LocalDateTime end);
+    List<Map<String, Object>> groupBySubCategory(Instant start, Instant end);
 }

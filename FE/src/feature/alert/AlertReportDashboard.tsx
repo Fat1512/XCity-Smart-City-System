@@ -25,7 +25,7 @@ import {
 import { Pie, Bar } from "react-chartjs-2";
 import useGetAlertStatics from "./useGetAlertStatics";
 import type { Alert } from "./AlertDetail";
-import { mapToLabels } from "../../utils/helper";
+import { extractAddress, mapToLabels } from "../../utils/helper";
 import {
   ALERT_CATEGORIES,
   ALERT_SUB_CATEGORIES,
@@ -303,12 +303,15 @@ const AlertReportDashboard = () => {
                   </td>
 
                   <td className="py-3 px-4 text-sm font-medium text-gray-800">
-                    {alert.name}
+                    {extractAddress(alert.address)}
                   </td>
 
                   <td className="py-3 px-4">
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                      {alert.category}
+                      {
+                        ALERT_CATEGORIES.find((a) => a.value === alert.category)
+                          ?.label
+                      }
                     </span>
                   </td>
 

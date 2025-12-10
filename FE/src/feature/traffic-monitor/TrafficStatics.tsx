@@ -20,32 +20,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import CreatableSelect from "react-select/creatable";
 import type { MultiValue } from "react-select";
 import dayjs from "dayjs";
-import {
-  Chart as ChartJS,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  BarElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Line, Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 
 import { type CameraOverviewResponse } from "./useGetAllCamera";
 import useGetStaticsTraffic from "./useGetStaticsTraffic";
 import TrafficDownloadSection from "./TrafficDownloadSection";
 import MetaCreateionAccordion from "../../ui/MetaCreateionAccordion";
 
-ChartJS.register(
-  LineElement,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend
-);
 export interface TrafficChartData {
   [cameraUrn: string]: TrafficDataPoint;
 }
@@ -113,7 +94,8 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras = [] }) => {
     const intensity = Array(24).fill(0);
 
     statics.dataPoints.forEach((point: any) => {
-      const hour = new Date(point.hour).getHours();
+      const date = new Date(point.hour * 1000);
+      const hour = date.getUTCHours();
       avgSpeed[hour] = point.avgSpeed ?? 0;
       intensity[hour] = point.totalIntensity ?? 0;
     });
@@ -137,18 +119,6 @@ const TrafficStatics: React.FC<TrafficStaticsProps> = ({ cameras = [] }) => {
       })),
     [chartData, cameras]
   );
-
-  // const intensityDatasets = useMemo(
-  //   () =>
-  //     Object.entries(chartData).map(([id, d], idx) => ({
-  //       label: cameras?.find((c) => c.id === id)?.address.streetAddress || id,
-  //       data: d.intensity,
-  //       backgroundColor: `hsla(${idx * 60}, 70%, 50%, 0.5)`,
-  //       borderRadius: 6,
-  //       barThickness: 18,
-  //     })),
-  //   [chartData, cameras]
-  // );
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>

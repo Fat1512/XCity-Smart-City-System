@@ -35,10 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,7 +61,7 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
         TrafficFlowObserved trafficFlowObserved = objectMapper.convertValue(data, TrafficFlowObserved.class);
         trafficFlowObserved.setDateObserved(dateObserved);
 
-//        trafficFlowObservedRepository.save(trafficFlowObserved);
+        trafficFlowObservedRepository.save(trafficFlowObserved);
         log.info("Saved TrafficFlowObserved entity | cameraId: {} | dateObserved: {}",
                 trafficFlowObserved.getRefDevice(), trafficFlowObserved.getDateObserved());
     }
@@ -72,29 +69,34 @@ public class TrafficFlowObservedServiceImpl implements TrafficFlowObservedServic
     @Override
     public TrafficStaticsResponse getDailyStatics(String refDevice, String date) {
         LocalDate localDate = LocalDate.parse(date);
+        ZoneId zoneVN = ZoneId.of("Asia/Ho_Chi_Minh");
+
+        Instant start = localDate.atStartOfDay(zoneVN).toInstant();
+        Instant end = localDate.atTime(LocalTime.MAX).atZone(zoneVN).toInstant();
 
 
         List<TrafficStaticsResponse.StaticsValue> results = trafficFlowObservedRepository.getHourlyStatics(
-                refDevice,
-                localDate.atStartOfDay(),
-                localDate.plusDays(1).atStartOfDay()
+                refDevice, start, end
         );
 
-        TreeMap<LocalDateTime, TrafficStaticsResponse.StaticsValue> valueMap = new TreeMap<>();
+        TreeMap<Instant, TrafficStaticsResponse.StaticsValue> valueMap = new TreeMap<>();
         for (var v : results) {
-            valueMap.put(v.getHour(), v);
+            Instant hourInstant = v.getHour();
+            valueMap.put(hourInstant, v);
         }
 
 
         List<TrafficStaticsResponse.StaticsValue> fullList = new ArrayList<>();
-
         for (int h = 0; h < 24; h++) {
 
-            LocalDateTime hourLocalDateTime = localDate.atTime(h, 0);
-            TrafficStaticsResponse.StaticsValue value = valueMap.get(hourLocalDateTime);
+            Instant hourInstant = localDate
+                    .atTime(h, 0)
+                    .atZone(zoneVN)
+                    .toInstant();
+            TrafficStaticsResponse.StaticsValue value = valueMap.get(hourInstant);
             if (value == null) {
                 value = TrafficStaticsResponse.StaticsValue.builder()
-                        .hour(hourLocalDateTime)
+                        .hour(hourInstant)
                         .build();
             }
             fullList.add(value);

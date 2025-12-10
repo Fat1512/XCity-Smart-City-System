@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -44,5 +45,6 @@ public interface TrafficFlowObservedRepository extends MongoRepository<TrafficFl
                     "} }",
             "{ $sort: { 'hour': 1 } }"
     })
-    List<TrafficStaticsResponse.StaticsValue> getHourlyStatics(String refDevice, LocalDateTime startDate, LocalDateTime endDate);
+    List<TrafficStaticsResponse.StaticsValue> getHourlyStatics(String refDevice, Instant start,
+                                                               Instant end);
 }
