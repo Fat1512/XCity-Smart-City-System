@@ -63,11 +63,11 @@ public class CameraResponse {
         private String address;
         private List<String> classes;
         private double conf;
-        private List<List<Integer>> imagePts;
+        private List<List<Double>> imagePts;
         private int limitFps;
         private List<String> segmentIds;
         private String trackerCfg;
         private String videoPath;
-        private List<List<Integer>> worldPts;
+        private List<List<Double>> worldPts;
     }
 }
