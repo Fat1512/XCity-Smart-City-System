@@ -99,7 +99,7 @@ public class OrionServiceImpl implements OrionService {
         try {
             HttpEntity<String> req = new HttpEntity<>(objectMapper.writeValueAsString(entity), createJsonLdHeaders(context));
             ResponseEntity<String> response = restTemplate.exchange(ORION_URL, HttpMethod.POST, req, String.class);
-            log.info("Created building: {}", entity.get("id"));
+            log.info("Created {}: {}", context, entity.get("id"));
         } catch (Exception ex) {
             log.warn("Failed to create {}: {}", entity.get("id"), ex.getMessage());
         }

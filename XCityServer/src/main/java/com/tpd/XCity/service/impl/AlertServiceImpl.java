@@ -114,8 +114,13 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public AlertStaticsResponse getStaticsAlert(String type) {
-        LocalDateTime start = getStartDate(type);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = getStartDate(type)
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        Instant end = LocalDateTime.now()
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
 
         long total = alertRepository.findByDateCreatedBetween(start, end, Pageable.unpaged()).size();
         long solved = alertRepository.countBySolvedAndDateCreatedBetween(true, start, end);
@@ -155,8 +160,13 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public List<AlertResponse> getDataForDownload(String type) {
-        LocalDateTime start = getStartDate(type);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = getStartDate(type)
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+
+        Instant end = LocalDateTime.now()
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
 
         List<AlertResponse> latest = alertRepository
                 .findByDateCreatedBetween(start, end, Pageable.unpaged())

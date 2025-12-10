@@ -115,10 +115,24 @@ export const AirQualityProvider = ({
           resetTimer();
         });
       },
-      onWebSocketClose: () => {
-        console.log("Disconnected from Air Quality WebSocket");
+      onStompError: (frame) => {
+        console.error("❌ STOMP Error: ", frame);
+        console.error("STOMP headers:", frame.headers);
+        console.error("STOMP body:", frame.body);
+      },
+
+      onWebSocketError: (event) => {
+        console.error("❌ WebSocket error:", event);
+      },
+
+      onWebSocketClose: (event) => {
+        console.warn("⚠️ WebSocket closed:", event);
         setConnected(false);
         setActive(false);
+      },
+
+      onDisconnect: () => {
+        console.warn("⚠️ STOMP client disconnected");
       },
     });
 

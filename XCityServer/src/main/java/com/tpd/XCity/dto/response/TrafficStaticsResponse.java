@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,14 +35,14 @@ public class TrafficStaticsResponse {
 
     private String refDevice;
     private List<StaticsValue> dataPoints;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
     public static class StaticsValue {
 
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-        private LocalDateTime hour;
+        private Instant hour;
         private Integer totalIntensity;
         private Double avgSpeed;
     }

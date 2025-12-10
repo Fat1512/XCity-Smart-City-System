@@ -42,6 +42,7 @@ import {
 import useCreateAlert, { type AlertCreateRequest } from "./useCreateAlert";
 import { toast } from "react-toastify";
 import { geocodeAddress } from "../../service/externalAPI";
+import ErrorMessage from "../../ui/ErrorMessage";
 
 const modalStyle = {
   position: "absolute" as const,
@@ -63,8 +64,13 @@ interface AlertModalProps {
 }
 
 const AlertModal = ({ open, setOpen }: AlertModalProps) => {
-  const { control, setValue, handleSubmit, watch } =
-    useForm<AlertCreateRequest>({});
+  const {
+    control,
+    setValue,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<AlertCreateRequest>({});
   const { isPending, createAlert } = useCreateAlert();
 
   const location = watch("location");
@@ -188,7 +194,6 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
 
           <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 3 }}>
             <Stack spacing={3}>
-              {/* Name */}
               <Controller
                 name="name"
                 control={control}
@@ -221,6 +226,7 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                 <Controller
                   name="category"
                   control={control}
+                  rules={{ required: "Vui lòng chọn loại cảnh báo" }}
                   render={({ field }) => (
                     <Stack direction="row" spacing={1.5}>
                       {ALERT_CATEGORIES.map((cat) => (
@@ -256,9 +262,11 @@ const AlertModal = ({ open, setOpen }: AlertModalProps) => {
                     </Stack>
                   )}
                 />
+                {errors.category && (
+                  <ErrorMessage message={errors.category.message} />
+                )}
               </Box>
 
-              {/* Sub Category */}
               <Box>
                 <Typography
                   variant="body2"
