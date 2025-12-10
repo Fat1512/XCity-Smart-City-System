@@ -181,3 +181,6 @@ export function epochSecondsToDateTime(
   // "2025-12-09, 00:00:00" → "2025-12-09 00:00:00"
   return formatter.format(date).replace(",", "");
 }
+
+export const safeNum = (value: number | null | undefined, digits = 1) =>
+  value != null ? value.toFixed(digits) : "N/A";

@@ -19,9 +19,19 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useAirQuality } from "../../context/AirQualityContext";
 import type { Location } from "../building/AdminBuilding";
 import type { Address } from "../air-quality-observed/AirQualityAdmin";
+import { safeNum } from "../../utils/helper";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-
+const METRICS = [
+  { key: "pm1", label: "PM1.0", unit: "μg/m³", digits: 1 },
+  { key: "pm25", label: "PM2.5", unit: "μg/m³", digits: 1 },
+  { key: "pm10", label: "PM10", unit: "μg/m³", digits: 1 },
+  { key: "co2", label: "CO₂", unit: "ppm", digits: 0 },
+  { key: "o3", label: "O₃", unit: "μg/m³", digits: 1 },
+  { key: "so2", label: "SO₂", unit: "μg/m³", digits: 1 },
+  { key: "temperature", label: "Temperature", unit: "°C", digits: 1 },
+  { key: "relativeHumidity", label: "Humidity", unit: "%", digits: 0 },
+];
 export interface SensorLocation {
   id: string;
   location: Location;
@@ -53,7 +63,7 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
     name: string;
     data: any;
   } | null>(null);
-
+  console.log(selectedSensor);
   const getAirQualityColor = (pm25: number | null) => {
     if (pm25 === null) return "#6b7280";
     if (pm25 <= 12) return "#10b981";
@@ -359,11 +369,10 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
             </button>
           </div>
 
-          {/* Content */}
           <div style={{ padding: "20px" }}>
             {selectedSensor.data ? (
               <div className="sensor-popup">
-                {/* PM2.5 Main Card */}
+                {/* PM2.5 special card */}
                 <div
                   style={{
                     background:
@@ -385,6 +394,7 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
                   >
                     PM2.5
                   </div>
+
                   <div
                     style={{
                       display: "flex",
@@ -399,12 +409,13 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
                         color: getAirQualityColor(selectedSensor.data.pm25),
                       }}
                     >
-                      {selectedSensor.data.pm25?.toFixed(1) ?? "N/A"}
+                      {safeNum(selectedSensor.data.pm25, 1)}
                     </span>
                     <span style={{ fontSize: "16px", color: "#6b7280" }}>
                       μg/m³
                     </span>
                   </div>
+
                   <div
                     style={{
                       fontSize: "14px",
@@ -417,143 +428,55 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
                   </div>
                 </div>
 
-                {/* Other Metrics Grid */}
+                {/* Dynamic metrics */}
                 <div
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
                     gap: "10px",
+                    marginTop: "14px",
                   }}
                 >
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      padding: "14px",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#6b7280",
-                        marginBottom: "4px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      PM1.0
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "20px",
-                        fontWeight: 700,
-                        color: "#1f2937",
-                      }}
-                    >
-                      {selectedSensor.data.pm1?.toFixed(1) ?? "N/A"}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                      μg/m³
-                    </div>
-                  </div>
+                  {METRICS.filter((m) => m.key !== "pm25").map((m) => {
+                    const val = selectedSensor.data[m.key];
 
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      padding: "14px",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#6b7280",
-                        marginBottom: "4px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      CO₂
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "20px",
-                        fontWeight: 700,
-                        color: "#1f2937",
-                      }}
-                    >
-                      {selectedSensor.data.co2?.toFixed(0) ?? "N/A"}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                      ppm
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      padding: "14px",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#6b7280",
-                        marginBottom: "4px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      O₃
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "20px",
-                        fontWeight: 700,
-                        color: "#1f2937",
-                      }}
-                    >
-                      {selectedSensor.data.o3?.toFixed(1) ?? "N/A"}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                      μg/m³
-                    </div>
-                  </div>
-
-                  {selectedSensor.data.temperature && (
-                    <div
-                      style={{
-                        background: "#f9fafb",
-                        padding: "14px",
-                        borderRadius: "8px",
-                        border: "1px solid #e5e7eb",
-                      }}
-                    >
+                    return (
                       <div
+                        key={m.key}
                         style={{
-                          fontSize: "12px",
-                          color: "#6b7280",
-                          marginBottom: "4px",
-                          fontWeight: 500,
+                          background: "#f9fafb",
+                          padding: "14px",
+                          borderRadius: "8px",
+                          border: "1px solid #e5e7eb",
                         }}
                       >
-                        Temperature
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            marginBottom: "4px",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {m.label}
+                        </div>
+
+                        <div
+                          style={{
+                            fontSize: "20px",
+                            fontWeight: 700,
+                            color: "#1f2937",
+                          }}
+                        >
+                          {safeNum(val, m.digits)}
+                        </div>
+
+                        <div style={{ fontSize: "11px", color: "#9ca3af" }}>
+                          {m.unit}
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          fontSize: "20px",
-                          fontWeight: 700,
-                          color: "#1f2937",
-                        }}
-                      >
-                        {selectedSensor.data.temperature.toFixed(1)}°C
-                      </div>
-                      <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                        celsius
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
 
                 {/* Timestamp */}
@@ -561,7 +484,7 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
                   style={{
                     fontSize: "12px",
                     color: "#9ca3af",
-                    marginTop: "8px",
+                    marginTop: "12px",
                     paddingTop: "12px",
                     borderTop: "1px solid #e5e7eb",
                     display: "flex",
@@ -569,13 +492,8 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
                     gap: "6px",
                   }}
                 >
-                  <span>🕒</span>
-                  <span>
-                    Last updated:{" "}
-                    {new Date(
-                      selectedSensor.data.dateObserved
-                    ).toLocaleString()}
-                  </span>
+                  🕒 Last updated:{" "}
+                  {new Date(selectedSensor.data.dateObserved).toLocaleString()}
                 </div>
               </div>
             ) : (
