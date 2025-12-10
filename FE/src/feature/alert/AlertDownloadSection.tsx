@@ -166,9 +166,7 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
       case "HTML":
         downloadAsHTML();
         break;
-      //   case "RDF":
-      //     downloadAsRDF();
-      //     break;
+
       default:
         console.warn("Unsupported format:", format);
     }
@@ -196,7 +194,7 @@ const AlertDownloadSection = ({ type }: AlertDownloadSectionProps) => {
           Tải xuống dữ liệu mở
         </label>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
         {FORMAT.map(({ label, color, icon }) => (
           <button
             key={label}
