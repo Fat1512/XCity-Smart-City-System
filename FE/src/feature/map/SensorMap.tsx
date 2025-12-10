@@ -63,7 +63,7 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
     name: string;
     data: any;
   } | null>(null);
-  console.log(selectedSensor);
+
   const getAirQualityColor = (pm25: number | null) => {
     if (pm25 === null) return "#6b7280";
     if (pm25 <= 12) return "#10b981";
@@ -258,7 +258,7 @@ const SensorMap = ({ sensorLocations }: SensorMapProps) => {
       const sensorData = dataPoints[id] || [
         sensorLocations.find((s) => s.id === id)?.airQualityLatest,
       ];
-      console.log(dataPoints);
+
       const latestData = sensorData?.[sensorData.length - 1];
       const pm25 = latestData?.pm25 ?? null;
 

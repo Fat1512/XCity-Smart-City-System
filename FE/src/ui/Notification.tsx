@@ -83,7 +83,6 @@ const Notification = () => {
     });
 
     client.onConnect = () => {
-      console.log("Alert Connected to WebSocket");
       client.subscribe("/topic/alerts", (message) => {
         const alert: Alert = JSON.parse(message.body);
         setSocketAlerts((prev) => [alert, ...prev]);

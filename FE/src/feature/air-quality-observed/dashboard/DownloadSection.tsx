@@ -112,7 +112,6 @@ const DownloadSection: React.FC<DownloadSectionProps> = ({
   };
 
   const downloadAsJSON = () => {
-    console.log(selectedSensors);
     const data = {
       metadata: {
         exportDate: new Date().toISOString(),
@@ -293,12 +292,7 @@ aq:sensor${sensorIndex}_point${pointIndex} rdf:type aq:AirQualityMeasurement ;
       case "HTML":
         downloadAsHTML();
         break;
-      case "XML":
-        downloadAsXML();
-        break;
-      case "RDF":
-        downloadAsRDF();
-        break;
+
       default:
         console.warn("Unsupported format:", format);
     }
@@ -326,7 +320,7 @@ aq:sensor${sensorIndex}_point${pointIndex} rdf:type aq:AirQualityMeasurement ;
           Tải xuống dữ liệu mở
         </label>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
         {FORMAT.map(({ label, color, icon }) => (
           <button
             key={label}

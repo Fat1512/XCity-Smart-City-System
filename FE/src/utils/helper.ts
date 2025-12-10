@@ -12,10 +12,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+// -----------------------------------------------------------------------------
 import type { Address } from "../feature/air-quality-observed/AirQualityAdmin";
 
-// -----------------------------------------------------------------------------
 export function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString("vi-VN");
@@ -107,7 +106,7 @@ export function formatTime(timestamp: string) {
 
 export function formatTimeAgo(timestamp: number): string {
   const time = new Date(timestamp * 1000);
-  console.log(timestamp);
+
   const now = new Date();
   const diff = now.getTime() - time.getTime();
 

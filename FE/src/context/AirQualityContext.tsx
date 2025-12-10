@@ -86,7 +86,6 @@ export const AirQualityProvider = ({
         console.log("Connected to Air Quality WebSocket");
         setConnected(true);
         client.subscribe("/topic/air-quality", (msg) => {
-          console.log("Received Air Quality message", msg);
           if (!msg.body) return;
           const json = JSON.parse(msg.body);
           const sensorId = json.refDevice;
@@ -115,24 +114,11 @@ export const AirQualityProvider = ({
           resetTimer();
         });
       },
-      onStompError: (frame) => {
-        console.error("❌ STOMP Error: ", frame);
-        console.error("STOMP headers:", frame.headers);
-        console.error("STOMP body:", frame.body);
-      },
-
-      onWebSocketError: (event) => {
-        console.error("❌ WebSocket error:", event);
-      },
 
       onWebSocketClose: (event) => {
         console.warn("⚠️ WebSocket closed:", event);
         setConnected(false);
         setActive(false);
-      },
-
-      onDisconnect: () => {
-        console.warn("⚠️ STOMP client disconnected");
       },
     });
 

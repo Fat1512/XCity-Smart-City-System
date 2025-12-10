@@ -24,8 +24,7 @@ function useGetBuildings() {
       const buildings = await getBuildings();
 
       const compacted = await jsonld.compact(buildings ?? [], JSONLD_CONTEXT);
-      console.log("Compacted JSON-LD:", compacted);
-      console.log(compacted["@graph"]);
+
       return compacted["@graph"] ?? [];
     },
   });
