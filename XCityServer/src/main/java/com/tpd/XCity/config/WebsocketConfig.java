@@ -50,10 +50,6 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ObjectMapper objectMapper;
     @Value(value = "${app.client-url}")
     private String clientUrl;
-//    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
-//    private final UserDetailsService userDetailsService;
-//    private final JwtService jwtService;
-//    private final TokenService tokenService;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -65,7 +61,7 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/api/v1/ws")
-                .setAllowedOrigins("http://localhost:5173")
+                .setAllowedOrigins("http://localhost:5173", "https://xcity.tanle.site")
                 .withSockJS();
     }
 
